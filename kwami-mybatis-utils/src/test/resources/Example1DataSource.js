@@ -1,0 +1,23 @@
+{
+	"url":"jdbc:mysql://localhost/example1",
+	"driverClassName":"com.mysql.jdbc.Driver",
+	"dbProperties":{
+		"user":"chris"
+	},
+	"user":"chris",
+	"jmxEnabled":false,
+	"testWhileIdle":false,
+	"testOnBorrow":true,
+	"validationQuery":"select 1 from system_control browse access",
+	"testOnReturn":false,
+	"validationInterval":30000,
+	"timeBetweenEvictionRunsMillis":30000,
+	"maxActive":100,
+	"initialSize":10,
+	"maxWait":10000,
+	"removeAbandonedTimeout":60,
+	"minEvictableIdleTimeMillis":30000,
+	"minIdle":10,
+	"logAbandoned":true,
+	"removeAbandoned":true
+}
