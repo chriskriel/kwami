@@ -20,7 +20,7 @@ public class DeMultiplexor {
 			// List<Message> messages = new ArrayList<Message>();
 			reader.beginArray();
 			while (reader.hasNext()) {
-				Message message = gson.fromJson(reader, Message.class);
+				ContainerMessage message = gson.fromJson(reader, ContainerMessage.class);
 				System.out.println(message.toString());
 			}
 			reader.endArray();
@@ -31,7 +31,7 @@ public class DeMultiplexor {
 
 	public static void main(String[] args) {
 		try (InputStream in = new FileInputStream(
-				"/home/chris/git/kwami/general/load-balancer/src/main/java/net/kwami/tcp/input.txt")) {
+				"/home/chris/git/kwami/general/load-balancer/src/test/resources/input.txt")) {
 			DeMultiplexor plexor = new DeMultiplexor();
 			plexor.run(in);
 		} catch (Exception e) {
