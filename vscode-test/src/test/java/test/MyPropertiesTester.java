@@ -31,12 +31,6 @@ public class MyPropertiesTester {
 		testProps.setShortProperty("short.property.max", Short.MAX_VALUE);
 		testProps.setShortProperty("short.property.min", Short.MIN_VALUE);
 		Gson gson = new GsonBuilder().create();
-		TestJsonClass j = new TestJsonClass();
-		j.setNumber(10);
-		String[] a = {"one", "two"}; 
-		j.setArray(a);
-		String s = gson.toJson(j);
-		testProps.setProperty("json", s);
 		String serialized = gson.toJson(testProps);
 		System.out.println(serialized);
 		testProps = gson.fromJson(serialized, MyProperties.class);
@@ -47,9 +41,5 @@ public class MyPropertiesTester {
 		assertEquals(Integer.MIN_VALUE, testProps.getIntProperty("int.property.min", 0));
 		assertEquals(Long.MIN_VALUE, testProps.getLongProperty("long.property.min", 0L));
 		assertEquals(Short.MAX_VALUE, testProps.getShortProperty("int.property.max", Short.MAX_VALUE));
-		j = null;
-		j = testProps.getJsonProperty("json", new TestJsonClass());
-		assertEquals(10, j.getNumber());
-		assertEquals("two", j.getArray()[1]);
 	}
 }

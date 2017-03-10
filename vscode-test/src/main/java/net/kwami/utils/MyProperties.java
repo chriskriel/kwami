@@ -2,21 +2,11 @@ package net.kwami.utils;
 
 import java.util.Properties;
 
-import com.google.gson.GsonBuilder;
-
 public class MyProperties extends Properties {
 
 	private static final String ERR_MSG = "returning defaultValue %d because property '%s', with value '%s', cannot be parsed as %s";
 	private static final long serialVersionUID = 1L;
 	private static final MyLogger logger = new MyLogger(MyProperties.class);
-	
-	@SuppressWarnings("unchecked")
-	public <T> T getJsonProperty(String property, T defaultValue) {
-		String s = getProperty(property);
-		if (s == null)
-			return defaultValue;
-		return (T)new GsonBuilder().create().fromJson(s, defaultValue.getClass());
-	}
 
 	public void setByteProperty(String property, byte value) {
 		setProperty(property, String.valueOf(value));
