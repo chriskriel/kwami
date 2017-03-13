@@ -1,7 +1,6 @@
 package net.kwami.utils;
 
 import java.util.Properties;
-
 import com.google.gson.GsonBuilder;
 
 public class MyProperties extends Properties {
