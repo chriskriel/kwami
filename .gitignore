@@ -30,4 +30,4 @@ ignore/
 .vscode
 .vscode/
 classpath.txt
-
+javac-services*

@@ -8,8 +8,6 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -30,7 +28,7 @@ class CachedObject {
 
 public abstract class Configurator {
 
-	private static final Logger logger = Logger.getLogger(Configurator.class);
+	private static final MyLogger logger = new MyLogger(Configurator.class);
 	private static final Map<String, CachedObject> cache = new ConcurrentHashMap<String, CachedObject>();
 	private static final long refreshInterval;
 
@@ -44,7 +42,7 @@ public abstract class Configurator {
 	}
 
 	public static <T> T get(Class<T> classT, String resourceName) {
-		logger.debug("resource=" + resourceName);
+		logger.debug("resource=%s", resourceName);
 		URL url = classT.getResource(resourceName);
 		T t = null;
 		if ((t = getCachedObject(resourceName, url)) != null)
@@ -56,7 +54,7 @@ public abstract class Configurator {
 			try {
 				is = classT.getResourceAsStream(resourceName);
 				if (is == null) {
-					logger.error("could not create an InputStream on " + resourceName);
+					logger.error("could not create an InputStream on %s", resourceName);
 					return null;
 				}
 				InputStreamReader rdr = new InputStreamReader(is);
@@ -72,7 +70,7 @@ public abstract class Configurator {
 			if (t != null)
 				cache.put(resourceName, new CachedObject(refreshInterval, t));
 			else
-				logger.error("could not create " + classT.getSimpleName() + " from " + resourceName);
+				logger.error("could not create %s from %s", classT.getSimpleName(), resourceName);
 			return t;
 		}
 	}
