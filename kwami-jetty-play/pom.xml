@@ -3,27 +3,44 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>net.kwami</groupId>
-  <artifactId>kwami-archetype-quickstart</artifactId>
+  <artifactId>kwami-jetty-play</artifactId>
   <version>1</version>
   <packaging>jar</packaging>
 
-  <name>kwami-archetype-quickstart</name>
-  <url>http://maven.apache.org</url>
+  <name>kwami-jetty-play</name>
+  <url>http://kwami.net</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jettyVersion>9.2.21.v20170120</jettyVersion>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.1</version>
+      <version>[4.7,)</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <version>${jettyVersion}</version>
     </dependency>
   </dependencies>
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+          <execution><goals><goal>java</goal></goals></execution>
+        </executions>
+        <configuration>
+          <mainClass>net.kwami.App</mainClass>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
