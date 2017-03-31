@@ -1,0 +1,12 @@
+{       
+    "compilerOptions": {
+        "target": "es5",
+        "module": "umd",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "allowJs": true,
+        "noUnusedLocals": false,
+        "outDir": "src/main/webapp/scripts"
+    }
+}

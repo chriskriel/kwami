@@ -1,0 +1,187 @@
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+}
+
+button {
+	float: right;
+}
+
+div {
+	margin: 2px;
+	padding: 0;
+}
+
+label, input {
+	margin: 0.5em;
+}
+
+fieldset {
+	margin: 1em;
+}
+
+p {
+	width: 30em;
+}
+
+polyline {
+	fill: black;
+	stroke: black;
+	stroke-width: 1;
+	margin: 0;
+	border: 0;
+	padding: 0;
+}
+
+textarea {
+/*	position: relative; */
+	resize: none;
+	display: block;
+	height: 10vh;
+	width: 100%; /* 71vw */
+	overflow: auto;
+/*
+	width: 100%;
+	max-height: 25vh;
+	max-width: 95vw;
+	overflow: auto;
+	*/
+}
+
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+#sqlInput button {
+	float: left;
+	display: block;
+}
+
+#container {
+	max-height: 85vh;
+}
+
+#body {
+	position: relative;
+	top: 0;
+	left: 0;
+	width: 99.5vw;
+	height: 99.5vh;
+	background-color: #c9bf8f;
+}
+
+.scrollable {
+	max-height: 85vh;
+	max-width: 95vw;
+	overflow: auto;
+	list-style-type: none;
+}
+
+.tableDiv {
+	float: left;
+	font-size: smaller;
+	max-width: 100em;
+	max-height: 78vh;
+	overflow: auto;
+}
+
+.template {
+   	display: none; 
+}
+
+.panel {
+	position: absolute;
+	padding: 0.5em;
+	border-style: solid;
+	border-width: 3px;
+	border-radius: 10px;
+	background-color: darkcyan;
+}
+
+.panelHeading {
+	display: inline;
+	cursor: pointer;
+	color: blue;
+}
+
+.inlineSpace {
+	display: inline;
+}
+
+.blankLine {
+	margin: 0;
+}
+
+.menu {
+	display: none;
+	position: absolute;
+	overflow: hidden;
+	padding-left: 0;
+	border: 1px solid #000000;
+	white-space: nowrap;
+	font-family: sans-serif;
+	background: #FFF;
+	color: #333;
+	border-radius: 5px;
+}
+
+.menu ul {
+	list-style-type: none;
+}
+
+.menu li {
+	padding: 0.1em 0.3em;
+	cursor: pointer;
+}
+
+.menu li:hover {
+	background-color: #DEF;
+}
+
+.menuHeading {
+	text-align: left;
+	font-weight: bold;
+}
+
+.schema {
+	color: initial;
+	list-style-type: none;
+}
+
+.table, .nsItem {
+	color: blue;
+	cursor: pointer;
+}
+
+.pnlButton {
+	float: right;
+	cursor: pointer;
+}
+
+.displayOn {
+	display: block;
+}
+
+.displayOff {
+	display: none;
+}
+
+.ajaxOverlay {
+	background-color: #333;
+	opacity: 0.8;
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	z-index: 1500;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+	background-repeat: no-repeat;
+	background-image: url(../images/ajax-loader.gif);
+	background-position: center;
+}
