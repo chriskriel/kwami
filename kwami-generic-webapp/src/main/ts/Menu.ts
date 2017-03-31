@@ -1,4 +1,4 @@
-import { app, Panel, PanelType } from "Panel";
+import { Panel, PanelType } from "Panel";
 
 export class Menu {
 
@@ -14,7 +14,7 @@ export class Menu {
         ev.preventDefault();
         let menu = document.getElementById('bodyMenu');
         let element = <HTMLElement>document.getElementById('menuCnnct');
-        element.innerHTML = app.getPanel(PanelType[PanelType.Connect]).getHeading();
+        element.innerHTML = Panel.getPanel(PanelType[PanelType.Connect]).getHeading();
         Menu.showMenu(ev, 'bodyMenu');
     }
 
@@ -24,7 +24,7 @@ export class Menu {
         menu.style.top = (ev.clientY - 15) + 'px';
         menu.style.left = ev.clientX + 'px';
         menu.style.display = 'block';
-        menu.style.zIndex = app.newZindex();
+        menu.style.zIndex = Panel.newZindex();
     }
 
     public static hideAllMenus(): void {
@@ -39,15 +39,15 @@ export class Menu {
         let target = <HTMLUListElement>ev.target;
         switch (target.getAttribute("data-action")) {
             case PanelType[PanelType.Connect]:
-                app.showPanel(PanelType[PanelType.Connect]);
+                Panel.showPanel(PanelType[PanelType.Connect]);
                 Menu.hideAllMenus();
                 break;
             case PanelType[PanelType.Schema]:
-                app.newPanel(PanelType.Schema).show();
+                Panel.newPanel(PanelType.Schema).show();
                 Menu.hideAllMenus();
                 break;
             case PanelType[PanelType.Sql]:
-                app.newPanel(PanelType.Sql).show();
+                Panel.newPanel(PanelType.Sql).show();
                 Menu.hideAllMenus();
                 break;
             case "sqls":
@@ -62,7 +62,7 @@ export class Menu {
             default:
                 let liAttrs = (<Element>ev.target).attributes;
                 let dataAction: Attr = liAttrs.getNamedItem('data-action');
-                app.showPanel(dataAction.value);
+                Panel.showPanel(dataAction.value);
         }
     }
 
@@ -75,7 +75,7 @@ export class Menu {
         li.classList.add('menuHeading');
         li.innerHTML = menuHeading;
         ul.appendChild(li);
-        let panels: Panel[] = app.getPanels();
+        let panels: Panel[] = Panel.getPanels();
         panels.forEach((panel: Panel, index: number, array: Panel[]) => {
             if (panel.getType() === panelType) {
                 li = document.createElement('li');

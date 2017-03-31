@@ -4,11 +4,12 @@
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "HeadingUpdater"], factory);
+        define(["require", "exports", "Utils", "HeadingUpdater"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    var Utils_1 = require("Utils");
     var HeadingUpdater_1 = require("HeadingUpdater");
     var PanelType;
     (function (PanelType) {
@@ -54,7 +55,7 @@
             this.prepareHeading(this.div.id);
         };
         Panel.prototype.prepareHeading = function (parentId) {
-            var s = exports.app.interpolate('#{} #{}', parentId, 'panelHeading');
+            var s = Utils_1.interpolate('#{} #{}', parentId, 'panelHeading');
             var h3 = document.querySelector(s);
             h3.innerHTML = this.heading;
             h3.setAttribute('title', 'click to rename');
@@ -66,9 +67,21 @@
         Panel.prototype.appendChild = function (child) {
             this.div.appendChild(child);
         };
+        Panel.newZindex = function () {
+            return Panel.zIndex++ + '';
+        };
         Panel.prototype.show = function () {
             this.div.style.display = 'block';
-            this.div.style.zIndex = exports.app.newZindex();
+            this.div.style.zIndex = Panel.newZindex();
+        };
+        Panel.prototype.showPanel = function (id) {
+            for (var i = 0; i < Panel.panels.length; i++) {
+                var panel = Panel.panels[i];
+                if (panel.getId() === id) {
+                    panel.show();
+                    return;
+                }
+            }
         };
         Panel.prototype.getId = function () {
             return this.div.id;
@@ -92,7 +105,7 @@
             var left = (ev.clientX - parseInt(data[2], 10)) + "px";
             panel.style.top = top;
             panel.style.left = left;
-            panel.style.zIndex = exports.app.newZindex();
+            panel.style.zIndex = Panel.newZindex();
         };
         Panel.dragStart = function (ev) {
             ev.stopPropagation();
@@ -101,18 +114,18 @@
             var leftPx = target.style.left.substring(0, target.style.left.length - 2);
             var topOffset = ev.clientY - Number(topPx);
             var leftOffSet = ev.clientX - Number(leftPx);
-            var data = exports.app.interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
+            var data = Utils_1.interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
             var x = ev.dataTransfer;
             x.setData("text", data);
         };
         Panel.prototype.prepareButtons = function (parentId, notCloseable) {
-            var s = exports.app.interpolate('#{} #{}', parentId, 'closeBttn');
+            var s = Utils_1.interpolate('#{} #{}', parentId, 'closeBttn');
             var closeButton = document.querySelector(s);
             if (notCloseable)
                 closeButton.remove();
             else
                 closeButton.onclick = Panel.closePanel;
-            s = exports.app.interpolate('#{} #{}', parentId, 'hideBttn');
+            s = Utils_1.interpolate('#{} #{}', parentId, 'hideBttn');
             var hider = document.querySelector(s);
             hider.onclick = Panel.hidePanel;
             hider.onmousedown = function (ev) {
@@ -132,10 +145,36 @@
             var button = ev.target;
             var panel = button.parentElement;
             panel.remove();
-            exports.app.removePanel(panel.id);
+            Panel.removePanel(panel.id);
+        };
+        Panel.removePanel = function (id, removeHtml) {
+            if (removeHtml === void 0) { removeHtml = false; }
+            for (var i = 0; i < Panel.panels.length; i++) {
+                var panel = Panel.panels[i];
+                if (panel.getId() === id) {
+                    if (removeHtml && panel.getHtml() != null)
+                        panel.getHtml().remove();
+                    Panel.panels.splice(i, 1);
+                    return;
+                }
+            }
+        };
+        Panel.getPanel = function (id) {
+            for (var i = 0; i < Panel.panels.length; i++) {
+                var panel = Panel.panels[i];
+                if (panel.getId() === id) {
+                    return panel;
+                }
+            }
+            return null;
+        };
+        Panel.getPanels = function () {
+            return Panel.panels;
         };
         return Panel;
     }());
     Panel.template = null;
+    Panel.zIndex = 0;
+    Panel.pnlNumber = 0;
     exports.Panel = Panel;
 });

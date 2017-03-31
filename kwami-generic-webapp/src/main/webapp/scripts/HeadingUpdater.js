@@ -15,13 +15,13 @@
         }
         HeadingUpdater.show = function (panelId) {
             HeadingUpdater.panelId = panelId;
-            var panel = Panel_1.app.getPanel(HeadingUpdater.panelId);
+            var panel = Panel_1.Panel.getPanel(HeadingUpdater.panelId);
             var html = document.getElementById(HeadingUpdater.id);
-            var s = Panel_1.app.interpolate('#{} #{}', html.id, 'newName');
+            var s = Utils.interpolate('#{} #{}', html.id, 'newName');
             var input = document.querySelector(s);
             input.value = panel.getHeading();
             HeadingUpdater.addEventListeners(html);
-            html.style.zIndex = Panel_1.app.newZindex();
+            html.style.zIndex = Panel_1.Panel.newZindex();
             html.style.display = 'block';
         };
         HeadingUpdater.cancel = function (ev) {
@@ -30,9 +30,9 @@
         };
         HeadingUpdater.updateName = function (ev) {
             var html = document.getElementById(HeadingUpdater.id);
-            var s = Panel_1.app.interpolate('#{} #{}', html.id, 'newName');
+            var s = Utils.interpolate('#{} #{}', html.id, 'newName');
             var input = document.querySelector(s);
-            var panel = Panel_1.app.getPanel(HeadingUpdater.panelId);
+            var panel = Utils.getPanel(HeadingUpdater.panelId);
             panel.setHeading(input.value);
             html.style.display = 'none';
         };
@@ -40,10 +40,10 @@
             if (this.isConfigured)
                 return;
             this.isConfigured = true;
-            var s = Panel_1.app.interpolate('#{} #{}', html.id, 'cancel');
+            var s = Utils.interpolate('#{} #{}', html.id, 'cancel');
             var cnclBttn = document.querySelector(s);
             cnclBttn.onclick = HeadingUpdater.cancel;
-            s = Panel_1.app.interpolate('#{} #{}', html.id, 'update');
+            s = Utils.interpolate('#{} #{}', html.id, 'update');
             var updteBttn = document.querySelector(s);
             updteBttn.onclick = HeadingUpdater.updateName;
         };

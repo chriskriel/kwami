@@ -1,7 +1,4 @@
-import { Application } from "Application";
-import { HeadingUpdater } from "HeadingUpdater";
-
-export let app: Application;  // all classes of this application depends on this global variable
+import { interpolate } from "Utils";
 
 export enum PanelType {
     Schema,
@@ -13,13 +10,15 @@ export enum PanelType {
 
 export class Panel {
     private static template: HTMLDivElement = null;
+    private static panels: Panel[];
+    private static zIndex: number = 0;
+    private static pnlNumber: number = 0;
     private type: PanelType;
     private heading: string;
     private div: HTMLDivElement;
     private body: HTMLBodyElement;
 
-    public constructor(type: PanelType, id: string, heading: string,
-        notCloseable?: boolean) {
+    public constructor(type: PanelType, id: string, heading: string, notCloseable?: boolean) {
         this.prepareTemplate();
         this.type = type;
         this.heading = heading;
@@ -58,7 +57,7 @@ export class Panel {
     }
 
     private prepareHeading(parentId: string): HTMLElement {
-        let s: string = app.interpolate('#{} #{}', parentId, 'panelHeading');
+        let s: string = interpolate('#{} #{}', parentId, 'panelHeading');
         let h3 = <HTMLElement>document.querySelector(s);
         h3.innerHTML = this.heading;
         h3.setAttribute('title', 'click to rename');
@@ -73,9 +72,23 @@ export class Panel {
         this.div.appendChild(child);
     }
 
+    public static newZindex(): string {
+        return Panel.zIndex++ + '';
+    }
+
     public show(): void {
         this.div.style.display = 'block';
-        this.div.style.zIndex = app.newZindex();
+        this.div.style.zIndex = Panel.newZindex();
+    }
+
+    public static showPanel(id: string) {
+        for (let i = 0; i < Panel.panels.length; i++) {
+            let panel = Panel.panels[i];
+            if (panel.getId() === id) {
+                panel.show();
+                return;
+            }
+        }
     }
 
     public getId(): string {
@@ -103,7 +116,7 @@ export class Panel {
         let left = (ev.clientX - parseInt(data[2], 10)) + "px";
         panel.style.top = top;
         panel.style.left = left;
-        panel.style.zIndex = app.newZindex();
+        panel.style.zIndex = Panel.newZindex();
     }
 
     private static dragStart(ev: DragEvent): void {
@@ -113,20 +126,20 @@ export class Panel {
         let leftPx = target.style.left.substring(0, target.style.left.length - 2);
         let topOffset = ev.clientY - Number(topPx);
         let leftOffSet = ev.clientX - Number(leftPx);
-        let data = app.interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
+        let data = interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
         let x = ev.dataTransfer;
         x.setData("text", data);
 
     }
 
     private prepareButtons(parentId: string, notCloseable?: boolean): void {
-        let s: string = app.interpolate('#{} #{}', parentId, 'closeBttn');
+        let s: string = interpolate('#{} #{}', parentId, 'closeBttn');
         let closeButton = <HTMLElement>document.querySelector(s);
         if (notCloseable)
             closeButton.remove();
         else
             closeButton.onclick = Panel.closePanel;
-        s = app.interpolate('#{} #{}', parentId, 'hideBttn');
+        s = interpolate('#{} #{}', parentId, 'hideBttn');
         let hider = <HTMLElement>document.querySelector(s);
         hider.onclick = Panel.hidePanel;
         hider.onmousedown = (ev: MouseEvent): any => {
@@ -148,6 +161,76 @@ export class Panel {
         let button = <HTMLElement>ev.target;
         let panel = <HTMLElement>button.parentElement;
         panel.remove();
-        app.removePanel(panel.id);
+        Panel.removePanel(panel.id);
+    }
+
+    public static removePanel(id: string, removeHtml: boolean = false): void {
+        for (let i = 0; i < Panel.panels.length; i++) {
+            let panel = Panel.panels[i];
+            if (panel.getId() === id) {
+                if (removeHtml && panel.getHtml() != null)
+                    panel.getHtml().remove();
+                Panel.panels.splice(i, 1);
+                return;
+            }
+        }
+    }
+
+    public static getPanel(id: string): Panel {
+        for (let i = 0; i < Panel.panels.length; i++) {
+            let panel = Panel.panels[i];
+            if (panel.getId() === id) {
+                return panel;
+            }
+        }
+        return null;
+    }
+
+    public static getPanels(): Panel[] {
+        return Panel.panels;
+    }
+}
+
+class HeadingUpdater {
+    private static panelId: string;
+    private static id: string = 'headingUpdater';
+    private static isConfigured: boolean = false;
+
+    public static show(panelId: string) {
+        HeadingUpdater.panelId = panelId;
+        let panel: Panel = Panel.getPanel(HeadingUpdater.panelId);
+        let html = <HTMLDivElement>document.getElementById(HeadingUpdater.id);
+        let s: string = interpolate('#{} #{}', html.id, 'newName');
+        let input = <HTMLInputElement>document.querySelector(s);
+        input.value = panel.getHeading();
+        HeadingUpdater.addEventListeners(html);
+        html.style.zIndex = Panel.newZindex();
+        html.style.display = 'block';
+    }
+
+    private static cancel(ev: MouseEvent) {
+        let html = <HTMLDivElement>document.getElementById(HeadingUpdater.id);
+        html.style.display = 'none';
+    }
+
+    private static updateName(ev: MouseEvent) {
+        let html = <HTMLDivElement>document.getElementById(HeadingUpdater.id);
+        let s: string = interpolate('#{} #{}', html.id, 'newName');
+        let input = <HTMLInputElement>document.querySelector(s);
+        let panel: Panel = Panel.getPanel(HeadingUpdater.panelId);
+        panel.setHeading(input.value);
+        html.style.display = 'none';
+    }
+
+    private static addEventListeners(html: HTMLDivElement): void {
+        if (this.isConfigured)
+            return;
+        this.isConfigured = true;
+        let s: string = interpolate('#{} #{}', html.id, 'cancel');
+        let cnclBttn = <HTMLElement>document.querySelector(s);
+        cnclBttn.onclick = HeadingUpdater.cancel;
+        s = interpolate('#{} #{}', html.id, 'update');
+        let updteBttn = <HTMLElement>document.querySelector(s);
+        updteBttn.onclick = HeadingUpdater.updateName;
     }
 }

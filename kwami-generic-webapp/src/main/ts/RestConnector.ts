@@ -1,4 +1,5 @@
-import { app, Panel, PanelType } from "Panel";
+import { interpolate, debug } from "Utils";
+import { Panel, PanelType } from "Panel";
 
 export interface Row {
     values: string[];
@@ -62,7 +63,7 @@ export class RestConnector extends Panel {
         let context: string = input.value;
         input = <HTMLInputElement>document.querySelector("#connectInputs #schema");
         let schema: string = input.value;
-        RestConnector.url = app.interpolate("http://{}:{}/{}/{}/", host, port, context, schema);
+        RestConnector.url = interpolate("http://{}:{}/{}/{}/", host, port, context, schema);
     }
 
     public static ajaxGet(url: string, acb: (json: JsonResponse, obj?: Object) => void,
@@ -88,7 +89,7 @@ export class RestConnector extends Panel {
                 overlay.classList.remove('displayOn');
                 overlay.classList.add('displayOff');
                 let jsonResponse: JsonResponse = JSON.parse(RestConnector.xmlhttp.responseText);
-                if (app.getDebug) {
+                if (debug) {
                     if (jsonResponse != null && jsonResponse.results[0] != null) {
                         if (jsonResponse.results[0].updateCount != null)
                             console.log("JSON update count: " + jsonResponse.results[0].updateCount);
@@ -101,7 +102,7 @@ export class RestConnector extends Panel {
                 RestConnector.respFn(jsonResponse, obj);
             }
         };
-        (<RestConnector>app.getPanel("Connect")).setUrl();
+        (<RestConnector>Panel.getPanel("Connect")).setUrl();
         let URL: string = RestConnector.url + url;
         console.log("URL=" + URL);
         RestConnector.xmlhttp.open(method, URL, true);
@@ -118,7 +119,7 @@ export class RestConnector extends Panel {
     }
 
     public static setResponse(response: JsonResponse, obj?: Object): void {
-        app.removePanel(PanelType[PanelType.Schema], true);
+        Panel.removePanel(PanelType[PanelType.Schema], true);
         let result: Result = response.results[0];
         let status = <HTMLInputElement>obj;
         status.style.fontWeight = 'bold';
@@ -126,8 +127,8 @@ export class RestConnector extends Panel {
         connException.innerHTML = '';
         if (result.resultType == 'RESULTSET') {
             RestConnector.tables = response;
-            app.getPanel(PanelType[PanelType.Connect]).hide();
-            app.newPanel(PanelType.Schema).show();
+            Panel.getPanel(PanelType[PanelType.Connect]).hide();
+            Panel.newPanel(PanelType.Schema).show();
             status.value = 'OK';
             status.style.color = 'green';
         } else {
