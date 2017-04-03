@@ -4,12 +4,14 @@
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "Panel"], factory);
+        define(["require", "exports", "Panel", "SchemaPanel", "SqlPanel"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Panel_1 = require("Panel");
+    var SchemaPanel_1 = require("SchemaPanel");
+    var SqlPanel_1 = require("SqlPanel");
     var Menu = (function () {
         function Menu() {
             document.addEventListener("contextmenu", Menu.showContextMenu, false);
@@ -22,7 +24,7 @@
             ev.preventDefault();
             var menu = document.getElementById('bodyMenu');
             var element = document.getElementById('menuCnnct');
-            element.innerHTML = Panel_1.app.getPanel(Panel_1.PanelType[Panel_1.PanelType.Connect]).getHeading();
+            element.innerHTML = Panel_1.Panel.getPanel(Panel_1.PanelType[Panel_1.PanelType.Connect]).getHeading();
             Menu.showMenu(ev, 'bodyMenu');
         };
         Menu.showMenu = function (ev, menuName) {
@@ -31,7 +33,7 @@
             menu.style.top = (ev.clientY - 15) + 'px';
             menu.style.left = ev.clientX + 'px';
             menu.style.display = 'block';
-            menu.style.zIndex = Panel_1.app.newZindex();
+            menu.style.zIndex = Panel_1.Panel.newZindex();
         };
         Menu.hideAllMenus = function () {
             var menus = document.querySelectorAll('.menu');
@@ -44,15 +46,15 @@
             var target = ev.target;
             switch (target.getAttribute("data-action")) {
                 case Panel_1.PanelType[Panel_1.PanelType.Connect]:
-                    Panel_1.app.showPanel(Panel_1.PanelType[Panel_1.PanelType.Connect]);
+                    Panel_1.Panel.showPanel(Panel_1.PanelType[Panel_1.PanelType.Connect]);
                     Menu.hideAllMenus();
                     break;
                 case Panel_1.PanelType[Panel_1.PanelType.Schema]:
-                    Panel_1.app.newPanel(Panel_1.PanelType.Schema).show();
+                    SchemaPanel_1.SchemaPanel.getInstance().show();
                     Menu.hideAllMenus();
                     break;
                 case Panel_1.PanelType[Panel_1.PanelType.Sql]:
-                    Panel_1.app.newPanel(Panel_1.PanelType.Sql).show();
+                    SqlPanel_1.SqlPanel.getInstance().show();
                     Menu.hideAllMenus();
                     break;
                 case "sqls":
@@ -67,7 +69,7 @@
                 default:
                     var liAttrs = ev.target.attributes;
                     var dataAction = liAttrs.getNamedItem('data-action');
-                    Panel_1.app.showPanel(dataAction.value);
+                    Panel_1.Panel.showPanel(dataAction.value);
             }
         };
         Menu.showPanelListMenu = function (ev, panelType, menuHeading) {
@@ -78,7 +80,7 @@
             li.classList.add('menuHeading');
             li.innerHTML = menuHeading;
             ul.appendChild(li);
-            var panels = Panel_1.app.getPanels();
+            var panels = Panel_1.Panel.getPanels();
             panels.forEach(function (panel, index, array) {
                 if (panel.getType() === panelType) {
                     li = document.createElement('li');

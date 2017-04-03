@@ -1,4 +1,6 @@
 import { Panel, PanelType } from "Panel";
+import { SchemaPanel } from "SchemaPanel";
+import { SqlPanel } from "SqlPanel";
 
 export class Menu {
 
@@ -43,11 +45,11 @@ export class Menu {
                 Menu.hideAllMenus();
                 break;
             case PanelType[PanelType.Schema]:
-                Panel.newPanel(PanelType.Schema).show();
+                SchemaPanel.getInstance().show();
                 Menu.hideAllMenus();
                 break;
             case PanelType[PanelType.Sql]:
-                Panel.newPanel(PanelType.Sql).show();
+                SqlPanel.getInstance().show();
                 Menu.hideAllMenus();
                 break;
             case "sqls":

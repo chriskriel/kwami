@@ -14,15 +14,17 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "Panel", "ResultsDisplay", "RestConnector", "Menu"], factory);
+        define(["require", "exports", "Panel", "ResultsDisplay", "ConnectionPanel", "ResultPanel", "Menu", "Utils"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Panel_1 = require("Panel");
     var ResultsDisplay_1 = require("ResultsDisplay");
-    var RestConnector_1 = require("RestConnector");
+    var ConnectionPanel_1 = require("ConnectionPanel");
+    var ResultPanel_1 = require("ResultPanel");
     var Menu_1 = require("Menu");
+    var Utils_1 = require("Utils");
     var SqlPanel = (function (_super) {
         __extends(SqlPanel, _super);
         function SqlPanel(id, heading) {
@@ -39,19 +41,19 @@ var __extends = (this && this.__extends) || (function () {
                 _this.div2.parentElement.setAttribute("draggable", "true");
             };
             _super.prototype.appendChild.call(_this, _this.div2);
-            var selector = Panel_1.app.interpolate('#{} #statement', id);
+            var selector = Utils_1.Utils.interpolate('#{} #statement', id);
             _this.sql = document.querySelector(selector);
-            selector = Panel_1.app.interpolate('#{} #clear', id);
+            selector = Utils_1.Utils.interpolate('#{} #clear', id);
             var bttn = document.querySelector(selector);
             bttn.onclick = function (ev) {
                 ev.stopImmediatePropagation();
                 _this.sql.value = '';
             };
-            selector = Panel_1.app.interpolate('#{} #exec', id);
+            selector = Utils_1.Utils.interpolate('#{} #exec', id);
             bttn = document.querySelector(selector);
             bttn.onclick = function (ev) {
                 ev.stopImmediatePropagation();
-                RestConnector_1.RestConnector.ajaxPost("sql?maxRows=-1", SqlPanel.processResults, "sql=" + _this.sql.value, _this.sql.value);
+                ConnectionPanel_1.ConnectionPanel.ajaxPost("sql?maxRows=-1", SqlPanel.processResults, "sql=" + _this.sql.value, _this.sql.value);
             };
             _this.resultsDisplay = new ResultsDisplay_1.ResultsDisplay(_this, "right-click to copy to SQL");
             _this.resultsDisplay.addValueCallback(function (value) {
@@ -78,7 +80,7 @@ var __extends = (this && this.__extends) || (function () {
         };
         SqlPanel.processResults = function (metaData, sql) {
             console.log("executed: " + sql);
-            var panel = Panel_1.app.newPanel(Panel_1.PanelType.Result);
+            var panel = ResultPanel_1.ResultPanel.getInstance();
             var result = metaData.results[0];
             if (result.resultType == 'EXCEPTION') {
                 panel.setStatement("Exception: " + result.toString);
@@ -90,6 +92,12 @@ var __extends = (this && this.__extends) || (function () {
             }
             panel.show();
             Menu_1.Menu.hideAllMenus();
+        };
+        SqlPanel.getInstance = function () {
+            var headTxt = "SQL Panel " + Panel_1.Panel.nextPanelNumber();
+            var x = new SqlPanel(Panel_1.PanelType[Panel_1.PanelType.Sql], headTxt);
+            Panel_1.Panel.savePanel(x);
+            return x;
         };
         return SqlPanel;
     }(Panel_1.Panel));

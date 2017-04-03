@@ -1,11 +1,11 @@
 import { Panel, PanelType } from "Panel";
-import { ColumnDefinition, Row } from "RestConnector";
+import { ColumnDefinition, Row } from "ConnectionPanel";
 
 export class RowPanel extends Panel {
 
     private grid: HTMLDivElement;
 
-    constructor(id: string, heading: string) {
+    private constructor(id: string, heading: string) {
         super(PanelType.Row, id, heading);
         this.grid = document.createElement('div');
         super.appendChild(this.grid);
@@ -38,5 +38,12 @@ export class RowPanel extends Panel {
                 td.innerText = value;
             }
         );
+    }
+
+    public static getInstance(): RowPanel {
+        let headTxt: string = "Row Panel " + Panel.nextPanelNumber();
+        let x: RowPanel = new RowPanel(PanelType[PanelType.Row], headTxt);
+        Panel.savePanel(x);
+        return x;
     }
 }

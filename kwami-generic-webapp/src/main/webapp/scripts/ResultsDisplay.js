@@ -4,12 +4,12 @@
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "Panel", "Menu"], factory);
+        define(["require", "exports", "RowPanel", "Menu"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var Panel_1 = require("Panel");
+    var RowPanel_1 = require("RowPanel");
     var Menu_1 = require("Menu");
     var ResultsDisplay = (function () {
         function ResultsDisplay(panel, cellTitle) {
@@ -73,7 +73,7 @@
             tr.onclick = function (ev) {
                 ev.stopPropagation();
                 var head = _this.panel.getHeading() + ' Row ' + index;
-                panel = Panel_1.app.newPanel(Panel_1.PanelType.Row, head);
+                panel = RowPanel_1.RowPanel.getInstance();
                 panel.addResults(result.columnDefinitions, row);
                 panel.show();
                 Menu_1.Menu.hideAllMenus();

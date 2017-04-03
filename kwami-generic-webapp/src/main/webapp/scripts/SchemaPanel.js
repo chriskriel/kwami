@@ -14,14 +14,16 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "Panel", "RestConnector", "Menu"], factory);
+        define(["require", "exports", "Panel", "ConnectionPanel", "SqlPanel", "Menu", "Utils"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Panel_1 = require("Panel");
-    var RestConnector_1 = require("RestConnector");
+    var ConnectionPanel_1 = require("ConnectionPanel");
+    var SqlPanel_1 = require("SqlPanel");
     var Menu_1 = require("Menu");
+    var Utils_1 = require("Utils");
     var TableClickContext = (function () {
         function TableClickContext(panelId, li) {
             this.panelId = panelId;
@@ -32,13 +34,13 @@ var __extends = (this && this.__extends) || (function () {
     var SchemaPanel = (function (_super) {
         __extends(SchemaPanel, _super);
         function SchemaPanel(id, heading) {
-            var _this = _super.call(this, Panel_1.PanelType.Schema, id, RestConnector_1.RestConnector.url, true) || this;
+            var _this = _super.call(this, Panel_1.PanelType.Schema, id, ConnectionPanel_1.ConnectionPanel.url, true) || this;
             _this.prepareTreeTemplate();
             _this.div2 = SchemaPanel.treeTemplate.cloneNode(true);
             _this.div2.style.display = 'block';
             _super.prototype.appendChild.call(_this, _this.div2);
-            if (RestConnector_1.RestConnector.tables != null) {
-                var result = RestConnector_1.RestConnector.tables.results[0];
+            if (ConnectionPanel_1.ConnectionPanel.tables != null) {
+                var result = ConnectionPanel_1.ConnectionPanel.tables.results[0];
                 var ul_1 = document.querySelector('#' + id + ' #tree');
                 while (ul_1.firstChild)
                     ul_1.removeChild(ul_1.firstChild);
@@ -50,7 +52,7 @@ var __extends = (this && this.__extends) || (function () {
                     li.attributes.setNamedItem(attr);
                     li.classList.add('nsItem');
                     li.onclick = function (ev) {
-                        RestConnector_1.RestConnector.ajaxGet("tables/" + value.values[2] + "/metaData", SchemaPanel.processTableMetaData, new TableClickContext(id, li));
+                        ConnectionPanel_1.ConnectionPanel.ajaxGet("tables/" + value.values[2] + "/metaData", SchemaPanel.processTableMetaData, new TableClickContext(id, li));
                     };
                     ul_1.appendChild(li);
                 });
@@ -58,11 +60,11 @@ var __extends = (this && this.__extends) || (function () {
             return _this;
         }
         SchemaPanel.processTableMetaData = function (metaData, ctx) {
-            if (Panel_1.app.getDebug())
+            if (Utils_1.Utils.debug)
                 console.log("clicked: " + ctx.li.getAttribute('id'));
             var result = metaData.results[0];
-            var panel = Panel_1.app.newPanel(Panel_1.PanelType.Sql);
-            panel.setSql(Panel_1.app.getFirstSql(ctx.li.getAttribute('id')));
+            var panel = SqlPanel_1.SqlPanel.getInstance();
+            panel.setSql(Utils_1.Utils.getFirstSql(ctx.li.getAttribute('id')));
             if (result.resultType == 'EXCEPTION') {
                 panel.setStatement("Exception: " + result.toString);
                 panel.addResults();
@@ -79,6 +81,15 @@ var __extends = (this && this.__extends) || (function () {
                 SchemaPanel.treeTemplate = document.getElementById("metaTree");
                 SchemaPanel.treeTemplate.remove();
             }
+        };
+        SchemaPanel.getInstance = function () {
+            var x = Panel_1.Panel.getPanel(Panel_1.PanelType[Panel_1.PanelType.Schema]);
+            if (x == null) {
+                Panel_1.Panel.nextPanelNumber();
+                x = new SchemaPanel(Panel_1.PanelType[Panel_1.PanelType.Schema], "Schema Panel");
+                Panel_1.Panel.savePanel(x);
+            }
+            return x;
         };
         return SchemaPanel;
     }(Panel_1.Panel));

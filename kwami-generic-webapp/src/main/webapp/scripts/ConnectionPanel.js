@@ -22,9 +22,9 @@ var __extends = (this && this.__extends) || (function () {
     var Utils_1 = require("Utils");
     var Panel_1 = require("Panel");
     var SchemaPanel_1 = require("SchemaPanel");
-    var RestConnector = (function (_super) {
-        __extends(RestConnector, _super);
-        function RestConnector(id, heading, debug) {
+    var ConnectionPanel = (function (_super) {
+        __extends(ConnectionPanel, _super);
+        function ConnectionPanel(id, heading, debug) {
             if (debug === void 0) { debug = false; }
             var _this = this;
             Utils_1.Utils.debug = debug;
@@ -47,12 +47,12 @@ var __extends = (this && this.__extends) || (function () {
                 status.value = 'Connecting...';
                 status.style.color = 'orange';
                 status.style.fontWeight = 'bold';
-                RestConnector.ajaxGet('tables', RestConnector.setResponse, status);
+                ConnectionPanel.ajaxGet('tables', ConnectionPanel.setResponse, status);
             };
             _this.show();
             return _this;
         }
-        RestConnector.prototype.setUrl = function () {
+        ConnectionPanel.prototype.setUrl = function () {
             var input = document.querySelector("#connectInputs #host");
             var host = input.value;
             input = document.querySelector("#connectInputs #port");
@@ -61,28 +61,28 @@ var __extends = (this && this.__extends) || (function () {
             var context = input.value;
             input = document.querySelector("#connectInputs #schema");
             var schema = input.value;
-            RestConnector.url = Utils_1.Utils.interpolate("http://{}:{}/{}/{}/", host, port, context, schema);
+            ConnectionPanel.url = Utils_1.Utils.interpolate("http://{}:{}/{}/{}/", host, port, context, schema);
         };
-        RestConnector.prototype.setSqlTemplate = function (value) {
+        ConnectionPanel.prototype.setSqlTemplate = function (value) {
             Utils_1.Utils.sqlTemplate = value;
         };
-        RestConnector.ajaxGet = function (url, acb, obj) {
-            RestConnector.ajaxJson("GET", url, acb, obj);
+        ConnectionPanel.ajaxGet = function (url, acb, obj) {
+            ConnectionPanel.ajaxJson("GET", url, acb, obj);
         };
-        RestConnector.ajaxPost = function (url, acb, data, obj) {
-            RestConnector.ajaxJson("POST", url, acb, obj, data);
+        ConnectionPanel.ajaxPost = function (url, acb, data, obj) {
+            ConnectionPanel.ajaxJson("POST", url, acb, obj, data);
         };
-        RestConnector.ajaxJson = function (method, url, acb, obj, data) {
+        ConnectionPanel.ajaxJson = function (method, url, acb, obj, data) {
             console.log("method:" + method + ", url:" + url + ", data:" + data);
-            RestConnector.xmlhttp = new XMLHttpRequest();
-            RestConnector.respFn = acb;
-            RestConnector.xmlhttp.onreadystatechange = function (ev) {
+            ConnectionPanel.xmlhttp = new XMLHttpRequest();
+            ConnectionPanel.respFn = acb;
+            ConnectionPanel.xmlhttp.onreadystatechange = function (ev) {
                 ev.stopPropagation();
-                if (RestConnector.xmlhttp.readyState == 4 && RestConnector.xmlhttp.status == 200) {
+                if (ConnectionPanel.xmlhttp.readyState == 4 && ConnectionPanel.xmlhttp.status == 200) {
                     var overlay_1 = document.querySelector('#ajaxOverlay');
                     overlay_1.classList.remove('displayOn');
                     overlay_1.classList.add('displayOff');
-                    var jsonResponse = JSON.parse(RestConnector.xmlhttp.responseText);
+                    var jsonResponse = JSON.parse(ConnectionPanel.xmlhttp.responseText);
                     if (Utils_1.Utils.debug) {
                         if (jsonResponse != null && jsonResponse.results[0] != null) {
                             if (jsonResponse.results[0].updateCount != null)
@@ -93,25 +93,25 @@ var __extends = (this && this.__extends) || (function () {
                                 console.log("JSON contained " + jsonResponse.results[0].rows.length + " rows");
                         }
                     }
-                    RestConnector.respFn(jsonResponse, obj);
+                    ConnectionPanel.respFn(jsonResponse, obj);
                 }
             };
             Panel_1.Panel.getPanel("Connect").setUrl();
-            var URL = RestConnector.url + url;
+            var URL = ConnectionPanel.url + url;
             console.log("URL=" + URL);
-            RestConnector.xmlhttp.open(method, URL, true);
-            RestConnector.xmlhttp.setRequestHeader("Accept", "application/json");
+            ConnectionPanel.xmlhttp.open(method, URL, true);
+            ConnectionPanel.xmlhttp.setRequestHeader("Accept", "application/json");
             var overlay = document.querySelector('#ajaxOverlay');
             overlay.classList.remove('displayOff');
             overlay.classList.add('displayOn');
             if (method == "GET")
-                RestConnector.xmlhttp.send();
+                ConnectionPanel.xmlhttp.send();
             else if (method == "POST") {
-                RestConnector.xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-                RestConnector.xmlhttp.send(data);
+                ConnectionPanel.xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                ConnectionPanel.xmlhttp.send(data);
             }
         };
-        RestConnector.setResponse = function (response, obj) {
+        ConnectionPanel.setResponse = function (response, obj) {
             Panel_1.Panel.removePanel(Panel_1.PanelType[Panel_1.PanelType.Schema], true);
             var result = response.results[0];
             var status = obj;
@@ -119,9 +119,9 @@ var __extends = (this && this.__extends) || (function () {
             var connException = document.getElementById("connException");
             connException.innerHTML = '';
             if (result.resultType == 'RESULTSET') {
-                RestConnector.tables = response;
+                ConnectionPanel.tables = response;
                 Panel_1.Panel.getPanel(Panel_1.PanelType[Panel_1.PanelType.Connect]).hide();
-                SchemaPanel_1.SchemaPanel.new().show();
+                SchemaPanel_1.SchemaPanel.getInstance().show();
                 status.value = 'OK';
                 status.style.color = 'green';
             }
@@ -133,9 +133,18 @@ var __extends = (this && this.__extends) || (function () {
                 }
             }
         };
-        return RestConnector;
+        ConnectionPanel.getInstance = function () {
+            var x = Panel_1.Panel.getPanel(Panel_1.PanelType[Panel_1.PanelType.Connect]);
+            if (x == null) {
+                Panel_1.Panel.nextPanelNumber();
+                x = new ConnectionPanel(Panel_1.PanelType[Panel_1.PanelType.Connect], "Connection Panel");
+                Panel_1.Panel.savePanel(x);
+            }
+            return x;
+        };
+        return ConnectionPanel;
     }(Panel_1.Panel));
-    RestConnector.xmlhttp = new XMLHttpRequest();
-    RestConnector.respFn = null;
-    exports.RestConnector = RestConnector;
+    ConnectionPanel.xmlhttp = new XMLHttpRequest();
+    ConnectionPanel.respFn = null;
+    exports.ConnectionPanel = ConnectionPanel;
 });

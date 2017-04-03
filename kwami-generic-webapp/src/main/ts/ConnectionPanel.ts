@@ -1,5 +1,6 @@
-import { interpolate, debug } from "Utils";
+import { Utils } from "Utils";
 import { Panel, PanelType } from "Panel";
+import { SchemaPanel } from "SchemaPanel";
 
 export interface Row {
     values: string[];
@@ -23,14 +24,15 @@ export interface JsonResponse {
     results: Result[];
 }
 
-export class RestConnector extends Panel {
+export class ConnectionPanel extends Panel {
     public static tables: JsonResponse;
     public static url: string;
     private static xmlhttp = new XMLHttpRequest();
     private static respFn: (response: JsonResponse, obj?: Object) => void = null;
     private div2: HTMLDivElement;
 
-    constructor(id: string, heading: string) {
+    private constructor(id: string, heading: string, debug: boolean = false) {
+        Utils.debug = debug;
         super(PanelType.Connect, id, heading, true);
         let x = <HTMLDivElement>document.getElementById("connectInputs");
         this.div2 = <HTMLDivElement>x.cloneNode(true);
@@ -50,8 +52,9 @@ export class RestConnector extends Panel {
             status.value = 'Connecting...';
             status.style.color = 'orange';
             status.style.fontWeight = 'bold';
-            RestConnector.ajaxGet('tables', RestConnector.setResponse, status);
+            ConnectionPanel.ajaxGet('tables', ConnectionPanel.setResponse, status);
         }
+        this.show();
     }
 
     public setUrl(): void {
@@ -63,33 +66,37 @@ export class RestConnector extends Panel {
         let context: string = input.value;
         input = <HTMLInputElement>document.querySelector("#connectInputs #schema");
         let schema: string = input.value;
-        RestConnector.url = interpolate("http://{}:{}/{}/{}/", host, port, context, schema);
+        ConnectionPanel.url = Utils.interpolate("http://{}:{}/{}/{}/", host, port, context, schema);
+    }
+
+    public setSqlTemplate(value: string): void {
+        Utils.sqlTemplate = value;
     }
 
     public static ajaxGet(url: string, acb: (json: JsonResponse, obj?: Object) => void,
         obj?: Object): void {
-        RestConnector.ajaxJson("GET", url, acb, obj);
+        ConnectionPanel.ajaxJson("GET", url, acb, obj);
     }
 
     public static ajaxPost(url: string, acb: (json: JsonResponse, obj?: Object) => void,
         data: string, obj?: Object): void {
-        RestConnector.ajaxJson("POST", url, acb, obj, data);
+        ConnectionPanel.ajaxJson("POST", url, acb, obj, data);
     }
 
     private static ajaxJson(method: string, url: string,
         acb: (json: JsonResponse, obj?: Object) => void,
         obj?: Object, data?: string): void {
         console.log("method:" + method + ", url:" + url + ", data:" + data);
-        RestConnector.xmlhttp = new XMLHttpRequest();
-        RestConnector.respFn = acb;
-        RestConnector.xmlhttp.onreadystatechange = (ev: ProgressEvent): void => {
+        ConnectionPanel.xmlhttp = new XMLHttpRequest();
+        ConnectionPanel.respFn = acb;
+        ConnectionPanel.xmlhttp.onreadystatechange = (ev: ProgressEvent): void => {
             ev.stopPropagation();
-            if (RestConnector.xmlhttp.readyState == 4 && RestConnector.xmlhttp.status == 200) {
+            if (ConnectionPanel.xmlhttp.readyState == 4 && ConnectionPanel.xmlhttp.status == 200) {
                 let overlay = <HTMLElement>document.querySelector('#ajaxOverlay');
                 overlay.classList.remove('displayOn');
                 overlay.classList.add('displayOff');
-                let jsonResponse: JsonResponse = JSON.parse(RestConnector.xmlhttp.responseText);
-                if (debug) {
+                let jsonResponse: JsonResponse = JSON.parse(ConnectionPanel.xmlhttp.responseText);
+                if (Utils.debug) {
                     if (jsonResponse != null && jsonResponse.results[0] != null) {
                         if (jsonResponse.results[0].updateCount != null)
                             console.log("JSON update count: " + jsonResponse.results[0].updateCount);
@@ -99,22 +106,22 @@ export class RestConnector extends Panel {
                             console.log("JSON contained " + jsonResponse.results[0].rows.length + " rows");
                     }
                 }
-                RestConnector.respFn(jsonResponse, obj);
+                ConnectionPanel.respFn(jsonResponse, obj);
             }
         };
-        (<RestConnector>Panel.getPanel("Connect")).setUrl();
-        let URL: string = RestConnector.url + url;
+        (<ConnectionPanel>Panel.getPanel("Connect")).setUrl();
+        let URL: string = ConnectionPanel.url + url;
         console.log("URL=" + URL);
-        RestConnector.xmlhttp.open(method, URL, true);
-        RestConnector.xmlhttp.setRequestHeader("Accept", "application/json");
+        ConnectionPanel.xmlhttp.open(method, URL, true);
+        ConnectionPanel.xmlhttp.setRequestHeader("Accept", "application/json");
         let overlay = <HTMLElement>document.querySelector('#ajaxOverlay');
         overlay.classList.remove('displayOff');
         overlay.classList.add('displayOn');
         if (method == "GET")
-            RestConnector.xmlhttp.send();
+            ConnectionPanel.xmlhttp.send();
         else if (method == "POST") {
-            RestConnector.xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-            RestConnector.xmlhttp.send(data);
+            ConnectionPanel.xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            ConnectionPanel.xmlhttp.send(data);
         }
     }
 
@@ -126,9 +133,9 @@ export class RestConnector extends Panel {
         let connException = <HTMLParagraphElement>document.getElementById("connException");
         connException.innerHTML = '';
         if (result.resultType == 'RESULTSET') {
-            RestConnector.tables = response;
+            ConnectionPanel.tables = response;
             Panel.getPanel(PanelType[PanelType.Connect]).hide();
-            Panel.newPanel(PanelType.Schema).show();
+            SchemaPanel.getInstance().show();
             status.value = 'OK';
             status.style.color = 'green';
         } else {
@@ -140,4 +147,13 @@ export class RestConnector extends Panel {
         }
     }
 
+    public static getInstance(): ConnectionPanel {
+        let x: ConnectionPanel = <ConnectionPanel>Panel.getPanel(PanelType[PanelType.Connect]);
+        if (x == null) {
+            Panel.nextPanelNumber();
+            x = new ConnectionPanel(PanelType[PanelType.Connect], "Connection Panel");
+            Panel.savePanel(x);
+        }
+        return x;
+    }
 }

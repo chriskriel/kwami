@@ -35,6 +35,12 @@ var __extends = (this && this.__extends) || (function () {
             if (resp === void 0) { resp = null; }
             this.resultsDisplay.addResults(resp, filter);
         };
+        ResultPanel.getInstance = function () {
+            var headTxt = "Result Panel " + Panel_1.Panel.nextPanelNumber();
+            var x = new ResultPanel(Panel_1.PanelType[Panel_1.PanelType.Result], headTxt);
+            Panel_1.Panel.savePanel(x);
+            return x;
+        };
         return ResultPanel;
     }(Panel_1.Panel));
     exports.ResultPanel = ResultPanel;

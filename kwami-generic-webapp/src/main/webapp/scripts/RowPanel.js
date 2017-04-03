@@ -54,6 +54,12 @@ var __extends = (this && this.__extends) || (function () {
                 td.innerText = value;
             });
         };
+        RowPanel.getInstance = function () {
+            var headTxt = "Row Panel " + Panel_1.Panel.nextPanelNumber();
+            var x = new RowPanel(Panel_1.PanelType[Panel_1.PanelType.Row], headTxt);
+            Panel_1.Panel.savePanel(x);
+            return x;
+        };
         return RowPanel;
     }(Panel_1.Panel));
     exports.RowPanel = RowPanel;

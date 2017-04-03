@@ -1,5 +1,5 @@
-import { app, Panel, PanelType } from "Panel";
-import { JsonResponse, Result, ColumnDefinition, Row } from "RestConnector";
+import { Panel, PanelType } from "Panel";
+import { JsonResponse, Result, ColumnDefinition, Row } from "ConnectionPanel";
 import { RowPanel } from "RowPanel";
 import { Menu } from "Menu";
 
@@ -72,7 +72,7 @@ export class ResultsDisplay {
         tr.onclick = (ev: MouseEvent) => {
             ev.stopPropagation();
             let head: string = this.panel.getHeading() + ' Row ' + index;
-            panel = <RowPanel>app.newPanel(PanelType.Row, head);
+            panel = RowPanel.getInstance();
             panel.addResults(result.columnDefinitions, row);
             panel.show();
             Menu.hideAllMenus();

@@ -4,13 +4,12 @@
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "Utils", "HeadingUpdater"], factory);
+        define(["require", "exports", "Utils"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Utils_1 = require("Utils");
-    var HeadingUpdater_1 = require("HeadingUpdater");
     var PanelType;
     (function (PanelType) {
         PanelType[PanelType["Schema"] = 0] = "Schema";
@@ -34,7 +33,7 @@
             var h3 = this.prepareHeading(id);
             h3.onclick = function (ev) {
                 ev.stopPropagation();
-                HeadingUpdater_1.HeadingUpdater.show(_this.div.id);
+                HeadingUpdater.show(_this.div.id);
             };
             this.setupDragAndDrop();
         }
@@ -55,7 +54,7 @@
             this.prepareHeading(this.div.id);
         };
         Panel.prototype.prepareHeading = function (parentId) {
-            var s = Utils_1.interpolate('#{} #{}', parentId, 'panelHeading');
+            var s = Utils_1.Utils.interpolate('#{} #{}', parentId, 'panelHeading');
             var h3 = document.querySelector(s);
             h3.innerHTML = this.heading;
             h3.setAttribute('title', 'click to rename');
@@ -74,7 +73,7 @@
             this.div.style.display = 'block';
             this.div.style.zIndex = Panel.newZindex();
         };
-        Panel.prototype.showPanel = function (id) {
+        Panel.showPanel = function (id) {
             for (var i = 0; i < Panel.panels.length; i++) {
                 var panel = Panel.panels[i];
                 if (panel.getId() === id) {
@@ -114,18 +113,18 @@
             var leftPx = target.style.left.substring(0, target.style.left.length - 2);
             var topOffset = ev.clientY - Number(topPx);
             var leftOffSet = ev.clientX - Number(leftPx);
-            var data = Utils_1.interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
+            var data = Utils_1.Utils.interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
             var x = ev.dataTransfer;
             x.setData("text", data);
         };
         Panel.prototype.prepareButtons = function (parentId, notCloseable) {
-            var s = Utils_1.interpolate('#{} #{}', parentId, 'closeBttn');
+            var s = Utils_1.Utils.interpolate('#{} #{}', parentId, 'closeBttn');
             var closeButton = document.querySelector(s);
             if (notCloseable)
                 closeButton.remove();
             else
                 closeButton.onclick = Panel.closePanel;
-            s = Utils_1.interpolate('#{} #{}', parentId, 'hideBttn');
+            s = Utils_1.Utils.interpolate('#{} #{}', parentId, 'hideBttn');
             var hider = document.querySelector(s);
             hider.onclick = Panel.hidePanel;
             hider.onmousedown = function (ev) {
@@ -171,10 +170,58 @@
         Panel.getPanels = function () {
             return Panel.panels;
         };
+        Panel.nextPanelNumber = function () {
+            return ++Panel.pnlNumber;
+        };
+        Panel.savePanel = function (panel) {
+            this.panels.push(panel);
+        };
         return Panel;
     }());
     Panel.template = null;
+    Panel.panels = [];
     Panel.zIndex = 0;
     Panel.pnlNumber = 0;
     exports.Panel = Panel;
+    var HeadingUpdater = (function () {
+        function HeadingUpdater() {
+        }
+        HeadingUpdater.show = function (panelId) {
+            HeadingUpdater.panelId = panelId;
+            var panel = Panel.getPanel(HeadingUpdater.panelId);
+            var html = document.getElementById(HeadingUpdater.id);
+            var s = Utils_1.Utils.interpolate('#{} #{}', html.id, 'newName');
+            var input = document.querySelector(s);
+            input.value = panel.getHeading();
+            HeadingUpdater.addEventListeners(html);
+            html.style.zIndex = Panel.newZindex();
+            html.style.display = 'block';
+        };
+        HeadingUpdater.cancel = function (ev) {
+            var html = document.getElementById(HeadingUpdater.id);
+            html.style.display = 'none';
+        };
+        HeadingUpdater.updateName = function (ev) {
+            var html = document.getElementById(HeadingUpdater.id);
+            var s = Utils_1.Utils.interpolate('#{} #{}', html.id, 'newName');
+            var input = document.querySelector(s);
+            var panel = Panel.getPanel(HeadingUpdater.panelId);
+            panel.setHeading(input.value);
+            html.style.display = 'none';
+        };
+        HeadingUpdater.addEventListeners = function (html) {
+            if (this.isConfigured)
+                return;
+            this.isConfigured = true;
+            var s = Utils_1.Utils.interpolate('#{} #{}', html.id, 'cancel');
+            var cnclBttn = document.querySelector(s);
+            cnclBttn.onclick = HeadingUpdater.cancel;
+            s = Utils_1.Utils.interpolate('#{} #{}', html.id, 'update');
+            var updteBttn = document.querySelector(s);
+            updteBttn.onclick = HeadingUpdater.updateName;
+        };
+        return HeadingUpdater;
+    }());
+    HeadingUpdater.id = 'headingUpdater';
+    HeadingUpdater.isConfigured = false;
 });

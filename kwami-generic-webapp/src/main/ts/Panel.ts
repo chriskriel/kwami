@@ -1,4 +1,5 @@
-import { interpolate } from "Utils";
+import { Utils } from "Utils";
+import { ConnectionPanel } from "ConnectionPanel";
 
 export enum PanelType {
     Schema,
@@ -10,7 +11,7 @@ export enum PanelType {
 
 export class Panel {
     private static template: HTMLDivElement = null;
-    private static panels: Panel[];
+    private static panels: Panel[] = [];
     private static zIndex: number = 0;
     private static pnlNumber: number = 0;
     private type: PanelType;
@@ -18,7 +19,7 @@ export class Panel {
     private div: HTMLDivElement;
     private body: HTMLBodyElement;
 
-    public constructor(type: PanelType, id: string, heading: string, notCloseable?: boolean) {
+    protected constructor(type: PanelType, id: string, heading: string, notCloseable?: boolean) {
         this.prepareTemplate();
         this.type = type;
         this.heading = heading;
@@ -57,7 +58,7 @@ export class Panel {
     }
 
     private prepareHeading(parentId: string): HTMLElement {
-        let s: string = interpolate('#{} #{}', parentId, 'panelHeading');
+        let s: string = Utils.interpolate('#{} #{}', parentId, 'panelHeading');
         let h3 = <HTMLElement>document.querySelector(s);
         h3.innerHTML = this.heading;
         h3.setAttribute('title', 'click to rename');
@@ -126,20 +127,20 @@ export class Panel {
         let leftPx = target.style.left.substring(0, target.style.left.length - 2);
         let topOffset = ev.clientY - Number(topPx);
         let leftOffSet = ev.clientX - Number(leftPx);
-        let data = interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
+        let data = Utils.interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
         let x = ev.dataTransfer;
         x.setData("text", data);
 
     }
 
     private prepareButtons(parentId: string, notCloseable?: boolean): void {
-        let s: string = interpolate('#{} #{}', parentId, 'closeBttn');
+        let s: string = Utils.interpolate('#{} #{}', parentId, 'closeBttn');
         let closeButton = <HTMLElement>document.querySelector(s);
         if (notCloseable)
             closeButton.remove();
         else
             closeButton.onclick = Panel.closePanel;
-        s = interpolate('#{} #{}', parentId, 'hideBttn');
+        s = Utils.interpolate('#{} #{}', parentId, 'hideBttn');
         let hider = <HTMLElement>document.querySelector(s);
         hider.onclick = Panel.hidePanel;
         hider.onmousedown = (ev: MouseEvent): any => {
@@ -189,6 +190,15 @@ export class Panel {
     public static getPanels(): Panel[] {
         return Panel.panels;
     }
+
+    public static nextPanelNumber(): number {
+        return ++Panel.pnlNumber;                
+    }
+
+    public static savePanel(panel: Panel) {
+        this.panels.push(panel);        
+    }
+
 }
 
 class HeadingUpdater {
@@ -200,7 +210,7 @@ class HeadingUpdater {
         HeadingUpdater.panelId = panelId;
         let panel: Panel = Panel.getPanel(HeadingUpdater.panelId);
         let html = <HTMLDivElement>document.getElementById(HeadingUpdater.id);
-        let s: string = interpolate('#{} #{}', html.id, 'newName');
+        let s: string = Utils.interpolate('#{} #{}', html.id, 'newName');
         let input = <HTMLInputElement>document.querySelector(s);
         input.value = panel.getHeading();
         HeadingUpdater.addEventListeners(html);
@@ -215,7 +225,7 @@ class HeadingUpdater {
 
     private static updateName(ev: MouseEvent) {
         let html = <HTMLDivElement>document.getElementById(HeadingUpdater.id);
-        let s: string = interpolate('#{} #{}', html.id, 'newName');
+        let s: string = Utils.interpolate('#{} #{}', html.id, 'newName');
         let input = <HTMLInputElement>document.querySelector(s);
         let panel: Panel = Panel.getPanel(HeadingUpdater.panelId);
         panel.setHeading(input.value);
@@ -226,10 +236,10 @@ class HeadingUpdater {
         if (this.isConfigured)
             return;
         this.isConfigured = true;
-        let s: string = interpolate('#{} #{}', html.id, 'cancel');
+        let s: string = Utils.interpolate('#{} #{}', html.id, 'cancel');
         let cnclBttn = <HTMLElement>document.querySelector(s);
         cnclBttn.onclick = HeadingUpdater.cancel;
-        s = interpolate('#{} #{}', html.id, 'update');
+        s = Utils.interpolate('#{} #{}', html.id, 'update');
         let updteBttn = <HTMLElement>document.querySelector(s);
         updteBttn.onclick = HeadingUpdater.updateName;
     }

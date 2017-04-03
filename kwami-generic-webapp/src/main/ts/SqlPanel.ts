@@ -1,8 +1,9 @@
-import { app, Panel, PanelType } from "Panel";
+import { Panel, PanelType } from "Panel";
 import { ResultsDisplay } from "ResultsDisplay";
-import { Result, JsonResponse, RestConnector } from "RestConnector";
+import { Result, JsonResponse, ConnectionPanel } from "ConnectionPanel";
 import { ResultPanel } from "ResultPanel";
 import { Menu } from "Menu";
+import { Utils } from "Utils";
 
 export class SqlPanel extends Panel {
     private static sqlTemplate: HTMLDivElement = null;
@@ -10,7 +11,7 @@ export class SqlPanel extends Panel {
     private resultsDisplay: ResultsDisplay;
     private sql: HTMLTextAreaElement;
 
-    constructor(id: string, heading: string) {
+    private constructor(id: string, heading: string) {
         super(PanelType.Sql, id, heading);
         if (SqlPanel.sqlTemplate == null) {
             SqlPanel.sqlTemplate = <HTMLDivElement>document.getElementById("sqlPanel");
@@ -24,19 +25,19 @@ export class SqlPanel extends Panel {
             this.div2.parentElement.setAttribute("draggable", "true");
         }
         super.appendChild(this.div2);
-        let selector: string = app.interpolate('#{} #statement', id);
+        let selector: string = Utils.interpolate('#{} #statement', id);
         this.sql = <HTMLTextAreaElement>document.querySelector(selector);
-        selector = app.interpolate('#{} #clear', id);
+        selector = Utils.interpolate('#{} #clear', id);
         let bttn: HTMLElement = <HTMLElement>document.querySelector(selector);
         bttn.onclick = (ev: MouseEvent) => {
             ev.stopImmediatePropagation();
             this.sql.value = '';
         }
-        selector = app.interpolate('#{} #exec', id);
+        selector = Utils.interpolate('#{} #exec', id);
         bttn = <HTMLElement>document.querySelector(selector);
         bttn.onclick = (ev: MouseEvent) => {
             ev.stopImmediatePropagation();
-            RestConnector.ajaxPost(
+            ConnectionPanel.ajaxPost(
                 "sql?maxRows=-1",
                 SqlPanel.processResults,
                 "sql=" + this.sql.value,
@@ -68,10 +69,9 @@ export class SqlPanel extends Panel {
         this.resultsDisplay.addResults(resp, filter);
     }
 
-
     public static processResults(metaData: JsonResponse, sql: string): void {
         console.log("executed: " + sql);
-        let panel = <ResultPanel>app.newPanel(PanelType.Result);
+        let panel = ResultPanel.getInstance();
         let result: Result = metaData.results[0];
         if (result.resultType == 'EXCEPTION') {
             panel.setStatement("Exception: " + result.toString);
@@ -82,5 +82,12 @@ export class SqlPanel extends Panel {
         }
         panel.show();
         Menu.hideAllMenus();
+    }
+
+    public static getInstance(): SqlPanel {
+        let headTxt: string = "SQL Panel " + Panel.nextPanelNumber();
+        let x: SqlPanel = new SqlPanel(PanelType[PanelType.Sql], headTxt);
+        Panel.savePanel(x);
+        return x;
     }
 }
