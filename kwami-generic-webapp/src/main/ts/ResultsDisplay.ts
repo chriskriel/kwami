@@ -1,5 +1,5 @@
 import { Panel, PanelType } from "Panel";
-import { JsonResponse, Result, ColumnDefinition, Row } from "ConnectionPanel";
+import { JsonResponse, Result, ColumnDefinition, Row } from "AjaxClient";
 import { RowPanel } from "RowPanel";
 import { Menu } from "Menu";
 

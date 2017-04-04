@@ -1,5 +1,5 @@
 import { Panel, PanelType } from "Panel";
-import { Result, JsonResponse, ConnectionPanel, Row } from "ConnectionPanel";
+import { Result, JsonResponse, Row, AjaxClient } from "AjaxClient";
 import { SqlPanel } from "SqlPanel";
 import { Menu } from "Menu";
 import { Utils } from "Utils";
@@ -18,15 +18,16 @@ class TableClickContext {
 export class SchemaPanel extends Panel {
     private static treeTemplate: HTMLDivElement = null;
     private div2: HTMLDivElement;
+    private tables: JsonResponse;
 
     private constructor(id: string, heading: string) {
-        super(PanelType.Schema, id, ConnectionPanel.url, true);
+        super(PanelType.Schema, id, AjaxClient.url, true);
         this.prepareTreeTemplate();
         this.div2 = <HTMLDivElement>SchemaPanel.treeTemplate.cloneNode(true);
         this.div2.style.display = 'block';
         super.appendChild(this.div2);
-        if (ConnectionPanel.tables != null) {
-            let result: Result = ConnectionPanel.tables.results[0];
+        if (this.tables != null) {
+            let result: Result = this.tables.results[0];
             let ul = <HTMLUListElement>document.querySelector('#' + id + ' #tree');
             while (ul.firstChild)
                 ul.removeChild(ul.firstChild);
@@ -39,7 +40,7 @@ export class SchemaPanel extends Panel {
                     li.attributes.setNamedItem(attr);
                     li.classList.add('nsItem');
                     li.onclick = (ev: MouseEvent) => {
-                        ConnectionPanel.ajaxGet(
+                        AjaxClient.get(
                             "tables/" + value.values[2] + "/metaData",
                             SchemaPanel.processTableMetaData,
                             new TableClickContext(id, li)
@@ -48,6 +49,10 @@ export class SchemaPanel extends Panel {
                     ul.appendChild(li);
                 });
         }
+    }
+
+    private setTables(tables: JsonResponse): void {
+        this.tables = tables;
     }
 
     public static processTableMetaData(metaData: JsonResponse, ctx: TableClickContext): void {
@@ -74,13 +79,15 @@ export class SchemaPanel extends Panel {
         }
     }
 
-    public static getInstance(): SchemaPanel {
+    public static getInstance(tables?: JsonResponse): SchemaPanel {
         let x: SchemaPanel = <SchemaPanel>Panel.getPanel(PanelType[PanelType.Schema]);
         if (x == null) {
             Panel.nextPanelNumber();
             x = new SchemaPanel(PanelType[PanelType.Schema], "Schema Panel");
             Panel.savePanel(x);
         }
+        if (tables != null)
+            x.setTables(tables);
         return x;
     }
 }

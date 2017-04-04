@@ -1,5 +1,4 @@
 import { Utils } from "Utils";
-import { ConnectionPanel } from "ConnectionPanel";
 
 export enum PanelType {
     Schema,

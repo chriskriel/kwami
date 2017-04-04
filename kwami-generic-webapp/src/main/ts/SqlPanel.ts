@@ -1,6 +1,6 @@
 import { Panel, PanelType } from "Panel";
 import { ResultsDisplay } from "ResultsDisplay";
-import { Result, JsonResponse, ConnectionPanel } from "ConnectionPanel";
+import { AjaxClient, Result, JsonResponse } from "AjaxClient";
 import { ResultPanel } from "ResultPanel";
 import { Menu } from "Menu";
 import { Utils } from "Utils";
@@ -37,7 +37,7 @@ export class SqlPanel extends Panel {
         bttn = <HTMLElement>document.querySelector(selector);
         bttn.onclick = (ev: MouseEvent) => {
             ev.stopImmediatePropagation();
-            ConnectionPanel.ajaxPost(
+            AjaxClient.post(
                 "sql?maxRows=-1",
                 SqlPanel.processResults,
                 "sql=" + this.sql.value,

@@ -14,14 +14,14 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "Panel", "ResultsDisplay", "ConnectionPanel", "ResultPanel", "Menu", "Utils"], factory);
+        define(["require", "exports", "Panel", "ResultsDisplay", "AjaxClient", "ResultPanel", "Menu", "Utils"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Panel_1 = require("Panel");
     var ResultsDisplay_1 = require("ResultsDisplay");
-    var ConnectionPanel_1 = require("ConnectionPanel");
+    var AjaxClient_1 = require("AjaxClient");
     var ResultPanel_1 = require("ResultPanel");
     var Menu_1 = require("Menu");
     var Utils_1 = require("Utils");
@@ -53,7 +53,7 @@ var __extends = (this && this.__extends) || (function () {
             bttn = document.querySelector(selector);
             bttn.onclick = function (ev) {
                 ev.stopImmediatePropagation();
-                ConnectionPanel_1.ConnectionPanel.ajaxPost("sql?maxRows=-1", SqlPanel.processResults, "sql=" + _this.sql.value, _this.sql.value);
+                AjaxClient_1.AjaxClient.post("sql?maxRows=-1", SqlPanel.processResults, "sql=" + _this.sql.value, _this.sql.value);
             };
             _this.resultsDisplay = new ResultsDisplay_1.ResultsDisplay(_this, "right-click to copy to SQL");
             _this.resultsDisplay.addValueCallback(function (value) {

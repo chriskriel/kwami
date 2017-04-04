@@ -1,5 +1,5 @@
 import { Panel, PanelType } from "Panel";
-import { ColumnDefinition, Row } from "ConnectionPanel";
+import { ColumnDefinition, Row } from "AjaxClient";
 
 export class RowPanel extends Panel {
 

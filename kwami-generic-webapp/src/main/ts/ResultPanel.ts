@@ -1,5 +1,5 @@
 import { Panel, PanelType } from "Panel";
-import { JsonResponse } from "ConnectionPanel";
+import { JsonResponse } from "AjaxClient";
 import { ResultsDisplay } from "ResultsDisplay";
 
 export class ResultPanel extends Panel {

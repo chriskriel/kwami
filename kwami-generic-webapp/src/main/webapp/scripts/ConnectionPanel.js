@@ -14,7 +14,7 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "Utils", "Panel", "SchemaPanel"], factory);
+        define(["require", "exports", "Utils", "Panel", "SchemaPanel", "AjaxClient"], factory);
     }
 })(function (require, exports) {
     "use strict";
@@ -22,12 +22,13 @@ var __extends = (this && this.__extends) || (function () {
     var Utils_1 = require("Utils");
     var Panel_1 = require("Panel");
     var SchemaPanel_1 = require("SchemaPanel");
+    var AjaxClient_1 = require("AjaxClient");
     var ConnectionPanel = (function (_super) {
         __extends(ConnectionPanel, _super);
         function ConnectionPanel(id, heading, debug) {
             if (debug === void 0) { debug = false; }
             var _this = this;
-            Utils_1.Utils.debug = debug;
+            Utils_1.Utils.debug = AjaxClient_1.AjaxClient.debug = debug;
             _this = _super.call(this, Panel_1.PanelType.Connect, id, heading, true) || this;
             var x = document.getElementById("connectInputs");
             _this.div2 = x.cloneNode(true);
@@ -39,15 +40,15 @@ var __extends = (this && this.__extends) || (function () {
             _this.div2.onmouseup = function (ev) {
                 _this.div2.parentElement.setAttribute("draggable", "true");
             };
-            _this.setUrl();
             var bttn = document.querySelector("#Connect #connectBtn");
             bttn.onclick = function (ev) {
                 ev.stopImmediatePropagation();
+                _this.setUrl();
                 var status = document.querySelector('#connectInputs #status');
                 status.value = 'Connecting...';
                 status.style.color = 'orange';
                 status.style.fontWeight = 'bold';
-                ConnectionPanel.ajaxGet('tables', ConnectionPanel.setResponse, status);
+                AjaxClient_1.AjaxClient.get('tables', ConnectionPanel.setResponse, status);
             };
             _this.show();
             return _this;
@@ -61,55 +62,10 @@ var __extends = (this && this.__extends) || (function () {
             var context = input.value;
             input = document.querySelector("#connectInputs #schema");
             var schema = input.value;
-            ConnectionPanel.url = Utils_1.Utils.interpolate("http://{}:{}/{}/{}/", host, port, context, schema);
+            AjaxClient_1.AjaxClient.url = Utils_1.Utils.interpolate("http://{}:{}/{}/{}/", host, port, context, schema);
         };
         ConnectionPanel.prototype.setSqlTemplate = function (value) {
             Utils_1.Utils.sqlTemplate = value;
-        };
-        ConnectionPanel.ajaxGet = function (url, acb, obj) {
-            ConnectionPanel.ajaxJson("GET", url, acb, obj);
-        };
-        ConnectionPanel.ajaxPost = function (url, acb, data, obj) {
-            ConnectionPanel.ajaxJson("POST", url, acb, obj, data);
-        };
-        ConnectionPanel.ajaxJson = function (method, url, acb, obj, data) {
-            console.log("method:" + method + ", url:" + url + ", data:" + data);
-            ConnectionPanel.xmlhttp = new XMLHttpRequest();
-            ConnectionPanel.respFn = acb;
-            ConnectionPanel.xmlhttp.onreadystatechange = function (ev) {
-                ev.stopPropagation();
-                if (ConnectionPanel.xmlhttp.readyState == 4 && ConnectionPanel.xmlhttp.status == 200) {
-                    var overlay_1 = document.querySelector('#ajaxOverlay');
-                    overlay_1.classList.remove('displayOn');
-                    overlay_1.classList.add('displayOff');
-                    var jsonResponse = JSON.parse(ConnectionPanel.xmlhttp.responseText);
-                    if (Utils_1.Utils.debug) {
-                        if (jsonResponse != null && jsonResponse.results[0] != null) {
-                            if (jsonResponse.results[0].updateCount != null)
-                                console.log("JSON update count: " + jsonResponse.results[0].updateCount);
-                            if (jsonResponse.results[0].columnDefinitions != null)
-                                console.log("JSON contained " + jsonResponse.results[0].columnDefinitions.length + " column definitions");
-                            if (jsonResponse.results[0].rows != null)
-                                console.log("JSON contained " + jsonResponse.results[0].rows.length + " rows");
-                        }
-                    }
-                    ConnectionPanel.respFn(jsonResponse, obj);
-                }
-            };
-            Panel_1.Panel.getPanel("Connect").setUrl();
-            var URL = ConnectionPanel.url + url;
-            console.log("URL=" + URL);
-            ConnectionPanel.xmlhttp.open(method, URL, true);
-            ConnectionPanel.xmlhttp.setRequestHeader("Accept", "application/json");
-            var overlay = document.querySelector('#ajaxOverlay');
-            overlay.classList.remove('displayOff');
-            overlay.classList.add('displayOn');
-            if (method == "GET")
-                ConnectionPanel.xmlhttp.send();
-            else if (method == "POST") {
-                ConnectionPanel.xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-                ConnectionPanel.xmlhttp.send(data);
-            }
         };
         ConnectionPanel.setResponse = function (response, obj) {
             Panel_1.Panel.removePanel(Panel_1.PanelType[Panel_1.PanelType.Schema], true);
@@ -119,9 +75,8 @@ var __extends = (this && this.__extends) || (function () {
             var connException = document.getElementById("connException");
             connException.innerHTML = '';
             if (result.resultType == 'RESULTSET') {
-                ConnectionPanel.tables = response;
                 Panel_1.Panel.getPanel(Panel_1.PanelType[Panel_1.PanelType.Connect]).hide();
-                SchemaPanel_1.SchemaPanel.getInstance().show();
+                SchemaPanel_1.SchemaPanel.getInstance(response).show();
                 status.value = 'OK';
                 status.style.color = 'green';
             }
@@ -144,7 +99,5 @@ var __extends = (this && this.__extends) || (function () {
         };
         return ConnectionPanel;
     }(Panel_1.Panel));
-    ConnectionPanel.xmlhttp = new XMLHttpRequest();
-    ConnectionPanel.respFn = null;
     exports.ConnectionPanel = ConnectionPanel;
 });

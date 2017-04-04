@@ -14,13 +14,13 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "Panel", "ConnectionPanel", "SqlPanel", "Menu", "Utils"], factory);
+        define(["require", "exports", "Panel", "AjaxClient", "SqlPanel", "Menu", "Utils"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Panel_1 = require("Panel");
-    var ConnectionPanel_1 = require("ConnectionPanel");
+    var AjaxClient_1 = require("AjaxClient");
     var SqlPanel_1 = require("SqlPanel");
     var Menu_1 = require("Menu");
     var Utils_1 = require("Utils");
@@ -34,13 +34,13 @@ var __extends = (this && this.__extends) || (function () {
     var SchemaPanel = (function (_super) {
         __extends(SchemaPanel, _super);
         function SchemaPanel(id, heading) {
-            var _this = _super.call(this, Panel_1.PanelType.Schema, id, ConnectionPanel_1.ConnectionPanel.url, true) || this;
+            var _this = _super.call(this, Panel_1.PanelType.Schema, id, AjaxClient_1.AjaxClient.url, true) || this;
             _this.prepareTreeTemplate();
             _this.div2 = SchemaPanel.treeTemplate.cloneNode(true);
             _this.div2.style.display = 'block';
             _super.prototype.appendChild.call(_this, _this.div2);
-            if (ConnectionPanel_1.ConnectionPanel.tables != null) {
-                var result = ConnectionPanel_1.ConnectionPanel.tables.results[0];
+            if (_this.tables != null) {
+                var result = _this.tables.results[0];
                 var ul_1 = document.querySelector('#' + id + ' #tree');
                 while (ul_1.firstChild)
                     ul_1.removeChild(ul_1.firstChild);
@@ -52,13 +52,16 @@ var __extends = (this && this.__extends) || (function () {
                     li.attributes.setNamedItem(attr);
                     li.classList.add('nsItem');
                     li.onclick = function (ev) {
-                        ConnectionPanel_1.ConnectionPanel.ajaxGet("tables/" + value.values[2] + "/metaData", SchemaPanel.processTableMetaData, new TableClickContext(id, li));
+                        AjaxClient_1.AjaxClient.get("tables/" + value.values[2] + "/metaData", SchemaPanel.processTableMetaData, new TableClickContext(id, li));
                     };
                     ul_1.appendChild(li);
                 });
             }
             return _this;
         }
+        SchemaPanel.prototype.setTables = function (tables) {
+            this.tables = tables;
+        };
         SchemaPanel.processTableMetaData = function (metaData, ctx) {
             if (Utils_1.Utils.debug)
                 console.log("clicked: " + ctx.li.getAttribute('id'));
@@ -82,13 +85,15 @@ var __extends = (this && this.__extends) || (function () {
                 SchemaPanel.treeTemplate.remove();
             }
         };
-        SchemaPanel.getInstance = function () {
+        SchemaPanel.getInstance = function (tables) {
             var x = Panel_1.Panel.getPanel(Panel_1.PanelType[Panel_1.PanelType.Schema]);
             if (x == null) {
                 Panel_1.Panel.nextPanelNumber();
                 x = new SchemaPanel(Panel_1.PanelType[Panel_1.PanelType.Schema], "Schema Panel");
                 Panel_1.Panel.savePanel(x);
             }
+            if (tables != null)
+                x.setTables(tables);
             return x;
         };
         return SchemaPanel;
