@@ -1,11 +1,11 @@
-import { Panel, PanelType } from "Panel";
-import { ResultsDisplay } from "ResultsDisplay";
-import { AjaxClient, Result, JsonResponse } from "AjaxClient";
-import { ResultPanel } from "ResultPanel";
-import { Menu } from "Menu";
-import { Utils } from "Utils";
+// import { Panel, PanelType } from "Panel";
+// import { ResultsDisplay } from "ResultsDisplay";
+// import { AjaxClient, Result, JsonResponse } from "AjaxClient";
+// import { ResultPanel } from "ResultPanel";
+// import { Menu } from "Menu";
+// import { Utils } from "Utils";
 
-export class SqlPanel extends Panel {
+/* export */ class SqlPanel extends Panel {
     private static sqlTemplate: HTMLDivElement = null;
     private div2: HTMLDivElement;
     private resultsDisplay: ResultsDisplay;

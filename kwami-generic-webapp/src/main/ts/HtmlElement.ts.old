@@ -1,4 +1,4 @@
-export class EventContext {
+/* export */ class EventContext {
     self: HtmlElement;
     handler: (ev: Event) => void;
 
@@ -7,7 +7,7 @@ export class EventContext {
     }
 }
 
-export class HtmlElement {
+/* export */ class HtmlElement {
     private static idIncr: number = 0;
     private static objects: HtmlElement[] = [];
     private parent: HtmlElement = null;

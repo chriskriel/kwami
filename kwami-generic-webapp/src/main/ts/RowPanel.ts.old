@@ -1,7 +1,7 @@
-import { Panel, PanelType } from "Panel";
-import { ColumnDefinition, Row } from "AjaxClient";
+// import { Panel, PanelType } from "Panel";
+// import { ColumnDefinition, Row } from "AjaxClient";
 
-export class RowPanel extends Panel {
+/* export */ class RowPanel extends Panel {
 
     private grid: HTMLDivElement;
 

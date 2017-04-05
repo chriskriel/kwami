@@ -1,9 +1,9 @@
-import { Panel, PanelType } from "Panel";
-import { JsonResponse, Result, ColumnDefinition, Row } from "AjaxClient";
-import { RowPanel } from "RowPanel";
-import { Menu } from "Menu";
+// import { Panel, PanelType } from "Panel";
+// import { JsonResponse, Result, ColumnDefinition, Row } from "AjaxClient";
+// import { RowPanel } from "RowPanel";
+// import { Menu } from "Menu";
 
-export class ResultsDisplay {
+/* export */ class ResultsDisplay {
 
     private stmnt: HTMLParagraphElement;
     private panel: Panel;

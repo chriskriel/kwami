@@ -1,6 +1,6 @@
-import { Utils } from "Utils";
+//import { Utils } from "Utils";
 
-export enum PanelType {
+/* export */ enum PanelType {
     Schema,
     Connect,
     Result,
@@ -8,7 +8,7 @@ export enum PanelType {
     Sql
 }
 
-export class Panel {
+/* export */ class Panel {
     private static template: HTMLDivElement = null;
     private static panels: Panel[] = [];
     private static zIndex: number = 0;

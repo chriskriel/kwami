@@ -1,9 +1,9 @@
-import { Utils } from "Utils";
-import { Panel, PanelType } from "Panel";
-import { SchemaPanel } from "SchemaPanel";
-import { AjaxClient, JsonResponse, Result } from "AjaxClient";
+// import { Utils } from "Utils";
+// import { Panel, PanelType } from "Panel";
+// import { SchemaPanel } from "SchemaPanel";
+// import { AjaxClient, JsonResponse, Result } from "AjaxClient";
 
-export class ConnectionPanel extends Panel {
+/* export */ class  ConnectionPanel extends Panel {
     private ajaxClient: AjaxClient;
     private static url: string;
     private div2: HTMLDivElement;
@@ -71,13 +71,15 @@ export class ConnectionPanel extends Panel {
         }
     }
 
-    public static getInstance(): ConnectionPanel {
+    public static getInstance(isStartup: boolean = false): ConnectionPanel {
         let x: ConnectionPanel = <ConnectionPanel>Panel.getPanel(PanelType[PanelType.Connect]);
         if (x == null) {
             Panel.nextPanelNumber();
             x = new ConnectionPanel(PanelType[PanelType.Connect], "Connection Panel");
             Panel.savePanel(x);
         }
+        if (isStartup)
+            new Menu();
         return x;
     }
 }

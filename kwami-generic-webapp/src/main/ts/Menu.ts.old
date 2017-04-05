@@ -1,8 +1,8 @@
-import { Panel, PanelType } from "Panel";
-import { SchemaPanel } from "SchemaPanel";
-import { SqlPanel } from "SqlPanel";
+// import { Panel, PanelType } from "Panel";
+// import { SchemaPanel } from "SchemaPanel";
+// import { SqlPanel } from "SqlPanel";
 
-export class Menu {
+/* export */ class Menu {
 
     public constructor() {
         document.addEventListener("contextmenu", Menu.showContextMenu, false);

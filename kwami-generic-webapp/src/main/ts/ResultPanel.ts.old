@@ -1,8 +1,8 @@
-import { Panel, PanelType } from "Panel";
-import { JsonResponse } from "AjaxClient";
-import { ResultsDisplay } from "ResultsDisplay";
+// import { Panel, PanelType } from "Panel";
+// import { JsonResponse } from "AjaxClient";
+// import { ResultsDisplay } from "ResultsDisplay";
 
-export class ResultPanel extends Panel {
+/* export */ class ResultPanel extends Panel {
 
     private resultsDisplay: ResultsDisplay;
 

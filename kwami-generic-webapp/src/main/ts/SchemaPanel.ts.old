@@ -1,8 +1,8 @@
-import { Panel, PanelType } from "Panel";
-import { Result, JsonResponse, Row, AjaxClient } from "AjaxClient";
-import { SqlPanel } from "SqlPanel";
-import { Menu } from "Menu";
-import { Utils } from "Utils";
+// import { Panel, PanelType } from "Panel";
+// import { Result, JsonResponse, Row, AjaxClient } from "AjaxClient";
+// import { SqlPanel } from "SqlPanel";
+// import { Menu } from "Menu";
+// import { Utils } from "Utils";
 
 
 class TableClickContext {
@@ -15,19 +15,18 @@ class TableClickContext {
     }
 }
 
-export class SchemaPanel extends Panel {
+/* export */ class SchemaPanel extends Panel {
     private static treeTemplate: HTMLDivElement = null;
     private div2: HTMLDivElement;
-    private tables: JsonResponse;
 
-    private constructor(id: string, heading: string) {
+    private constructor(id: string, heading: string, tables: JsonResponse) {
         super(PanelType.Schema, id, AjaxClient.url, true);
         this.prepareTreeTemplate();
         this.div2 = <HTMLDivElement>SchemaPanel.treeTemplate.cloneNode(true);
         this.div2.style.display = 'block';
         super.appendChild(this.div2);
-        if (this.tables != null) {
-            let result: Result = this.tables.results[0];
+        if (tables != null) {
+            let result: Result = tables.results[0];
             let ul = <HTMLUListElement>document.querySelector('#' + id + ' #tree');
             while (ul.firstChild)
                 ul.removeChild(ul.firstChild);
@@ -49,10 +48,6 @@ export class SchemaPanel extends Panel {
                     ul.appendChild(li);
                 });
         }
-    }
-
-    private setTables(tables: JsonResponse): void {
-        this.tables = tables;
     }
 
     public static processTableMetaData(metaData: JsonResponse, ctx: TableClickContext): void {
@@ -83,11 +78,9 @@ export class SchemaPanel extends Panel {
         let x: SchemaPanel = <SchemaPanel>Panel.getPanel(PanelType[PanelType.Schema]);
         if (x == null) {
             Panel.nextPanelNumber();
-            x = new SchemaPanel(PanelType[PanelType.Schema], "Schema Panel");
+            x = new SchemaPanel(PanelType[PanelType.Schema], "Schema Panel", tables);
             Panel.savePanel(x);
         }
-        if (tables != null)
-            x.setTables(tables);
         return x;
     }
 }
