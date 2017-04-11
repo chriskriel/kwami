@@ -1,8 +1,6 @@
-var JsonAjaxClient = (function () {
-    function JsonAjaxClient() {
-    }
-    JsonAjaxClient.intercept = function (response, objs) {
-        var jsonResponse = JSON.parse(response);
+class JsonAjaxClient {
+    static intercept(response, objs) {
+        let jsonResponse = JSON.parse(response);
         if (AjaxClient.debug) {
             if (jsonResponse != null && jsonResponse.results[0] != null) {
                 if (jsonResponse.results[0].updateCount != null)
@@ -13,25 +11,24 @@ var JsonAjaxClient = (function () {
                     console.log("JSON contained " + jsonResponse.results[0].rows.length + " rows");
             }
         }
-        var callback = (objs.pop());
+        let callback = (objs.pop());
         callback(jsonResponse, objs);
-    };
-    JsonAjaxClient.get = function (url, callback, objs) {
+    }
+    static get(url, callback, objs) {
         objs.push(callback);
         AjaxClient.get(url, JsonAjaxClient.intercept, objs);
-    };
-    JsonAjaxClient.post = function (url, callback, data, objs) {
+    }
+    static post(url, callback, data, objs) {
         objs.push(callback);
         AjaxClient.post(url, JsonAjaxClient.intercept, data, objs);
-    };
-    JsonAjaxClient.setDebug = function (debug) {
+    }
+    static setDebug(debug) {
         AjaxClient.debug = debug;
-    };
-    JsonAjaxClient.getUrl = function () {
+    }
+    static getUrl() {
         return AjaxClient.url;
-    };
-    JsonAjaxClient.setUrl = function (url) {
+    }
+    static setUrl(url) {
         AjaxClient.url = url;
-    };
-    return JsonAjaxClient;
-}());
+    }
+}

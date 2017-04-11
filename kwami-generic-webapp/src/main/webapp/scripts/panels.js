@@ -1,13 +1,3 @@
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 var PanelType;
 (function (PanelType) {
     PanelType[PanelType["Schema"] = 0] = "Schema";
@@ -16,9 +6,8 @@ var PanelType;
     PanelType[PanelType["Row"] = 3] = "Row";
     PanelType[PanelType["Sql"] = 4] = "Sql";
 })(PanelType || (PanelType = {}));
-var Panel = (function () {
-    function Panel(type, id, heading, notCloseable) {
-        var _this = this;
+class Panel {
+    constructor(type, id, heading, notCloseable) {
         this.prepareTemplate();
         this.type = type;
         this.heading = heading;
@@ -28,126 +17,125 @@ var Panel = (function () {
         this.div.id = id;
         this.div.style.display = 'none';
         this.prepareButtons(id, notCloseable);
-        var h3 = this.prepareHeading(id);
-        h3.onclick = function (ev) {
+        let h3 = this.prepareHeading(id);
+        h3.onclick = (ev) => {
             ev.stopPropagation();
-            HeadingUpdater.show(_this.div.id);
+            HeadingUpdater.show(this.div.id);
         };
         this.setupDragAndDrop();
     }
-    Panel.prototype.getHtml = function () {
+    getHtml() {
         return this.div;
-    };
-    Panel.prototype.prepareTemplate = function () {
+    }
+    prepareTemplate() {
         if (Panel.template != null)
             return;
         Panel.template = document.getElementById("panel");
         Panel.template.remove();
-    };
-    Panel.prototype.getHeading = function () {
+    }
+    getHeading() {
         return this.heading;
-    };
-    Panel.prototype.setHeading = function (heading) {
+    }
+    setHeading(heading) {
         this.heading = heading;
         this.prepareHeading(this.div.id);
-    };
-    Panel.prototype.prepareHeading = function (parentId) {
-        var s = Utils.interpolate('#{} #{}', parentId, 'panelHeading');
-        var h3 = document.querySelector(s);
+    }
+    prepareHeading(parentId) {
+        let s = Utils.interpolate('#{} #{}', parentId, 'panelHeading');
+        let h3 = document.querySelector(s);
         h3.innerHTML = this.heading;
         h3.setAttribute('title', 'click to rename');
         return h3;
-    };
-    Panel.prototype.getType = function () {
+    }
+    getType() {
         return this.type;
-    };
-    Panel.prototype.appendChild = function (child) {
+    }
+    appendChild(child) {
         this.div.appendChild(child);
-    };
-    Panel.newZindex = function () {
+    }
+    static newZindex() {
         return Panel.zIndex++ + '';
-    };
-    Panel.prototype.show = function () {
+    }
+    show() {
         this.div.style.display = 'block';
         this.div.style.zIndex = Panel.newZindex();
-    };
-    Panel.showPanel = function (id) {
-        for (var i = 0; i < Panel.panels.length; i++) {
-            var panel = Panel.panels[i];
+    }
+    static showPanel(id) {
+        for (let i = 0; i < Panel.panels.length; i++) {
+            let panel = Panel.panels[i];
             if (panel.getId() === id) {
                 panel.show();
                 return;
             }
         }
-    };
-    Panel.prototype.getId = function () {
+    }
+    getId() {
         return this.div.id;
-    };
-    Panel.prototype.hide = function () {
+    }
+    hide() {
         this.div.style.display = 'none';
-    };
-    Panel.prototype.setupDragAndDrop = function () {
+    }
+    setupDragAndDrop() {
         this.div.draggable = true;
-        this.body.ondragover = function (ev) {
+        this.body.ondragover = (ev) => {
             ev.preventDefault();
         };
         this.div.ondragstart = Panel.dragStart;
         this.body.ondrop = Panel.drop;
-    };
-    Panel.drop = function (ev) {
+    }
+    static drop(ev) {
         ev.preventDefault();
-        var data = ev.dataTransfer.getData("text").split(',');
-        var panel = document.getElementById(data[0]);
-        var top = (ev.clientY - parseInt(data[1], 10)) + "px";
-        var left = (ev.clientX - parseInt(data[2], 10)) + "px";
+        let data = ev.dataTransfer.getData("text").split(',');
+        let panel = document.getElementById(data[0]);
+        let top = (ev.clientY - parseInt(data[1], 10)) + "px";
+        let left = (ev.clientX - parseInt(data[2], 10)) + "px";
         panel.style.top = top;
         panel.style.left = left;
         panel.style.zIndex = Panel.newZindex();
-    };
-    Panel.dragStart = function (ev) {
+    }
+    static dragStart(ev) {
         ev.stopPropagation();
-        var target = ev.target;
-        var topPx = target.style.top.substring(0, target.style.top.length - 2);
-        var leftPx = target.style.left.substring(0, target.style.left.length - 2);
-        var topOffset = ev.clientY - Number(topPx);
-        var leftOffSet = ev.clientX - Number(leftPx);
-        var data = Utils.interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
-        var x = ev.dataTransfer;
+        let target = ev.target;
+        let topPx = target.style.top.substring(0, target.style.top.length - 2);
+        let leftPx = target.style.left.substring(0, target.style.left.length - 2);
+        let topOffset = ev.clientY - Number(topPx);
+        let leftOffSet = ev.clientX - Number(leftPx);
+        let data = Utils.interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
+        let x = ev.dataTransfer;
         x.setData("text", data);
-    };
-    Panel.prototype.prepareButtons = function (parentId, notCloseable) {
-        var s = Utils.interpolate('#{} #{}', parentId, 'closeBttn');
-        var closeButton = document.querySelector(s);
+    }
+    prepareButtons(parentId, notCloseable) {
+        let s = Utils.interpolate('#{} #{}', parentId, 'closeBttn');
+        let closeButton = document.querySelector(s);
         if (notCloseable)
             closeButton.remove();
         else
             closeButton.onclick = Panel.closePanel;
         s = Utils.interpolate('#{} #{}', parentId, 'hideBttn');
-        var hider = document.querySelector(s);
+        let hider = document.querySelector(s);
         hider.onclick = Panel.hidePanel;
-        hider.onmousedown = function (ev) {
+        hider.onmousedown = (ev) => {
             hider.parentElement.setAttribute("draggable", "false");
         };
-        hider.onmouseup = function (ev) {
+        hider.onmouseup = (ev) => {
             hider.parentElement.setAttribute("draggable", "true");
         };
-    };
-    Panel.hidePanel = function (ev) {
+    }
+    static hidePanel(ev) {
         ev.stopPropagation();
-        var button = ev.target;
+        let button = ev.target;
         button.parentElement.style.display = 'none';
-    };
-    Panel.closePanel = function (ev) {
+    }
+    static closePanel(ev) {
         ev.stopPropagation();
-        var button = ev.target;
-        var panel = button.parentElement;
+        let button = ev.target;
+        let panel = button.parentElement;
         panel.remove();
         Panel.removePanel(panel.id);
-    };
-    Panel.removePanel = function (id, removeHtml) {
-        if (removeHtml === void 0) { removeHtml = false; }
-        for (var i = 0; i < Panel.panels.length; i++) {
-            var panel = Panel.panels[i];
+    }
+    static removePanel(id, removeHtml = false) {
+        for (let i = 0; i < Panel.panels.length; i++) {
+            let panel = Panel.panels[i];
             if (panel.getId() === id) {
                 if (removeHtml && panel.getHtml() != null)
                     panel.getHtml().remove();
@@ -155,119 +143,112 @@ var Panel = (function () {
                 return;
             }
         }
-    };
-    Panel.getPanel = function (id) {
-        for (var i = 0; i < Panel.panels.length; i++) {
-            var panel = Panel.panels[i];
+    }
+    static getPanel(id) {
+        for (let i = 0; i < Panel.panels.length; i++) {
+            let panel = Panel.panels[i];
             if (panel.getId() === id) {
                 return panel;
             }
         }
         return null;
-    };
-    Panel.getPanels = function () {
+    }
+    static getPanels() {
         return Panel.panels;
-    };
-    Panel.nextPanelNumber = function () {
+    }
+    static nextPanelNumber() {
         return ++Panel.pnlNumber;
-    };
-    Panel.savePanel = function (panel) {
+    }
+    static savePanel(panel) {
         this.panels.push(panel);
-    };
-    return Panel;
-}());
+    }
+}
 Panel.template = null;
 Panel.panels = [];
 Panel.zIndex = 0;
 Panel.pnlNumber = 0;
-var HeadingUpdater = (function () {
-    function HeadingUpdater() {
-    }
-    HeadingUpdater.show = function (panelId) {
+class HeadingUpdater {
+    static show(panelId) {
         HeadingUpdater.panelId = panelId;
-        var panel = Panel.getPanel(HeadingUpdater.panelId);
-        var html = document.getElementById(HeadingUpdater.id);
-        var s = Utils.interpolate('#{} #{}', html.id, 'newName');
-        var input = document.querySelector(s);
+        let panel = Panel.getPanel(HeadingUpdater.panelId);
+        let html = document.getElementById(HeadingUpdater.id);
+        let s = Utils.interpolate('#{} #{}', html.id, 'newName');
+        let input = document.querySelector(s);
         input.value = panel.getHeading();
         HeadingUpdater.addEventListeners(html);
         html.style.zIndex = Panel.newZindex();
         html.style.display = 'block';
-    };
-    HeadingUpdater.cancel = function (ev) {
-        var html = document.getElementById(HeadingUpdater.id);
+    }
+    static cancel(ev) {
+        let html = document.getElementById(HeadingUpdater.id);
         html.style.display = 'none';
-    };
-    HeadingUpdater.updateName = function (ev) {
-        var html = document.getElementById(HeadingUpdater.id);
-        var s = Utils.interpolate('#{} #{}', html.id, 'newName');
-        var input = document.querySelector(s);
-        var panel = Panel.getPanel(HeadingUpdater.panelId);
+    }
+    static updateName(ev) {
+        let html = document.getElementById(HeadingUpdater.id);
+        let s = Utils.interpolate('#{} #{}', html.id, 'newName');
+        let input = document.querySelector(s);
+        let panel = Panel.getPanel(HeadingUpdater.panelId);
         panel.setHeading(input.value);
         html.style.display = 'none';
-    };
-    HeadingUpdater.addEventListeners = function (html) {
+    }
+    static addEventListeners(html) {
         if (this.isConfigured)
             return;
         this.isConfigured = true;
-        var s = Utils.interpolate('#{} #{}', html.id, 'cancel');
-        var cnclBttn = document.querySelector(s);
+        let s = Utils.interpolate('#{} #{}', html.id, 'cancel');
+        let cnclBttn = document.querySelector(s);
         cnclBttn.onclick = HeadingUpdater.cancel;
         s = Utils.interpolate('#{} #{}', html.id, 'update');
-        var updteBttn = document.querySelector(s);
+        let updteBttn = document.querySelector(s);
         updteBttn.onclick = HeadingUpdater.updateName;
-    };
-    return HeadingUpdater;
-}());
+    }
+}
 HeadingUpdater.id = 'headingUpdater';
 HeadingUpdater.isConfigured = false;
-var ConnectionPanel = (function (_super) {
-    __extends(ConnectionPanel, _super);
-    function ConnectionPanel(id, heading, debug) {
-        if (debug === void 0) { debug = false; }
-        var _this = _super.call(this, PanelType.Connect, id, heading, true) || this;
+class ConnectionPanel extends Panel {
+    constructor(id, heading, debug = false) {
+        super(PanelType.Connect, id, heading, true);
         Utils.debug = debug;
         JsonAjaxClient.setDebug(debug);
-        var x = document.getElementById("connectInputs");
-        _this.div2 = x.cloneNode(true);
+        let x = document.getElementById("connectInputs");
+        this.div2 = x.cloneNode(true);
         x.remove();
-        _super.prototype.appendChild.call(_this, _this.div2);
-        _this.div2.onmousedown = function (ev) {
-            _this.div2.parentElement.setAttribute("draggable", "false");
+        super.appendChild(this.div2);
+        this.div2.onmousedown = (ev) => {
+            this.div2.parentElement.setAttribute("draggable", "false");
         };
-        _this.div2.onmouseup = function (ev) {
-            _this.div2.parentElement.setAttribute("draggable", "true");
+        this.div2.onmouseup = (ev) => {
+            this.div2.parentElement.setAttribute("draggable", "true");
         };
-        var bttn = document.querySelector("#Connect #connectBtn");
-        bttn.onclick = function (ev) {
+        let bttn = document.querySelector("#Connect #connectBtn");
+        bttn.onclick = (ev) => {
             ev.stopImmediatePropagation();
-            _this.setUrl();
-            var status = document.querySelector('#connectInputs #status');
+            this.setUrl();
+            let status = document.querySelector('#connectInputs #status');
             status.value = 'Connecting...';
             status.style.color = 'orange';
             status.style.fontWeight = 'bold';
             JsonAjaxClient.get('tables', ConnectionPanel.setResponse, [status]);
         };
-        _this.show();
-        return _this;
+        this.show();
     }
-    ConnectionPanel.prototype.setUrl = function () {
-        var input = document.querySelector("#connectInputs #host");
-        var host = input.value;
+    setUrl() {
+        let input = document.querySelector("#connectInputs #host");
+        let host = input.value;
         input = document.querySelector("#connectInputs #port");
-        var port = input.value;
+        let port = input.value;
         input = document.querySelector("#connectInputs #context");
-        var context = input.value;
+        let context = input.value;
         input = document.querySelector("#connectInputs #schema");
-        var schema = input.value;
+        let schema = input.value;
         JsonAjaxClient.setUrl(Utils.interpolate("http://{}:{}/{}/{}/", host, port, context, schema));
-    };
-    ConnectionPanel.setResponse = function (response, objs) {
+    }
+    static setResponse(response, objs) {
         Panel.removePanel(PanelType[PanelType.Schema], true);
-        var result = response.results[0];
-        var status = objs.pop();
+        let result = response.results[0];
+        let status = objs.pop();
         status.style.fontWeight = 'bold';
-        var connException = document.getElementById("connException");
+        let connException = document.getElementById("connException");
         connException.innerHTML = '';
         if (result.resultType == 'RESULTSET') {
             Panel.getPanel(PanelType[PanelType.Connect]).hide();
@@ -282,10 +263,9 @@ var ConnectionPanel = (function (_super) {
                 connException.innerHTML = "Exception: " + result.toString;
             }
         }
-    };
-    ConnectionPanel.getInstance = function (isStartup) {
-        if (isStartup === void 0) { isStartup = false; }
-        var x = Panel.getPanel(PanelType[PanelType.Connect]);
+    }
+    static getInstance(isStartup = false) {
+        let x = Panel.getPanel(PanelType[PanelType.Connect]);
         if (x == null) {
             Panel.nextPanelNumber();
             x = new ConnectionPanel(PanelType[PanelType.Connect], "Connection Panel");
@@ -294,51 +274,47 @@ var ConnectionPanel = (function (_super) {
         if (isStartup)
             new Menu();
         return x;
-    };
-    return ConnectionPanel;
-}(Panel));
+    }
+}
 ConnectionPanel.sqlTemplate = "select [first 10] * from {} browse access;";
-var TableClickContext = (function () {
-    function TableClickContext(panelId, li) {
+class TableClickContext {
+    constructor(panelId, li) {
         this.panelId = panelId;
         this.li = li;
     }
-    return TableClickContext;
-}());
-var SchemaPanel = (function (_super) {
-    __extends(SchemaPanel, _super);
-    function SchemaPanel(id, heading, tables) {
-        var _this = _super.call(this, PanelType.Schema, id, JsonAjaxClient.getUrl(), true) || this;
-        _this.prepareTreeTemplate();
-        _this.div2 = SchemaPanel.treeTemplate.cloneNode(true);
-        _this.div2.style.display = 'block';
-        _super.prototype.appendChild.call(_this, _this.div2);
+}
+class SchemaPanel extends Panel {
+    constructor(id, heading, tables) {
+        super(PanelType.Schema, id, JsonAjaxClient.getUrl(), true);
+        this.prepareTreeTemplate();
+        this.div2 = SchemaPanel.treeTemplate.cloneNode(true);
+        this.div2.style.display = 'block';
+        super.appendChild(this.div2);
         if (tables != null) {
-            var result = tables.results[0];
-            var ul_1 = document.querySelector('#' + id + ' #tree');
-            while (ul_1.firstChild)
-                ul_1.removeChild(ul_1.firstChild);
-            result.rows.forEach(function (value, index, array) {
-                var li = document.createElement("li");
+            let result = tables.results[0];
+            let ul = document.querySelector('#' + id + ' #tree');
+            while (ul.firstChild)
+                ul.removeChild(ul.firstChild);
+            result.rows.forEach((value, index, array) => {
+                let li = document.createElement("li");
                 li.innerHTML = value.values[3] + '=' + value.values[2];
-                var attr = document.createAttribute('id');
+                let attr = document.createAttribute('id');
                 attr.value = value.values[2];
                 li.attributes.setNamedItem(attr);
                 li.classList.add('nsItem');
-                li.onclick = function (ev) {
+                li.onclick = (ev) => {
                     JsonAjaxClient.get("tables/" + value.values[2] + "/metaData", SchemaPanel.processTableMetaData, [new TableClickContext(id, li)]);
                 };
-                ul_1.appendChild(li);
+                ul.appendChild(li);
             });
         }
-        return _this;
     }
-    SchemaPanel.processTableMetaData = function (metaData, ctxObjs) {
-        var ctx = ctxObjs.pop();
+    static processTableMetaData(metaData, ctxObjs) {
+        let ctx = ctxObjs.pop();
         if (Utils.debug)
             console.log("clicked: " + ctx.li.getAttribute('id'));
-        var result = metaData.results[0];
-        var panel = SqlPanel.getInstance();
+        let result = metaData.results[0];
+        let panel = SqlPanel.getInstance();
         panel.setSql(Utils.interpolate(ConnectionPanel.sqlTemplate, ctx.li.getAttribute('id')));
         if (result.resultType == 'EXCEPTION') {
             panel.setStatement("Exception: " + result.toString);
@@ -350,83 +326,79 @@ var SchemaPanel = (function (_super) {
         }
         panel.show();
         Menu.hideAllMenus();
-    };
-    SchemaPanel.prototype.prepareTreeTemplate = function () {
+    }
+    prepareTreeTemplate() {
         if (SchemaPanel.treeTemplate == null) {
             SchemaPanel.treeTemplate = document.getElementById("metaTree");
             SchemaPanel.treeTemplate.remove();
         }
-    };
-    SchemaPanel.getInstance = function (tables) {
-        var x = Panel.getPanel(PanelType[PanelType.Schema]);
+    }
+    static getInstance(tables) {
+        let x = Panel.getPanel(PanelType[PanelType.Schema]);
         if (x == null) {
             Panel.nextPanelNumber();
             x = new SchemaPanel(PanelType[PanelType.Schema], "Schema Panel", tables);
             Panel.savePanel(x);
         }
         return x;
-    };
-    return SchemaPanel;
-}(Panel));
+    }
+}
 SchemaPanel.treeTemplate = null;
-var SqlPanel = (function (_super) {
-    __extends(SqlPanel, _super);
-    function SqlPanel(id, heading) {
-        var _this = _super.call(this, PanelType.Sql, id, heading) || this;
+class SqlPanel extends Panel {
+    constructor(id, heading) {
+        super(PanelType.Sql, id, heading);
         if (SqlPanel.sqlTemplate == null) {
             SqlPanel.sqlTemplate = document.getElementById("sqlPanel");
             SqlPanel.sqlTemplate.remove();
         }
-        _this.div2 = SqlPanel.sqlTemplate.cloneNode(true);
-        _this.div2.onmousedown = function (ev) {
-            _this.div2.parentElement.setAttribute("draggable", "false");
+        this.div2 = SqlPanel.sqlTemplate.cloneNode(true);
+        this.div2.onmousedown = (ev) => {
+            this.div2.parentElement.setAttribute("draggable", "false");
         };
-        _this.div2.onmouseup = function (ev) {
-            _this.div2.parentElement.setAttribute("draggable", "true");
+        this.div2.onmouseup = (ev) => {
+            this.div2.parentElement.setAttribute("draggable", "true");
         };
-        _super.prototype.appendChild.call(_this, _this.div2);
-        var selector = Utils.interpolate('#{} #statement', id);
-        _this.sql = document.querySelector(selector);
+        super.appendChild(this.div2);
+        let selector = Utils.interpolate('#{} #statement', id);
+        this.sql = document.querySelector(selector);
         selector = Utils.interpolate('#{} #clear', id);
-        var bttn = document.querySelector(selector);
-        bttn.onclick = function (ev) {
+        let bttn = document.querySelector(selector);
+        bttn.onclick = (ev) => {
             ev.stopImmediatePropagation();
-            _this.sql.value = '';
+            this.sql.value = '';
         };
         selector = Utils.interpolate('#{} #exec', id);
         bttn = document.querySelector(selector);
-        bttn.onclick = function (ev) {
+        bttn.onclick = (ev) => {
             ev.stopImmediatePropagation();
-            JsonAjaxClient.post("sql?maxRows=-1", SqlPanel.processResults, "sql=" + _this.sql.value, [_this.sql.value]);
+            JsonAjaxClient.post("sql?maxRows=-1", SqlPanel.processResults, "sql=" + this.sql.value, [this.sql.value]);
         };
-        _this.resultsDisplay = new ResultsDisplay(_this, "right-click to copy to SQL");
-        _this.resultsDisplay.addValueCallback(function (value) {
-            var sqlText = _this.sql.value;
-            var cursorPos = _this.sql.selectionStart + value.length;
-            sqlText = _this.sql.value.substr(0, _this.sql.selectionStart) + value
-                + _this.sql.value.substr(_this.sql.selectionEnd);
-            _this.sql.focus();
-            _this.sql.value = sqlText;
-            _this.sql.setSelectionRange(cursorPos, cursorPos);
+        this.resultsDisplay = new ResultsDisplay(this, "right-click to copy to SQL");
+        this.resultsDisplay.addValueCallback((value) => {
+            let sqlText = this.sql.value;
+            let cursorPos = this.sql.selectionStart + value.length;
+            sqlText = this.sql.value.substr(0, this.sql.selectionStart) + value
+                + this.sql.value.substr(this.sql.selectionEnd);
+            this.sql.focus();
+            this.sql.value = sqlText;
+            this.sql.setSelectionRange(cursorPos, cursorPos);
             console.log("called back with: " + value);
         });
-        return _this;
     }
-    SqlPanel.prototype.setSql = function (sql) {
+    setSql(sql) {
         this.sql.value = sql;
-    };
-    SqlPanel.prototype.setStatement = function (stmnt) {
+    }
+    setStatement(stmnt) {
         this.resultsDisplay.setStatement(stmnt);
-    };
-    SqlPanel.prototype.addResults = function (resp, filter) {
-        if (resp === void 0) { resp = null; }
+    }
+    addResults(resp = null, filter) {
         this.resultsDisplay.addResults(resp, filter);
-    };
-    SqlPanel.processResults = function (metaData, objs) {
-        var sql = objs.pop();
+    }
+    static processResults(metaData, objs) {
+        let sql = objs.pop();
         console.log("executed: " + sql);
-        var panel = ResultPanel.getInstance();
-        var result = metaData.results[0];
+        let panel = ResultPanel.getInstance();
+        let result = metaData.results[0];
         if (result.resultType == 'EXCEPTION') {
             panel.setStatement("Exception: " + result.toString);
             panel.addResults();
@@ -437,41 +409,35 @@ var SqlPanel = (function (_super) {
         }
         panel.show();
         Menu.hideAllMenus();
-    };
-    SqlPanel.getInstance = function () {
-        var headTxt = "SQL Panel " + Panel.nextPanelNumber();
-        var x = new SqlPanel(PanelType[PanelType.Sql], headTxt);
-        Panel.savePanel(x);
-        return x;
-    };
-    return SqlPanel;
-}(Panel));
-SqlPanel.sqlTemplate = null;
-var ResultPanel = (function (_super) {
-    __extends(ResultPanel, _super);
-    function ResultPanel(id, heading) {
-        var _this = _super.call(this, PanelType.Result, id, heading) || this;
-        _this.resultsDisplay = new ResultsDisplay(_this);
-        return _this;
     }
-    ResultPanel.prototype.setStatement = function (stmnt) {
-        this.resultsDisplay.setStatement(stmnt);
-    };
-    ResultPanel.prototype.addResults = function (resp, filter) {
-        if (resp === void 0) { resp = null; }
-        this.resultsDisplay.addResults(resp, filter);
-    };
-    ResultPanel.getInstance = function () {
-        var headTxt = "Result Panel " + Panel.nextPanelNumber();
-        var x = new ResultPanel(PanelType[PanelType.Result], headTxt);
+    static getInstance() {
+        let headTxt = "SQL Panel " + Panel.nextPanelNumber();
+        let x = new SqlPanel(PanelType[PanelType.Sql], headTxt);
         Panel.savePanel(x);
         return x;
-    };
-    return ResultPanel;
-}(Panel));
-var ResultsDisplay = (function () {
-    function ResultsDisplay(panel, cellTitle) {
-        if (cellTitle === void 0) { cellTitle = null; }
+    }
+}
+SqlPanel.sqlTemplate = null;
+class ResultPanel extends Panel {
+    constructor(id, heading) {
+        super(PanelType.Result, id, heading);
+        this.resultsDisplay = new ResultsDisplay(this);
+    }
+    setStatement(stmnt) {
+        this.resultsDisplay.setStatement(stmnt);
+    }
+    addResults(resp = null, filter) {
+        this.resultsDisplay.addResults(resp, filter);
+    }
+    static getInstance() {
+        let headTxt = "Result Panel " + Panel.nextPanelNumber();
+        let x = new ResultPanel(PanelType[PanelType.Result], headTxt);
+        Panel.savePanel(x);
+        return x;
+    }
+}
+class ResultsDisplay {
+    constructor(panel, cellTitle = null) {
         this.panel = panel;
         this.stmnt = document.createElement('p');
         this.stmnt.setAttribute('id', 'stmnt');
@@ -485,88 +451,82 @@ var ResultsDisplay = (function () {
         this.panel.appendChild(this.grid);
         this.cellTitle = cellTitle;
     }
-    ResultsDisplay.prototype.setStatement = function (stmnt) {
+    setStatement(stmnt) {
         this.stmnt.innerHTML = stmnt;
-    };
-    ResultsDisplay.prototype.addValueCallback = function (valueCallback) {
+    }
+    addValueCallback(valueCallback) {
         this.valueCallback = valueCallback;
-    };
-    ResultsDisplay.prototype.addResults = function (resp, filter) {
-        var _this = this;
-        if (resp === void 0) { resp = null; }
-        if (filter === void 0) { filter = null; }
+    }
+    addResults(resp = null, filter = null) {
         this.updateCnt.innerHTML = '';
         while (this.grid.firstChild)
             this.grid.removeChild(this.grid.firstChild);
         if (resp == null)
             return;
-        var result = resp.results[0];
+        let result = resp.results[0];
         if (result.updateCount != undefined) {
             this.updateCnt.innerHTML = 'Update Count: ' + String(result.updateCount);
             return;
         }
-        var table = this.appendTable();
-        var tr = this.appendRow(table);
-        var td;
+        let table = this.appendTable();
+        let tr = this.appendRow(table);
+        let td;
         this.appendHdrCell(tr, "Row");
-        result.columnDefinitions.forEach(function (colDef, i, colDefs) {
+        result.columnDefinitions.forEach((colDef, i, colDefs) => {
             if (filter == null || (filter != null && filter.indexOf(i) >= 0))
-                _this.appendHdrCell(tr, colDef.name);
+                this.appendHdrCell(tr, colDef.name);
         });
-        var rowPanel;
-        result.rows.forEach(function (row, index, rows) {
-            tr = _this.createRowHtml(table, row, index, rowPanel, result);
-            _this.appendCell(tr, String(index));
-            row.values.forEach(function (value, i, values) {
+        let rowPanel;
+        result.rows.forEach((row, index, rows) => {
+            tr = this.createRowHtml(table, row, index, rowPanel, result);
+            this.appendCell(tr, String(index));
+            row.values.forEach((value, i, values) => {
                 if (filter == null || (filter != null && filter.indexOf(i) >= 0)) {
-                    td = _this.appendCell(tr);
-                    _this.prepareDataCell(td, value);
+                    td = this.appendCell(tr);
+                    this.prepareDataCell(td, value);
                 }
             });
         });
-    };
-    ResultsDisplay.prototype.createRowHtml = function (table, row, index, panel, result) {
-        var _this = this;
-        var tr = this.appendRow(table);
-        tr.onclick = function (ev) {
+    }
+    createRowHtml(table, row, index, panel, result) {
+        let tr = this.appendRow(table);
+        tr.onclick = (ev) => {
             ev.stopPropagation();
-            var head = _this.panel.getHeading() + ' Row ' + index;
+            let head = this.panel.getHeading() + ' Row ' + index;
             panel = RowPanel.getInstance();
             panel.addResults(result.columnDefinitions, row);
             panel.show();
             Menu.hideAllMenus();
         };
         return tr;
-    };
-    ResultsDisplay.prototype.prepareDataCell = function (td, value) {
+    }
+    prepareDataCell(td, value) {
         td.classList.add('nsItem');
         if (value.length > 32)
             td.innerHTML = value.substr(0, 32) + " ... ";
         else
             td.innerHTML = value;
-    };
-    ResultsDisplay.prototype.appendTable = function () {
-        var _this = this;
-        var table = document.createElement('table');
+    }
+    appendTable() {
+        let table = document.createElement('table');
         this.grid.appendChild(table);
         if (this.valueCallback != null) {
-            table.oncontextmenu = function (ev) {
+            table.oncontextmenu = (ev) => {
                 ev.preventDefault();
                 ev.stopImmediatePropagation();
-                var tdTgt = ev.target;
-                _this.valueCallback(tdTgt.innerHTML);
+                let tdTgt = ev.target;
+                this.valueCallback(tdTgt.innerHTML);
             };
         }
         return table;
-    };
-    ResultsDisplay.prototype.appendRow = function (table) {
-        var tr = document.createElement('tr');
+    }
+    appendRow(table) {
+        let tr = document.createElement('tr');
         table.appendChild(tr);
         return tr;
-    };
-    ResultsDisplay.prototype.appendCell = function (tr, value) {
-        if (value === void 0) { value = null; }
-        var td;
+    }
+    appendCell(tr, value = null) {
+        let td;
         td = document.createElement('td');
         tr.appendChild(td);
         if (value != null)
@@ -574,50 +534,48 @@ var ResultsDisplay = (function () {
         if (this.cellTitle != null)
             td.setAttribute('title', this.cellTitle);
         return td;
-    };
-    ResultsDisplay.prototype.appendHdrCell = function (tr, value) {
-        if (value === void 0) { value = null; }
-        var th;
+    }
+    appendHdrCell(tr, value = null) {
+        let th;
         th = document.createElement('th');
         tr.appendChild(th);
         if (value != null)
             th.innerHTML = value;
         return th;
-    };
-    return ResultsDisplay;
-}());
-var Menu = (function () {
-    function Menu() {
+    }
+}
+class Menu {
+    constructor() {
         document.addEventListener("contextmenu", Menu.showContextMenu, false);
         document.addEventListener("click", Menu.hideAllMenus, false);
-        var menuItems = document.querySelectorAll('#bodyMenu li');
-        for (var i = 1; i < menuItems.length; i++)
+        let menuItems = document.querySelectorAll('#bodyMenu li');
+        for (let i = 1; i < menuItems.length; i++)
             menuItems.item(i).addEventListener('click', Menu.itemClick, false);
     }
-    Menu.showContextMenu = function (ev) {
+    static showContextMenu(ev) {
         ev.preventDefault();
-        var menu = document.getElementById('bodyMenu');
-        var element = document.getElementById('menuCnnct');
+        let menu = document.getElementById('bodyMenu');
+        let element = document.getElementById('menuCnnct');
         element.innerHTML = Panel.getPanel(PanelType[PanelType.Connect]).getHeading();
         Menu.showMenu(ev, 'bodyMenu');
-    };
-    Menu.showMenu = function (ev, menuName) {
+    }
+    static showMenu(ev, menuName) {
         Menu.hideAllMenus();
-        var menu = document.getElementById(menuName);
+        let menu = document.getElementById(menuName);
         menu.style.top = (ev.clientY - 15) + 'px';
         menu.style.left = ev.clientX + 'px';
         menu.style.display = 'block';
         menu.style.zIndex = Panel.newZindex();
-    };
-    Menu.hideAllMenus = function () {
-        var menus = document.querySelectorAll('.menu');
-        for (var i = 0; i < menus.length; i++)
+    }
+    static hideAllMenus() {
+        let menus = document.querySelectorAll('.menu');
+        for (let i = 0; i < menus.length; i++)
             menus.item(i).style.display = 'none';
-    };
-    Menu.itemClick = function (ev) {
+    }
+    static itemClick(ev) {
         ev.stopPropagation();
         Menu.hideAllMenus();
-        var target = ev.target;
+        let target = ev.target;
         switch (target.getAttribute("data-action")) {
             case PanelType[PanelType.Connect]:
                 Panel.showPanel(PanelType[PanelType.Connect]);
@@ -641,25 +599,25 @@ var Menu = (function () {
                 Menu.showPanelListMenu(ev, PanelType.Result, "Result Panels");
                 break;
             default:
-                var liAttrs = ev.target.attributes;
-                var dataAction = liAttrs.getNamedItem('data-action');
+                let liAttrs = ev.target.attributes;
+                let dataAction = liAttrs.getNamedItem('data-action');
                 Panel.showPanel(dataAction.value);
         }
-    };
-    Menu.showPanelListMenu = function (ev, panelType, menuHeading) {
-        var ul = document.getElementById('panelListMenu');
+    }
+    static showPanelListMenu(ev, panelType, menuHeading) {
+        let ul = document.getElementById('panelListMenu');
         while (ul.firstChild)
             ul.removeChild(ul.firstChild);
-        var li = document.createElement('li');
+        let li = document.createElement('li');
         li.classList.add('menuHeading');
         li.innerHTML = menuHeading;
         ul.appendChild(li);
-        var panels = Panel.getPanels();
-        panels.forEach(function (panel, index, array) {
+        let panels = Panel.getPanels();
+        panels.forEach((panel, index, array) => {
             if (panel.getType() === panelType) {
                 li = document.createElement('li');
                 li.innerHTML = panel.getHeading();
-                var dataAction = document.createAttribute('data-action');
+                let dataAction = document.createAttribute('data-action');
                 dataAction.value = panel.getId();
                 li.attributes.setNamedItem(dataAction);
                 li.addEventListener('click', Menu.itemClick, false);
@@ -668,25 +626,22 @@ var Menu = (function () {
         });
         if (ul.childElementCount > 1)
             Menu.showMenu(ev, 'panelListMenu');
-    };
-    return Menu;
-}());
-var RowPanel = (function (_super) {
-    __extends(RowPanel, _super);
-    function RowPanel(id, heading) {
-        var _this = _super.call(this, PanelType.Row, id, heading) || this;
-        _this.grid = document.createElement('div');
-        _super.prototype.appendChild.call(_this, _this.grid);
-        _this.grid.classList.add('scrollable');
-        return _this;
     }
-    RowPanel.prototype.addResults = function (columnDefinitions, row) {
+}
+class RowPanel extends Panel {
+    constructor(id, heading) {
+        super(PanelType.Row, id, heading);
+        this.grid = document.createElement('div');
+        super.appendChild(this.grid);
+        this.grid.classList.add('scrollable');
+    }
+    addResults(columnDefinitions, row) {
         while (this.grid.firstChild)
             this.grid.removeChild(this.grid.firstChild);
-        var table = document.createElement('table');
-        var tr = document.createElement('tr');
-        var th = document.createElement('th');
-        var td;
+        let table = document.createElement('table');
+        let tr = document.createElement('tr');
+        let th = document.createElement('th');
+        let td;
         this.grid.appendChild(table);
         table.appendChild(tr);
         tr.appendChild(th);
@@ -694,7 +649,7 @@ var RowPanel = (function (_super) {
         th = document.createElement('th');
         tr.appendChild(th);
         th.innerText = 'Value';
-        row.values.forEach(function (value, i, values) {
+        row.values.forEach((value, i, values) => {
             tr = document.createElement('tr');
             table.appendChild(tr);
             td = document.createElement('td');
@@ -704,12 +659,11 @@ var RowPanel = (function (_super) {
             tr.appendChild(td);
             td.innerText = value;
         });
-    };
-    RowPanel.getInstance = function () {
-        var headTxt = "Row Panel " + Panel.nextPanelNumber();
-        var x = new RowPanel(PanelType[PanelType.Row], headTxt);
+    }
+    static getInstance() {
+        let headTxt = "Row Panel " + Panel.nextPanelNumber();
+        let x = new RowPanel(PanelType[PanelType.Row], headTxt);
         Panel.savePanel(x);
         return x;
-    };
-    return RowPanel;
-}(Panel));
+    }
+}
