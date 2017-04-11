@@ -1,10 +1,5 @@
-/* export */ class Utils {
+class Utils {
     public static debug: boolean = false;
-    public static sqlTemplate: string = 'select [first 10] * from {} browse access;';
-
-    public static getFirstSql(tableName: string): string {
-        return this.interpolate(this.sqlTemplate, tableName);
-    }
 
     public static interpolate(template: string, ...values: string[]) {
         if (template === undefined || template === null)

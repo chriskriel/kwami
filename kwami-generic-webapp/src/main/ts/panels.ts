@@ -1,5 +1,3 @@
-// import { Utils } from "Utils";
-// import { JsonAjaxClient, JsonResponse, Result, ColumnDefinition, Row } from "JsonAjaxClient";
 
 /********************************************************************/
 enum PanelType {

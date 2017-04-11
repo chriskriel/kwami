@@ -1,6 +1,6 @@
 type AjaxCallback = (response: string, objs: Object[]) => void;
 
-/* export */ abstract class AjaxClient {
+abstract class AjaxClient {
     public static debug: boolean = false;
     public static url: string;
     private static xmlhttp = new XMLHttpRequest();

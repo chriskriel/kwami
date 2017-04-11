@@ -1,18 +1,16 @@
-//import { AjaxClient } from "AjaxClient";
-
 type ResponseCallback = (response: JsonResponse, objs?: Object[]) => void;
 
-/*export*/ interface Row {
+interface Row {
     values: string[];
 }
 
-/*export*/ interface ColumnDefinition {
+interface ColumnDefinition {
     length: number;
     name: string;
     sqlType: string;
 }
 
-/*export*/ interface Result {
+interface Result {
     resultType: string;
     updateCount: number;
     toString: string;
@@ -20,12 +18,12 @@ type ResponseCallback = (response: JsonResponse, objs?: Object[]) => void;
     rows: Row[];
 }
 
-/*export*/ interface JsonResponse {
+interface JsonResponse {
     results: Result[];
 }
 
 
-/*export*/ abstract class JsonAjaxClient {
+abstract class JsonAjaxClient {
 
     public static intercept(response: string, objs: Object[]) {
         let jsonResponse: JsonResponse = JSON.parse(response);

@@ -5,17 +5,10 @@
     <meta charset="UTF-8" />
     <title>SQL Interpreter V1.0</title>
     <link rel="stylesheet" href="styles/general.css" type="text/css" media="screen" title="Stylesheet" />
-    <!--script src="scripts/require.js" data-main="scripts/Panels.js" type="text/javascript"></script-->
-    <script src="scripts/Utils.js" type="text/javascript"></script>
-    <script src="scripts/AjaxClient.js" type="text/javascript"></script>
-    <script src="scripts/JsonAjaxClient.js" type="text/javascript"></script>
-    <script src="scripts/Panels.js" type="text/javascript"></script>
-    <!--script src="scripts/Menu.js" type="text/javascript"></script>
-    <script src="scripts/ResultPanel.js" type="text/javascript"></script>
-    <script src="scripts/ResultsDisplay.js" type="text/javascript"></script>
-    <script src="scripts/RowPanel.js" type="text/javascript"></script>
-    <script src="scripts/SchemaPanel.js" type="text/javascript"></script>
-    <script src="scripts/SqlPanel.js" type="text/javascript"></script-->
+    <script src="scripts/utils.js" type="text/javascript"></script>
+    <script src="scripts/ajaxClient.js" type="text/javascript"></script>
+    <script src="scripts/jsonAjaxClient.js" type="text/javascript"></script-->
+    <script src="scripts/panels.js" type="text/javascript"></script>
 </head>
 
 <body id='body'>
@@ -108,8 +101,7 @@
             this.parentElement.removeChild(this);
         }
         ConnectionPanel.sqlTemplate = "select * from {} limit 10;";
-        connectionPanel = ConnectionPanel.getInstance(true);
-     </script>
+        ConnectionPanel.getInstance(true);
+     </script-->
 </body>
-
 </html>
