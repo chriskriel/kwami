@@ -41,7 +41,7 @@ class Panel {
         this.prepareHeading(this.div.id);
     }
     prepareHeading(parentId) {
-        let s = Utils.interpolate('#{} #{}', parentId, 'panelHeading');
+        let s = `#${parentId} #panelHeading`;
         let h3 = document.querySelector(s);
         h3.innerHTML = this.heading;
         h3.setAttribute('title', 'click to rename');
@@ -100,18 +100,18 @@ class Panel {
         let leftPx = target.style.left.substring(0, target.style.left.length - 2);
         let topOffset = ev.clientY - Number(topPx);
         let leftOffSet = ev.clientX - Number(leftPx);
-        let data = Utils.interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
+        let data = `${target.id},${String(topOffset)},${String(leftOffSet)}`;
         let x = ev.dataTransfer;
         x.setData("text", data);
     }
     prepareButtons(parentId, notCloseable) {
-        let s = Utils.interpolate('#{} #{}', parentId, 'closeBttn');
+        let s = `#${parentId} #closeBttn`;
         let closeButton = document.querySelector(s);
         if (notCloseable)
             closeButton.remove();
         else
             closeButton.onclick = Panel.closePanel;
-        s = Utils.interpolate('#{} #{}', parentId, 'hideBttn');
+        s = `#${parentId} #hideBttn`;
         let hider = document.querySelector(s);
         hider.onclick = Panel.hidePanel;
         hider.onmousedown = (ev) => {
@@ -172,7 +172,11 @@ class HeadingUpdater {
         HeadingUpdater.panelId = panelId;
         let panel = Panel.getPanel(HeadingUpdater.panelId);
         let html = document.getElementById(HeadingUpdater.id);
-        let s = Utils.interpolate('#{} #{}', html.id, 'newName');
+        if (html == null) {
+            html = (new DOMParser().parseFromString(HeadingUpdater.htmlStr, "text/html").body.firstChild);
+            document.body.appendChild(html);
+        }
+        let s = `#${html.id} #newName`;
         let input = document.querySelector(s);
         input.value = panel.getHeading();
         HeadingUpdater.addEventListeners(html);
@@ -185,7 +189,7 @@ class HeadingUpdater {
     }
     static updateName(ev) {
         let html = document.getElementById(HeadingUpdater.id);
-        let s = Utils.interpolate('#{} #{}', html.id, 'newName');
+        let s = `#${html.id} #newName`;
         let input = document.querySelector(s);
         let panel = Panel.getPanel(HeadingUpdater.panelId);
         panel.setHeading(input.value);
@@ -195,16 +199,26 @@ class HeadingUpdater {
         if (this.isConfigured)
             return;
         this.isConfigured = true;
-        let s = Utils.interpolate('#{} #{}', html.id, 'cancel');
+        let s = `#${html.id} #cancel`;
         let cnclBttn = document.querySelector(s);
         cnclBttn.onclick = HeadingUpdater.cancel;
-        s = Utils.interpolate('#{} #{}', html.id, 'update');
+        s = `#${html.id} #update`;
         let updteBttn = document.querySelector(s);
         updteBttn.onclick = HeadingUpdater.updateName;
     }
 }
 HeadingUpdater.id = 'headingUpdater';
 HeadingUpdater.isConfigured = false;
+HeadingUpdater.htmlStr = `
+        <div id="headingUpdater" class="panel" style='display: none;'>
+            <fieldset>
+                <legend>Panel Heading Update</legend>
+                <input id="newName" name="newName" type="text" size="30" placeholder="type new panel name here" />
+            </fieldset>
+            <button id="cancel" class="pnlButton">Cancel</button>
+            <button id="update" class="pnlButton">Update</button>
+        </div>
+    `;
 class ConnectionPanel extends Panel {
     constructor(id, heading, debug = false) {
         super(PanelType.Connect, id, heading, true);
@@ -241,7 +255,7 @@ class ConnectionPanel extends Panel {
         let context = input.value;
         input = document.querySelector("#connectInputs #schema");
         let schema = input.value;
-        JsonAjaxClient.setUrl(Utils.interpolate("http://{}:{}/{}/{}/", host, port, context, schema));
+        JsonAjaxClient.setUrl(`http://${host}:${port}/${context}/${schema}/`);
     }
     static setResponse(response, objs) {
         Panel.removePanel(PanelType[PanelType.Schema], true);
@@ -315,7 +329,7 @@ class SchemaPanel extends Panel {
             console.log("clicked: " + ctx.li.getAttribute('id'));
         let result = metaData.results[0];
         let panel = SqlPanel.getInstance();
-        panel.setSql(Utils.interpolate(ConnectionPanel.sqlTemplate, ctx.li.getAttribute('id')));
+        panel.setSql(`select * from ${ctx.li.getAttribute('id')} limit 10`);
         if (result.resultType == 'EXCEPTION') {
             panel.setStatement("Exception: " + result.toString);
             panel.addResults();
@@ -359,15 +373,15 @@ class SqlPanel extends Panel {
             this.div2.parentElement.setAttribute("draggable", "true");
         };
         super.appendChild(this.div2);
-        let selector = Utils.interpolate('#{} #statement', id);
+        let selector = `#${id} #statement`;
         this.sql = document.querySelector(selector);
-        selector = Utils.interpolate('#{} #clear', id);
+        selector = `#${id} #clear`;
         let bttn = document.querySelector(selector);
         bttn.onclick = (ev) => {
             ev.stopImmediatePropagation();
             this.sql.value = '';
         };
-        selector = Utils.interpolate('#{} #exec', id);
+        selector = `#${id} #exec`;
         bttn = document.querySelector(selector);
         bttn.onclick = (ev) => {
             ev.stopImmediatePropagation();
@@ -546,6 +560,16 @@ class ResultsDisplay {
 }
 class Menu {
     constructor() {
+        let html = document.getElementById("bodyMenu");
+        if (html == null) {
+            html = (new DOMParser().parseFromString(Menu.bodyMenuStr, "text/html").body.firstChild);
+            document.body.appendChild(html);
+        }
+        html = document.getElementById("panelListMenu");
+        if (html == null) {
+            html = (new DOMParser().parseFromString(Menu.panelListMenuStr, "text/html").body.firstChild);
+            document.body.appendChild(html);
+        }
         document.addEventListener("contextmenu", Menu.showContextMenu, false);
         document.addEventListener("click", Menu.hideAllMenus, false);
         let menuItems = document.querySelectorAll('#bodyMenu li');
@@ -628,6 +652,27 @@ class Menu {
             Menu.showMenu(ev, 'panelListMenu');
     }
 }
+Menu.bodyMenuStr = `
+        <div>
+            <ul id="bodyMenu" class="menu">
+                <li class="menuHeading">Context Menu</li>
+                <li id="menuCnnct" data-action="Connect">Connection Panel</li>
+                <li data-action="Schema">Schema Panel</li>
+                <li data-action="Sql">New SQL Panel</li>
+                <li data-action="sqls">SQL Panels ...</li>
+                <li data-action="rows">Row Panels ...</li>
+                <li data-action="results">Result Panels ...</li>
+            </ul>
+        </div>
+    `;
+Menu.panelListMenuStr = `
+        <div>
+            <ul id="panelListMenu" class="menu">
+                <li class="menuHeading"></li>
+                <li data-action="metaPanel1">Meta Panel 1</li>
+            </ul>
+        </div>
+    `;
 class RowPanel extends Panel {
     constructor(id, heading) {
         super(PanelType.Row, id, heading);

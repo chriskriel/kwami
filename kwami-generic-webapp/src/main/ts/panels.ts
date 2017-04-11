@@ -58,7 +58,7 @@ class Panel {
     }
 
     private prepareHeading(parentId: string): HTMLElement {
-        let s: string = Utils.interpolate('#{} #{}', parentId, 'panelHeading');
+        let s: string =`#${parentId} #panelHeading`;
         let h3 = <HTMLElement>document.querySelector(s);
         h3.innerHTML = this.heading;
         h3.setAttribute('title', 'click to rename');
@@ -127,20 +127,20 @@ class Panel {
         let leftPx = target.style.left.substring(0, target.style.left.length - 2);
         let topOffset = ev.clientY - Number(topPx);
         let leftOffSet = ev.clientX - Number(leftPx);
-        let data = Utils.interpolate('{},{},{}', target.id, String(topOffset), String(leftOffSet));
+        let data = `${target.id},${String(topOffset)},${String(leftOffSet)}`;
         let x = ev.dataTransfer;
         x.setData("text", data);
 
     }
 
     private prepareButtons(parentId: string, notCloseable?: boolean): void {
-        let s: string = Utils.interpolate('#{} #{}', parentId, 'closeBttn');
+        let s: string = `#${parentId} #closeBttn`;
         let closeButton = <HTMLElement>document.querySelector(s);
         if (notCloseable)
             closeButton.remove();
         else
             closeButton.onclick = Panel.closePanel;
-        s = Utils.interpolate('#{} #{}', parentId, 'hideBttn');
+        s = `#${parentId} #hideBttn`;
         let hider = <HTMLElement>document.querySelector(s);
         hider.onclick = Panel.hidePanel;
         hider.onmousedown = (ev: MouseEvent): any => {
@@ -206,12 +206,26 @@ class HeadingUpdater {
     private static panelId: string;
     private static id: string = 'headingUpdater';
     private static isConfigured: boolean = false;
+    private static htmlStr: string = `
+        <div id="headingUpdater" class="panel" style='display: none;'>
+            <fieldset>
+                <legend>Panel Heading Update</legend>
+                <input id="newName" name="newName" type="text" size="30" placeholder="type new panel name here" />
+            </fieldset>
+            <button id="cancel" class="pnlButton">Cancel</button>
+            <button id="update" class="pnlButton">Update</button>
+        </div>
+    `;
 
     public static show(panelId: string) {
         HeadingUpdater.panelId = panelId;
         let panel: Panel = Panel.getPanel(HeadingUpdater.panelId);
         let html = <HTMLDivElement>document.getElementById(HeadingUpdater.id);
-        let s: string = Utils.interpolate('#{} #{}', html.id, 'newName');
+        if (html == null) {
+            html = <HTMLDivElement>(new DOMParser().parseFromString(HeadingUpdater.htmlStr, "text/html").body.firstChild);
+            document.body.appendChild(html);
+        }
+        let s: string = `#${html.id} #newName`;
         let input = <HTMLInputElement>document.querySelector(s);
         input.value = panel.getHeading();
         HeadingUpdater.addEventListeners(html);
@@ -226,7 +240,7 @@ class HeadingUpdater {
 
     private static updateName(ev: MouseEvent) {
         let html = <HTMLDivElement>document.getElementById(HeadingUpdater.id);
-        let s: string = Utils.interpolate('#{} #{}', html.id, 'newName');
+        let s: string = `#${html.id} #newName`;
         let input = <HTMLInputElement>document.querySelector(s);
         let panel: Panel = Panel.getPanel(HeadingUpdater.panelId);
         panel.setHeading(input.value);
@@ -237,10 +251,10 @@ class HeadingUpdater {
         if (this.isConfigured)
             return;
         this.isConfigured = true;
-        let s: string = Utils.interpolate('#{} #{}', html.id, 'cancel');
+        let s: string = `#${html.id} #cancel`;
         let cnclBttn = <HTMLElement>document.querySelector(s);
         cnclBttn.onclick = HeadingUpdater.cancel;
-        s = Utils.interpolate('#{} #{}', html.id, 'update');
+        s = `#${html.id} #update`;
         let updteBttn = <HTMLElement>document.querySelector(s);
         updteBttn.onclick = HeadingUpdater.updateName;
     }
@@ -287,7 +301,7 @@ class ConnectionPanel extends Panel {
         let context: string = input.value;
         input = <HTMLInputElement>document.querySelector("#connectInputs #schema");
         let schema: string = input.value;
-        JsonAjaxClient.setUrl(Utils.interpolate("http://{}:{}/{}/{}/", host, port, context, schema));
+        JsonAjaxClient.setUrl(`http://${host}:${port}/${context}/${schema}/`);
     }
 
     public static setResponse(response: JsonResponse, objs: Object[]): void {
@@ -377,7 +391,7 @@ class SchemaPanel extends Panel {
             console.log("clicked: " + ctx.li.getAttribute('id'));
         let result: Result = metaData.results[0];
         let panel: SqlPanel = SqlPanel.getInstance();
-        panel.setSql(Utils.interpolate(ConnectionPanel.sqlTemplate, ctx.li.getAttribute('id')));
+        panel.setSql(`select * from ${ctx.li.getAttribute('id')} limit 10`);
         if (result.resultType == 'EXCEPTION') {
             panel.setStatement("Exception: " + result.toString);
             panel.addResults();
@@ -428,15 +442,15 @@ class SqlPanel extends Panel {
             this.div2.parentElement.setAttribute("draggable", "true");
         }
         super.appendChild(this.div2);
-        let selector: string = Utils.interpolate('#{} #statement', id);
+        let selector: string = `#${id} #statement`;
         this.sql = <HTMLTextAreaElement>document.querySelector(selector);
-        selector = Utils.interpolate('#{} #clear', id);
+        selector = `#${id} #clear`;
         let bttn: HTMLElement = <HTMLElement>document.querySelector(selector);
         bttn.onclick = (ev: MouseEvent) => {
             ev.stopImmediatePropagation();
             this.sql.value = '';
         }
-        selector = Utils.interpolate('#{} #exec', id);
+        selector = `#${id} #exec`;
         bttn = <HTMLElement>document.querySelector(selector);
         bttn.onclick = (ev: MouseEvent) => {
             ev.stopImmediatePropagation();
@@ -651,8 +665,40 @@ class ResultsDisplay {
 
 /********************************************************************/
 class Menu {
+    private static bodyMenuStr: string = `
+        <div>
+            <ul id="bodyMenu" class="menu">
+                <li class="menuHeading">Context Menu</li>
+                <li id="menuCnnct" data-action="Connect">Connection Panel</li>
+                <li data-action="Schema">Schema Panel</li>
+                <li data-action="Sql">New SQL Panel</li>
+                <li data-action="sqls">SQL Panels ...</li>
+                <li data-action="rows">Row Panels ...</li>
+                <li data-action="results">Result Panels ...</li>
+            </ul>
+        </div>
+    `;
+    private static panelListMenuStr: string = `
+        <div>
+            <ul id="panelListMenu" class="menu">
+                <li class="menuHeading"></li>
+                <li data-action="metaPanel1">Meta Panel 1</li>
+            </ul>
+        </div>
+    `;
+
 
     public constructor() {
+        let html = <HTMLDivElement>document.getElementById("bodyMenu");
+        if (html == null) {
+            html = <HTMLDivElement>(new DOMParser().parseFromString(Menu.bodyMenuStr, "text/html").body.firstChild);
+            document.body.appendChild(html);
+        }
+        html = <HTMLDivElement>document.getElementById("panelListMenu");        
+        if (html == null) {
+            html = <HTMLDivElement>(new DOMParser().parseFromString(Menu.panelListMenuStr, "text/html").body.firstChild);
+            document.body.appendChild(html);
+        }
         document.addEventListener("contextmenu", Menu.showContextMenu, false);
         document.addEventListener("click", Menu.hideAllMenus, false);
         let menuItems = document.querySelectorAll('#bodyMenu li');

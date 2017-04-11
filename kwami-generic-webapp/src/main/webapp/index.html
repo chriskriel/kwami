@@ -15,7 +15,7 @@
 
 <body id='body'>
 
-    <div>
+    <!--div>
         <ul id="bodyMenu" class="menu">
             <li class="menuHeading">Context Menu</li>
             <li id="menuCnnct" data-action="Connect">Connection Panel</li>
@@ -32,16 +32,16 @@
             <li class="menuHeading"></li>
             <li data-action="metaPanel1">Meta Panel 1</li>
         </ul>
-    </div>
+    </div-->
 
-    <div id="headingUpdater" class="panel" style='display: none;'>
+    <!--div id="headingUpdater" class="panel" style='display: none;'>
         <fieldset>
             <legend>Panel Heading Update</legend>
             <input id="newName" name="newName" type="text" size="30" placeholder="type new panel name here" />
         </fieldset>
         <button id="cancel" class="pnlButton">Cancel</button>
         <button id="update" class="pnlButton">Update</button>
-    </div>
+    </div-->
 
     <div id="ajaxOverlay" class="ajaxOverlay displayOff"></div>
 
@@ -102,7 +102,6 @@
         Element.prototype.remove = function() {
             this.parentElement.removeChild(this);
         }
-        ConnectionPanel.sqlTemplate = "select * from {} limit 10;";
         ConnectionPanel.getInstance(true);
      </script>
 </body>
