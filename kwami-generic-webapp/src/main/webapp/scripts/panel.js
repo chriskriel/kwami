@@ -6,16 +6,10 @@ var PanelType;
     PanelType[PanelType["Row"] = 3] = "Row";
     PanelType[PanelType["Sql"] = 4] = "Sql";
 })(PanelType || (PanelType = {}));
-class Panel {
-    constructor(type, id, heading, notCloseable) {
-        this.htmlStr = `
-        <div id="panel" class="panel">
-            <h3 id="panelHeading" class="panelHeading"></h3>
-            <p class="inlineSpace">&nbsp;&nbsp;&nbsp;</p>
-            <button id="closeBttn" class="pnlButton">X</button>
-            <button id="hideBttn" class="pnlButton">_</button>
-        </div>
-    `;
+var Panel = (function () {
+    function Panel(type, id, heading, notCloseable) {
+        var _this = this;
+        this.htmlStr = "\n        <div id=\"panel\" class=\"panel\">\n            <h3 id=\"panelHeading\" class=\"panelHeading\"></h3>\n            <p class=\"inlineSpace\">&nbsp;&nbsp;&nbsp;</p>\n            <button id=\"closeBttn\" class=\"pnlButton\">X</button>\n            <button id=\"hideBttn\" class=\"pnlButton\">_</button>\n        </div>\n    ";
         this.prepareTemplate();
         this.type = type;
         this.heading = heading;
@@ -25,124 +19,125 @@ class Panel {
         this.div.id = id;
         this.div.style.display = 'none';
         this.prepareButtons(id, notCloseable);
-        let h3 = this.prepareHeading(id);
-        h3.onclick = (ev) => {
+        var h3 = this.prepareHeading(id);
+        h3.onclick = function (ev) {
             ev.stopPropagation();
-            HeadingUpdater.show(this.div.id);
+            HeadingUpdater.show(_this.div.id);
         };
         this.setupDragAndDrop();
     }
-    getHtml() {
+    Panel.prototype.getHtml = function () {
         return this.div;
-    }
-    prepareTemplate() {
+    };
+    Panel.prototype.prepareTemplate = function () {
         if (Panel.template != null)
             return;
         Panel.template = Utils.makeDivFromString(this.htmlStr);
-    }
-    getHeading() {
+    };
+    Panel.prototype.getHeading = function () {
         return this.heading;
-    }
-    setHeading(heading) {
+    };
+    Panel.prototype.setHeading = function (heading) {
         this.heading = heading;
         this.prepareHeading(this.div.id);
-    }
-    prepareHeading(parentId) {
-        let s = `#${parentId} #panelHeading`;
-        let h3 = document.querySelector(s);
+    };
+    Panel.prototype.prepareHeading = function (parentId) {
+        var s = "#" + parentId + " #panelHeading";
+        var h3 = document.querySelector(s);
         h3.innerHTML = this.heading;
         h3.setAttribute('title', 'click to rename');
         return h3;
-    }
-    getType() {
+    };
+    Panel.prototype.getType = function () {
         return this.type;
-    }
-    appendChild(child) {
+    };
+    Panel.prototype.appendChild = function (child) {
         this.div.appendChild(child);
-    }
-    static newZindex() {
+    };
+    Panel.newZindex = function () {
         return Panel.zIndex++ + '';
-    }
-    show() {
+    };
+    Panel.prototype.show = function () {
         this.div.style.display = 'block';
         this.div.style.zIndex = Panel.newZindex();
-    }
-    static showPanel(id) {
-        for (let i = 0; i < Panel.panels.length; i++) {
-            let panel = Panel.panels[i];
+    };
+    Panel.showPanel = function (id) {
+        for (var i = 0; i < Panel.panels.length; i++) {
+            var panel = Panel.panels[i];
             if (panel.getId() === id) {
                 panel.show();
                 return;
             }
         }
-    }
-    getId() {
+    };
+    Panel.prototype.getId = function () {
         return this.div.id;
-    }
-    hide() {
+    };
+    Panel.prototype.hide = function () {
         this.div.style.display = 'none';
-    }
-    setupDragAndDrop() {
+    };
+    Panel.prototype.setupDragAndDrop = function () {
         this.div.draggable = true;
-        this.body.ondragover = (ev) => {
+        this.body.ondragover = function (ev) {
             ev.preventDefault();
         };
         this.div.ondragstart = Panel.dragStart;
         this.body.ondrop = Panel.drop;
-    }
-    static drop(ev) {
+    };
+    Panel.drop = function (ev) {
         ev.preventDefault();
-        let data = ev.dataTransfer.getData("text").split(',');
-        let panel = document.getElementById(data[0]);
-        let top = (ev.clientY - parseInt(data[1], 10)) + "px";
-        let left = (ev.clientX - parseInt(data[2], 10)) + "px";
+        var data = ev.dataTransfer.getData("text").split(',');
+        var panel = document.getElementById(data[0]);
+        var top = (ev.clientY - parseInt(data[1], 10)) + "px";
+        var left = (ev.clientX - parseInt(data[2], 10)) + "px";
         panel.style.top = top;
         panel.style.left = left;
         panel.style.zIndex = Panel.newZindex();
-    }
-    static dragStart(ev) {
+    };
+    Panel.dragStart = function (ev) {
         ev.stopPropagation();
-        let target = ev.target;
-        let topPx = target.style.top.substring(0, target.style.top.length - 2);
-        let leftPx = target.style.left.substring(0, target.style.left.length - 2);
-        let topOffset = ev.clientY - Number(topPx);
-        let leftOffSet = ev.clientX - Number(leftPx);
-        let data = `${target.id},${String(topOffset)},${String(leftOffSet)}`;
-        let x = ev.dataTransfer;
+        var target = ev.target;
+        var topPx = target.style.top.substring(0, target.style.top.length - 2);
+        var leftPx = target.style.left.substring(0, target.style.left.length - 2);
+        var topOffset = ev.clientY - Number(topPx);
+        var leftOffSet = ev.clientX - Number(leftPx);
+        var data = target.id + "," + String(topOffset) + "," + String(leftOffSet);
+        var x = ev.dataTransfer;
         x.setData("text", data);
-    }
-    prepareButtons(parentId, notCloseable) {
-        let s = `#${parentId} #closeBttn`;
-        let closeButton = document.querySelector(s);
+    };
+    Panel.prototype.prepareButtons = function (parentId, notCloseable) {
+        var s = "#" + parentId + " #closeBttn";
+        var closeButton = document.querySelector(s);
         if (notCloseable)
             closeButton.remove();
         else
             closeButton.onclick = Panel.closePanel;
-        s = `#${parentId} #hideBttn`;
-        let hider = document.querySelector(s);
+        s = "#" + parentId + " #hideBttn";
+        var hider = document.querySelector(s);
         hider.onclick = Panel.hidePanel;
-        hider.onmousedown = (ev) => {
+        hider.onmousedown = function (ev) {
             hider.parentElement.setAttribute("draggable", "false");
         };
-        hider.onmouseup = (ev) => {
+        hider.onmouseup = function (ev) {
             hider.parentElement.setAttribute("draggable", "true");
         };
-    }
-    static hidePanel(ev) {
+    };
+    Panel.hidePanel = function (ev) {
         ev.stopPropagation();
-        let button = ev.target;
+        var button = ev.target;
         button.parentElement.style.display = 'none';
-    }
-    static closePanel(ev) {
+    };
+    Panel.closePanel = function (ev) {
         ev.stopPropagation();
-        let button = ev.target;
-        let panel = button.parentElement;
+        var button = ev.target;
+        var panel = button.parentElement;
         panel.remove();
         Panel.removePanel(panel.id);
-    }
-    static removePanel(id, removeHtml = false) {
-        for (let i = 0; i < Panel.panels.length; i++) {
-            let panel = Panel.panels[i];
+    };
+    Panel.removePanel = function (id, removeHtml) {
+        if (removeHtml === void 0) { removeHtml = false; }
+        for (var i = 0; i < Panel.panels.length; i++) {
+            var panel = Panel.panels[i];
             if (panel.getId() === id) {
                 if (removeHtml && panel.getHtml() != null)
                     panel.getHtml().remove();
@@ -150,79 +145,74 @@ class Panel {
                 return;
             }
         }
-    }
-    static getPanel(id) {
-        for (let i = 0; i < Panel.panels.length; i++) {
-            let panel = Panel.panels[i];
+    };
+    Panel.getPanel = function (id) {
+        for (var i = 0; i < Panel.panels.length; i++) {
+            var panel = Panel.panels[i];
             if (panel.getId() === id) {
                 return panel;
             }
         }
         return null;
-    }
-    static getPanels() {
+    };
+    Panel.getPanels = function () {
         return Panel.panels;
-    }
-    static nextPanelNumber() {
+    };
+    Panel.nextPanelNumber = function () {
         return ++Panel.pnlNumber;
-    }
-    static savePanel(panel) {
+    };
+    Panel.savePanel = function (panel) {
         this.panels.push(panel);
-    }
-}
+    };
+    return Panel;
+}());
 Panel.template = null;
 Panel.panels = [];
 Panel.zIndex = 0;
 Panel.pnlNumber = 0;
-class HeadingUpdater {
-    static show(panelId) {
+var HeadingUpdater = (function () {
+    function HeadingUpdater() {
+    }
+    HeadingUpdater.show = function (panelId) {
         HeadingUpdater.panelId = panelId;
-        let panel = Panel.getPanel(HeadingUpdater.panelId);
-        let html = document.getElementById(HeadingUpdater.id);
+        var panel = Panel.getPanel(HeadingUpdater.panelId);
+        var html = document.getElementById(HeadingUpdater.id);
         if (html == null) {
             html = Utils.makeDivFromString(this.htmlStr);
             document.body.appendChild(html);
         }
-        let s = `#${html.id} #newName`;
-        let input = document.querySelector(s);
+        var s = "#" + html.id + " #newName";
+        var input = document.querySelector(s);
         input.value = panel.getHeading();
         HeadingUpdater.addEventListeners(html);
         html.style.zIndex = Panel.newZindex();
         html.style.display = 'block';
-    }
-    static cancel(ev) {
-        let html = document.getElementById(HeadingUpdater.id);
+    };
+    HeadingUpdater.cancel = function (ev) {
+        var html = document.getElementById(HeadingUpdater.id);
         html.style.display = 'none';
-    }
-    static updateName(ev) {
-        let html = document.getElementById(HeadingUpdater.id);
-        let s = `#${html.id} #newName`;
-        let input = document.querySelector(s);
-        let panel = Panel.getPanel(HeadingUpdater.panelId);
+    };
+    HeadingUpdater.updateName = function (ev) {
+        var html = document.getElementById(HeadingUpdater.id);
+        var s = "#" + html.id + " #newName";
+        var input = document.querySelector(s);
+        var panel = Panel.getPanel(HeadingUpdater.panelId);
         panel.setHeading(input.value);
         html.style.display = 'none';
-    }
-    static addEventListeners(html) {
+    };
+    HeadingUpdater.addEventListeners = function (html) {
         if (this.isConfigured)
             return;
         this.isConfigured = true;
-        let s = `#${html.id} #cancel`;
-        let cnclBttn = document.querySelector(s);
+        var s = "#" + html.id + " #cancel";
+        var cnclBttn = document.querySelector(s);
         cnclBttn.onclick = HeadingUpdater.cancel;
-        s = `#${html.id} #update`;
-        let updteBttn = document.querySelector(s);
+        s = "#" + html.id + " #update";
+        var updteBttn = document.querySelector(s);
         updteBttn.onclick = HeadingUpdater.updateName;
-    }
-}
+    };
+    return HeadingUpdater;
+}());
 HeadingUpdater.id = 'headingUpdater';
 HeadingUpdater.isConfigured = false;
-HeadingUpdater.htmlStr = `
-        <div id="headingUpdater" class="panel" style='display: none;'>
-            <fieldset>
-                <legend>Panel Heading Update</legend>
-                <input id="newName" name="newName" type="text" size="30" placeholder="type new panel name here" />
-            </fieldset>
-            <button id="cancel" class="pnlButton">Cancel</button>
-            <button id="update" class="pnlButton">Update</button>
-        </div>
-    `;
+HeadingUpdater.htmlStr = "\n        <div id=\"headingUpdater\" class=\"panel\" style='display: none;'>\n            <fieldset>\n                <legend>Panel Heading Update</legend>\n                <input id=\"newName\" name=\"newName\" type=\"text\" size=\"30\" placeholder=\"type new panel name here\" />\n            </fieldset>\n            <button id=\"cancel\" class=\"pnlButton\">Cancel</button>\n            <button id=\"update\" class=\"pnlButton\">Update</button>\n        </div>\n    ";

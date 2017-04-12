@@ -1,6 +1,8 @@
-class JsonAjaxClient {
-    static intercept(response, objs) {
-        let jsonResponse = JSON.parse(response);
+var JsonAjaxClient = (function () {
+    function JsonAjaxClient() {
+    }
+    JsonAjaxClient.intercept = function (response, objs) {
+        var jsonResponse = JSON.parse(response);
         if (AjaxClient.debug) {
             if (jsonResponse != null && jsonResponse.results[0] != null) {
                 if (jsonResponse.results[0].updateCount != null)
@@ -11,24 +13,25 @@ class JsonAjaxClient {
                     console.log("JSON contained " + jsonResponse.results[0].rows.length + " rows");
             }
         }
-        let callback = (objs.pop());
+        var callback = (objs.pop());
         callback(jsonResponse, objs);
-    }
-    static get(url, callback, objs) {
+    };
+    JsonAjaxClient.get = function (url, callback, objs) {
         objs.push(callback);
         AjaxClient.get(url, JsonAjaxClient.intercept, objs);
-    }
-    static post(url, callback, data, objs) {
+    };
+    JsonAjaxClient.post = function (url, callback, data, objs) {
         objs.push(callback);
         AjaxClient.post(url, JsonAjaxClient.intercept, data, objs);
-    }
-    static setDebug(debug) {
+    };
+    JsonAjaxClient.setDebug = function (debug) {
         AjaxClient.debug = debug;
-    }
-    static getUrl() {
+    };
+    JsonAjaxClient.getUrl = function () {
         return AjaxClient.url;
-    }
-    static setUrl(url) {
+    };
+    JsonAjaxClient.setUrl = function (url) {
         AjaxClient.url = url;
-    }
-}
+    };
+    return JsonAjaxClient;
+}());
