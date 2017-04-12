@@ -1,232 +1,10 @@
-var PanelType;
-(function (PanelType) {
-    PanelType[PanelType["Schema"] = 0] = "Schema";
-    PanelType[PanelType["Connect"] = 1] = "Connect";
-    PanelType[PanelType["Result"] = 2] = "Result";
-    PanelType[PanelType["Row"] = 3] = "Row";
-    PanelType[PanelType["Sql"] = 4] = "Sql";
-})(PanelType || (PanelType = {}));
-class Panel {
-    constructor(type, id, heading, notCloseable) {
-        this.prepareTemplate();
-        this.type = type;
-        this.heading = heading;
-        this.div = Panel.template.cloneNode(true);
-        this.body = document.getElementById("body");
-        this.body.appendChild(this.div);
-        this.div.id = id;
-        this.div.style.display = 'none';
-        this.prepareButtons(id, notCloseable);
-        let h3 = this.prepareHeading(id);
-        h3.onclick = (ev) => {
-            ev.stopPropagation();
-            HeadingUpdater.show(this.div.id);
-        };
-        this.setupDragAndDrop();
-    }
-    getHtml() {
-        return this.div;
-    }
-    prepareTemplate() {
-        if (Panel.template != null)
-            return;
-        Panel.template = document.getElementById("panel");
-        Panel.template.remove();
-    }
-    getHeading() {
-        return this.heading;
-    }
-    setHeading(heading) {
-        this.heading = heading;
-        this.prepareHeading(this.div.id);
-    }
-    prepareHeading(parentId) {
-        let s = `#${parentId} #panelHeading`;
-        let h3 = document.querySelector(s);
-        h3.innerHTML = this.heading;
-        h3.setAttribute('title', 'click to rename');
-        return h3;
-    }
-    getType() {
-        return this.type;
-    }
-    appendChild(child) {
-        this.div.appendChild(child);
-    }
-    static newZindex() {
-        return Panel.zIndex++ + '';
-    }
-    show() {
-        this.div.style.display = 'block';
-        this.div.style.zIndex = Panel.newZindex();
-    }
-    static showPanel(id) {
-        for (let i = 0; i < Panel.panels.length; i++) {
-            let panel = Panel.panels[i];
-            if (panel.getId() === id) {
-                panel.show();
-                return;
-            }
-        }
-    }
-    getId() {
-        return this.div.id;
-    }
-    hide() {
-        this.div.style.display = 'none';
-    }
-    setupDragAndDrop() {
-        this.div.draggable = true;
-        this.body.ondragover = (ev) => {
-            ev.preventDefault();
-        };
-        this.div.ondragstart = Panel.dragStart;
-        this.body.ondrop = Panel.drop;
-    }
-    static drop(ev) {
-        ev.preventDefault();
-        let data = ev.dataTransfer.getData("text").split(',');
-        let panel = document.getElementById(data[0]);
-        let top = (ev.clientY - parseInt(data[1], 10)) + "px";
-        let left = (ev.clientX - parseInt(data[2], 10)) + "px";
-        panel.style.top = top;
-        panel.style.left = left;
-        panel.style.zIndex = Panel.newZindex();
-    }
-    static dragStart(ev) {
-        ev.stopPropagation();
-        let target = ev.target;
-        let topPx = target.style.top.substring(0, target.style.top.length - 2);
-        let leftPx = target.style.left.substring(0, target.style.left.length - 2);
-        let topOffset = ev.clientY - Number(topPx);
-        let leftOffSet = ev.clientX - Number(leftPx);
-        let data = `${target.id},${String(topOffset)},${String(leftOffSet)}`;
-        let x = ev.dataTransfer;
-        x.setData("text", data);
-    }
-    prepareButtons(parentId, notCloseable) {
-        let s = `#${parentId} #closeBttn`;
-        let closeButton = document.querySelector(s);
-        if (notCloseable)
-            closeButton.remove();
-        else
-            closeButton.onclick = Panel.closePanel;
-        s = `#${parentId} #hideBttn`;
-        let hider = document.querySelector(s);
-        hider.onclick = Panel.hidePanel;
-        hider.onmousedown = (ev) => {
-            hider.parentElement.setAttribute("draggable", "false");
-        };
-        hider.onmouseup = (ev) => {
-            hider.parentElement.setAttribute("draggable", "true");
-        };
-    }
-    static hidePanel(ev) {
-        ev.stopPropagation();
-        let button = ev.target;
-        button.parentElement.style.display = 'none';
-    }
-    static closePanel(ev) {
-        ev.stopPropagation();
-        let button = ev.target;
-        let panel = button.parentElement;
-        panel.remove();
-        Panel.removePanel(panel.id);
-    }
-    static removePanel(id, removeHtml = false) {
-        for (let i = 0; i < Panel.panels.length; i++) {
-            let panel = Panel.panels[i];
-            if (panel.getId() === id) {
-                if (removeHtml && panel.getHtml() != null)
-                    panel.getHtml().remove();
-                Panel.panels.splice(i, 1);
-                return;
-            }
-        }
-    }
-    static getPanel(id) {
-        for (let i = 0; i < Panel.panels.length; i++) {
-            let panel = Panel.panels[i];
-            if (panel.getId() === id) {
-                return panel;
-            }
-        }
-        return null;
-    }
-    static getPanels() {
-        return Panel.panels;
-    }
-    static nextPanelNumber() {
-        return ++Panel.pnlNumber;
-    }
-    static savePanel(panel) {
-        this.panels.push(panel);
-    }
-}
-Panel.template = null;
-Panel.panels = [];
-Panel.zIndex = 0;
-Panel.pnlNumber = 0;
-class HeadingUpdater {
-    static show(panelId) {
-        HeadingUpdater.panelId = panelId;
-        let panel = Panel.getPanel(HeadingUpdater.panelId);
-        let html = document.getElementById(HeadingUpdater.id);
-        if (html == null) {
-            html = (new DOMParser().parseFromString(HeadingUpdater.htmlStr, "text/html").body.firstChild);
-            document.body.appendChild(html);
-        }
-        let s = `#${html.id} #newName`;
-        let input = document.querySelector(s);
-        input.value = panel.getHeading();
-        HeadingUpdater.addEventListeners(html);
-        html.style.zIndex = Panel.newZindex();
-        html.style.display = 'block';
-    }
-    static cancel(ev) {
-        let html = document.getElementById(HeadingUpdater.id);
-        html.style.display = 'none';
-    }
-    static updateName(ev) {
-        let html = document.getElementById(HeadingUpdater.id);
-        let s = `#${html.id} #newName`;
-        let input = document.querySelector(s);
-        let panel = Panel.getPanel(HeadingUpdater.panelId);
-        panel.setHeading(input.value);
-        html.style.display = 'none';
-    }
-    static addEventListeners(html) {
-        if (this.isConfigured)
-            return;
-        this.isConfigured = true;
-        let s = `#${html.id} #cancel`;
-        let cnclBttn = document.querySelector(s);
-        cnclBttn.onclick = HeadingUpdater.cancel;
-        s = `#${html.id} #update`;
-        let updteBttn = document.querySelector(s);
-        updteBttn.onclick = HeadingUpdater.updateName;
-    }
-}
-HeadingUpdater.id = 'headingUpdater';
-HeadingUpdater.isConfigured = false;
-HeadingUpdater.htmlStr = `
-        <div id="headingUpdater" class="panel" style='display: none;'>
-            <fieldset>
-                <legend>Panel Heading Update</legend>
-                <input id="newName" name="newName" type="text" size="30" placeholder="type new panel name here" />
-            </fieldset>
-            <button id="cancel" class="pnlButton">Cancel</button>
-            <button id="update" class="pnlButton">Update</button>
-        </div>
-    `;
 class ConnectionPanel extends Panel {
     constructor(id, heading, debug = false) {
         super(PanelType.Connect, id, heading, true);
         Utils.debug = debug;
         JsonAjaxClient.setDebug(debug);
-        let x = document.getElementById("connectInputs");
+        let x = Utils.makeDivFromString(ConnectionPanel.htmlStr);
         this.div2 = x.cloneNode(true);
-        x.remove();
         super.appendChild(this.div2);
         this.div2.onmousedown = (ev) => {
             this.div2.parentElement.setAttribute("draggable", "false");
@@ -255,6 +33,8 @@ class ConnectionPanel extends Panel {
         let context = input.value;
         input = document.querySelector("#connectInputs #schema");
         let schema = input.value;
+        input = document.querySelector("#connectInputs #sql");
+        ConnectionPanel.sqlTemplate = input.value;
         JsonAjaxClient.setUrl(`http://${host}:${port}/${context}/${schema}/`);
     }
     static setResponse(response, objs) {
@@ -290,7 +70,33 @@ class ConnectionPanel extends Panel {
         return x;
     }
 }
-ConnectionPanel.sqlTemplate = "select [first 10] * from {} browse access;";
+ConnectionPanel.htmlStr = `
+        <div id="connectInputs">
+            <fieldset>
+                <legend>Connection Parameters</legend>
+                <label for="host">Host: </label>
+                <input id="host" type="text" size="30" value="localhost" />
+                <br>
+                <label for="port">Port: </label>
+                <input id="port" type="number" min="4096" max="65535" value="18080" />
+                <br>
+                <label for="context">Context: </label>
+                <input id="context" type="text" size="30" value="sqlmx" />
+                <br>
+                <label for="schema">Schema: </label>
+                <input id="schema" type="text" size="30" value="employees" />
+                <br>
+                <label for="sql">Sampler: </label>
+                <input id="sql" type="text" size="30" value="select * from {} limit 10" />
+                <br>
+                <label for="status">Status: </label>
+                <input id="status" type="text" value="Not tried" disabled="disabled" />
+                <br>
+                <button id="connectBtn" class="pnlButton">Connect</button>
+            </fieldset>
+            <p id="connException"></p>
+        </div>
+    `;
 class TableClickContext {
     constructor(panelId, li) {
         this.panelId = panelId;
@@ -300,8 +106,9 @@ class TableClickContext {
 class SchemaPanel extends Panel {
     constructor(id, heading, tables) {
         super(PanelType.Schema, id, JsonAjaxClient.getUrl(), true);
-        this.prepareTreeTemplate();
-        this.div2 = SchemaPanel.treeTemplate.cloneNode(true);
+        if (SchemaPanel.htmlTemplate == null)
+            SchemaPanel.htmlTemplate = Utils.makeDivFromString(SchemaPanel.htmlStr);
+        this.div2 = SchemaPanel.htmlTemplate.cloneNode(true);
         this.div2.style.display = 'block';
         super.appendChild(this.div2);
         if (tables != null) {
@@ -329,7 +136,8 @@ class SchemaPanel extends Panel {
             console.log("clicked: " + ctx.li.getAttribute('id'));
         let result = metaData.results[0];
         let panel = SqlPanel.getInstance();
-        panel.setSql(`select * from ${ctx.li.getAttribute('id')} limit 10`);
+        let parts = ConnectionPanel.sqlTemplate.split("{}");
+        panel.setSql(parts[0] + ctx.li.getAttribute('id') + parts[1]);
         if (result.resultType == 'EXCEPTION') {
             panel.setStatement("Exception: " + result.toString);
             panel.addResults();
@@ -341,12 +149,6 @@ class SchemaPanel extends Panel {
         panel.show();
         Menu.hideAllMenus();
     }
-    prepareTreeTemplate() {
-        if (SchemaPanel.treeTemplate == null) {
-            SchemaPanel.treeTemplate = document.getElementById("metaTree");
-            SchemaPanel.treeTemplate.remove();
-        }
-    }
     static getInstance(tables) {
         let x = Panel.getPanel(PanelType[PanelType.Schema]);
         if (x == null) {
@@ -357,13 +159,20 @@ class SchemaPanel extends Panel {
         return x;
     }
 }
-SchemaPanel.treeTemplate = null;
+SchemaPanel.htmlStr = `
+        <div id="metaTree">
+            <ul id="tree" class="scrollable">
+                <li id="tanzkw" class="nsItem">TANZKW</li>
+                <li id="tanzm" class="nsItem">TANZM</li>
+            </ul>
+        </div>
+    `;
+SchemaPanel.htmlTemplate = null;
 class SqlPanel extends Panel {
     constructor(id, heading) {
         super(PanelType.Sql, id, heading);
         if (SqlPanel.sqlTemplate == null) {
-            SqlPanel.sqlTemplate = document.getElementById("sqlPanel");
-            SqlPanel.sqlTemplate.remove();
+            SqlPanel.sqlTemplate = Utils.makeDivFromString(SqlPanel.htmlStr);
         }
         this.div2 = SqlPanel.sqlTemplate.cloneNode(true);
         this.div2.onmousedown = (ev) => {
@@ -431,6 +240,18 @@ class SqlPanel extends Panel {
         return x;
     }
 }
+SqlPanel.htmlStr = `
+        <div id="sqlPanel">
+            <p class="blankLine">&nbsp;</p>
+            <textarea id="statement" placeholder="Type your SQL statement here ..."></textarea>
+            <div id="sqlInput">
+                <button id="exec">execute</button>
+                <button id="clear">clear</button>
+            </div>
+            <p class="blankLine">&nbsp;</p>
+            <div id="sqlResults"></div>
+        </div>
+    `;
 SqlPanel.sqlTemplate = null;
 class ResultPanel extends Panel {
     constructor(id, heading) {
@@ -562,12 +383,12 @@ class Menu {
     constructor() {
         let html = document.getElementById("bodyMenu");
         if (html == null) {
-            html = (new DOMParser().parseFromString(Menu.bodyMenuStr, "text/html").body.firstChild);
+            html = Utils.makeDivFromString(Menu.bodyMenuStr);
             document.body.appendChild(html);
         }
         html = document.getElementById("panelListMenu");
         if (html == null) {
-            html = (new DOMParser().parseFromString(Menu.panelListMenuStr, "text/html").body.firstChild);
+            html = Utils.makeDivFromString(Menu.panelListMenuStr);
             document.body.appendChild(html);
         }
         document.addEventListener("contextmenu", Menu.showContextMenu, false);

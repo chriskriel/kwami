@@ -5,98 +5,15 @@
     <meta charset="UTF-8" />
     <title>SQL Interpreter V1.0</title>
     <link rel="stylesheet" href="styles/general.css" type="text/css" media="screen" title="Stylesheet" />
-
     <script src="scripts/utils.js" type="text/javascript"></script>
     <script src="scripts/ajaxClient.js" type="text/javascript"></script>
     <script src="scripts/jsonAjaxClient.js" type="text/javascript"></script>
-    <script src="scripts/panels.js" type="text/javascript"></script>
-    
+    <script src="scripts/panel.js" type="text/javascript"></script>
+    <script src="scripts/panels.js" type="text/javascript"></script> 
 </head>
 
 <body id='body'>
-
-    <!--div>
-        <ul id="bodyMenu" class="menu">
-            <li class="menuHeading">Context Menu</li>
-            <li id="menuCnnct" data-action="Connect">Connection Panel</li>
-            <li data-action="Schema">Schema Panel</li>
-            <li data-action="Sql">New SQL Panel</li>
-            <li data-action="sqls">SQL Panels ...</li>
-            <li data-action="rows">Row Panels ...</li>
-            <li data-action="results">Result Panels ...</li>
-        </ul>
-    </div>
-
-    <div>
-        <ul id="panelListMenu" class="menu">
-            <li class="menuHeading"></li>
-            <li data-action="metaPanel1">Meta Panel 1</li>
-        </ul>
-    </div-->
-
-    <!--div id="headingUpdater" class="panel" style='display: none;'>
-        <fieldset>
-            <legend>Panel Heading Update</legend>
-            <input id="newName" name="newName" type="text" size="30" placeholder="type new panel name here" />
-        </fieldset>
-        <button id="cancel" class="pnlButton">Cancel</button>
-        <button id="update" class="pnlButton">Update</button>
-    </div-->
-
     <div id="ajaxOverlay" class="ajaxOverlay displayOff"></div>
-
-    <div class="template">
-
-        <div id="panel" class="panel">
-            <h3 id="panelHeading" class="panelHeading"></h3>
-            <p class="inlineSpace">&nbsp;&nbsp;&nbsp;</p>
-            <button id="closeBttn" class="pnlButton">X</button>
-            <button id="hideBttn" class="pnlButton">_</button>
-        </div>
-
-        <div id="connectInputs">
-            <fieldset>
-                <legend>Connection Parameters</legend>
-                <label for="host">Host: </label>
-                <input id="host" type="text" size="30" value="localhost" />
-                <br>
-                <label for="port">Port: </label>
-                <input id="port" type="number" min="4096" max="65535" value="8080" />
-                <br>
-                <label for="context">Context: </label>
-                <input id="context" type="text" size="30" value="sqlmx" />
-                <br>
-                <label for="schema">Schema: </label>
-                <input id="schema" type="text" size="30" value="employees" />
-                <br>
-                <label for="status">Status: </label>
-                <input id="status" type="text" value="Not tried" disabled="disabled" />
-                <br>
-                <button id="connectBtn" class="pnlButton">Connect</button>
-            </fieldset>
-            <p id="connException"></p>
-        </div>
-
-        <div id="metaTree">
-            <ul id="tree" class="scrollable">
-                <li id="tanzkw" class="nsItem">TANZKW</li>
-                <li id="tanzm" class="nsItem">TANZM</li>
-            </ul>
-        </div>
-
-        <div id="sqlPanel">
-            <p class="blankLine">&nbsp;</p>
-            <textarea id="statement" placeholder="Type your SQL statement here ..."></textarea>
-            <div id="sqlInput">
-                <button id="exec">execute</button>
-                <button id="clear">clear</button>
-            </div>
-            <p class="blankLine">&nbsp;</p>
-            <div id="sqlResults"></div>
-        </div>
-
-    </div>
-
     <script>
         // IE does not have remove()
         Element.prototype.remove = function() {
@@ -105,4 +22,5 @@
         ConnectionPanel.getInstance(true);
      </script>
 </body>
+
 </html>

@@ -1,6 +1,11 @@
 class Utils {
     public static debug: boolean = false;
 
+    public static makeDivFromString(html: string): HTMLDivElement {
+        return <HTMLDivElement>(new DOMParser().parseFromString(html, "text/html").body.firstChild);
+
+    }
+
     // public static interpolate(template: string, ...values: string[]) {
     //     if (template === undefined || template === null)
     //         return null;
