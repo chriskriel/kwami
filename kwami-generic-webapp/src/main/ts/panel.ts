@@ -1,4 +1,4 @@
-enum PanelType {
+export enum PanelType {
     Schema,
     Connect,
     Result,
@@ -7,7 +7,7 @@ enum PanelType {
 }
 
 /********************************************************************/
-class Panel {
+export class Panel {
     private static template: HTMLDivElement = null;
     private static panels: Panel[] = [];
     private static zIndex: number = 0;
@@ -207,7 +207,7 @@ class Panel {
 }
 
 /********************************************************************/
-class HeadingUpdater {
+export class HeadingUpdater {
     private static panelId: string;
     private static id: string = 'headingUpdater';
     private static isConfigured: boolean = false;
@@ -264,4 +264,3 @@ class HeadingUpdater {
         updteBttn.onclick = HeadingUpdater.updateName;
     }
 }
-

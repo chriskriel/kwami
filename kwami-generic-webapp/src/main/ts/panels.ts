@@ -1,3 +1,5 @@
+import { PanelType, Panel, HeadingUpdater } from "panel";
+
 class ConnectionPanel extends Panel {
     public static sqlTemplate: string;
     public static htmlStr = `
