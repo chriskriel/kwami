@@ -1,4 +1,4 @@
-export enum PanelType {
+enum PanelType {
     Schema,
     Connect,
     Result,
@@ -7,7 +7,7 @@ export enum PanelType {
 }
 
 /********************************************************************/
-export class Panel {
+class Panel {
     private static template: HTMLDivElement = null;
     private static panels: Panel[] = [];
     private static zIndex: number = 0;
@@ -207,7 +207,7 @@ export class Panel {
 }
 
 /********************************************************************/
-export class HeadingUpdater {
+class HeadingUpdater {
     private static panelId: string;
     private static id: string = 'headingUpdater';
     private static isConfigured: boolean = false;
