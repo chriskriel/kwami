@@ -111,14 +111,11 @@ public class StringEncryptor {
 		String line = null;
 		String[] fields = null;
 		while ((line = rdr.readLine()) != null) {
-			fields = line.split("|");
+			fields = line.split(",");
 			fields[2] = s.decrypt(fields[2]);
 			StringBuilder sb = new StringBuilder(100);
 			for (int i = 0; i < fields.length; i++) {
-				// if (i == 2 || i == 3)
-				// 	sb.append('"').append(fields[i]).append('"').append(',');
-				// else
-					sb.append(fields[i]).append('|');
+				sb.append(fields[i]).append('|');
 			}
 			sb.deleteCharAt(sb.length() - 1);
 			wtr.println(sb.toString());
