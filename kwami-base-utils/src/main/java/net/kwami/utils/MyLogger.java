@@ -4,9 +4,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
- * A logger that replaces the log4j Logger class in order to format messages using String.format before they are logged.
- * It also checks whether the logging priority is enabled before formatting any message.
- *
+   A logger that replaces the log4j Logger class in order to format messages using String.format() before they are logged.
+   It also checks whether the logging priority is enabled before formatting any message. 
  */
 public class MyLogger {
 

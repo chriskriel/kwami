@@ -3,12 +3,28 @@ package net.kwami.utils;
 import java.util.Properties;
 import com.google.gson.GsonBuilder;
 
+/*
+	MyProperties is a java.util.Properties specialization that provides some methods
+	to format and validate properties (mostly numeric properties).
+*/
 public class MyProperties extends Properties {
 
 	private static final String ERR_MSG = "returning defaultValue %d because property '%s', with value '%s', cannot be parsed as %s";
 	private static final long serialVersionUID = 1L;
 	private static final MyLogger logger = new MyLogger(MyProperties.class);
 	
+
+	/*
+		Allows the use of JSON strings as properties. This method will instantiate
+		the JSON string as an object of the type of the default value.
+		@param property
+			the name of the property that has a JSON string as a value
+		@param defaultValue
+			the default value if the property is null. The class of this
+			parameter also determines the class of the returned value
+		@return
+			an object of the same class as the default value passed in
+	*/
 	@SuppressWarnings("unchecked")
 	public <T> T getJsonProperty(String property, T defaultValue) {
 		String s = getProperty(property);

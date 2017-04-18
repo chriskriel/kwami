@@ -26,6 +26,14 @@ class CachedObject {
 	}
 }
 
+
+/*
+The Configurator uses Google's GSON library to instantiate objects from JSON formatted
+files. It is mostly used to read files with configuration properties into configuration objects.
+The JSON serialized file is called the "resource file". The Configurator can only locate resource
+files that appear on the java classpath. By default the resource file name is the class name of
+the object to be instantiated with a *.js extension.
+*/
 public abstract class Configurator {
 
 	private static final MyLogger logger = new MyLogger(Configurator.class);
@@ -36,6 +44,15 @@ public abstract class Configurator {
 		refreshInterval = Long.parseLong(System.getProperty("config.caching.mins", "2")) * 60000;
 	}
 	
+	/*
+	Instantiate an object of the specified class from a JSON file.
+	@param classT 
+		the Class of the object to be instantiated. The simple name
+		of this class with a suffix of *.js is used as the filename of the JSON
+		file. The file must be available on the classpath.
+	@return
+		an object of the specified class is returned
+	*/
 	public static <T> T get(Class<T> classT) {
 		String resourceName = String.format("/%s.js", classT.getSimpleName());
 		return get(classT, resourceName);
