@@ -6,6 +6,8 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import net.kwami.utils.HexDumper;
+
 public class TcpProxy extends Thread {
 	private String proxyChannel;
 	private int localPort;
@@ -22,6 +24,7 @@ public class TcpProxy extends Thread {
 
 	@Override
 	public void run() {
+		HexDumper hexDumper = new HexDumper();
 		try (ServerSocket ss = new ServerSocket(localPort)) {
 			final byte[] request = new byte[4096];
 			byte[] response = new byte[4096];
@@ -34,10 +37,13 @@ public class TcpProxy extends Thread {
 						final OutputStream streamToClient = localSocket.getOutputStream()) {
 					Thread sendingThread = new Thread() {
 						public void run() {
+							HexDumper hexDumper = new HexDumper();
 							int bytesRead;
 							try {
 								while ((bytesRead = streamFromClient.read(request)) != -1) {
 									streamToServer.write(request, 0, bytesRead);
+									System.out.println(Thread.currentThread().getName());
+									System.out.println(hexDumper.buildHexDump(request, bytesRead));
 								}
 								streamToServer.flush();
 							} catch (IOException e) {
@@ -49,12 +55,14 @@ public class TcpProxy extends Thread {
 						}
 					};
 					sendingThread.setDaemon(true);
-					sendingThread.setName("sendingThread[" + proxyChannel + "]");
+					sendingThread.setName("sendingThread[" + proxyChannel + "]:");
 					sendingThread.start();
 					int bytesRead;
 					try {
 						while ((bytesRead = streamFromServer.read(response)) != -1) {
 							streamToClient.write(response, 0, bytesRead);
+							System.out.println(Thread.currentThread().getName());
+							System.out.println(hexDumper.buildHexDump(request, bytesRead));
 						}
 						streamToClient.flush();
 					} catch (IOException e) {
@@ -97,7 +105,7 @@ public class TcpProxy extends Thread {
 			}
 			System.out.printf("Starting a proxy for %s\n", proxyChannel);
 			TcpProxy proxy = new TcpProxy(proxyChannel, localPort, remoteHost, remotePort);
-			proxy.setName("ReceivingThread[" + proxyChannel + "]");
+			proxy.setName("ReceivingThread[" + proxyChannel + "]:");
 			proxy.setDaemon(true);
 			proxy.start();
 		}

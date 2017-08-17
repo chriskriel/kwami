@@ -1,8 +1,8 @@
 package net.kwami.utils;
 
-public abstract class HexDumper {
+public class HexDumper {
 	private static final String HEX = "0123456789ABCDEF";
-	private int hexPerLine = 32;
+	private int hexPerLine = 64;
 	
 	public HexDumper() {
 		super();
