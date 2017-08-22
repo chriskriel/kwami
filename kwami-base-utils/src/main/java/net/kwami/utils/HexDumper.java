@@ -21,7 +21,6 @@ public class HexDumper {
 		byte[] bytes = new byte[length];
 		System.arraycopy(inBytes, 0, bytes, 0, length);
 		StringBuilder sb = new StringBuilder((length == 0 ? 20 : length) * 2);
-		sb.append('\n');
 		if (length == 0) {
 			sb.append("no bytes to display in hex format");
 			return sb;

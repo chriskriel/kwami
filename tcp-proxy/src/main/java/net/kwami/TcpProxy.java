@@ -2,6 +2,7 @@ package net.kwami;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -42,8 +43,11 @@ public class TcpProxy extends Thread {
 							try {
 								while ((bytesRead = streamFromClient.read(request)) != -1) {
 									streamToServer.write(request, 0, bytesRead);
-									System.out.println(Thread.currentThread().getName());
-									System.out.println(hexDumper.buildHexDump(request, bytesRead));
+									synchronized (System.out) {
+										System.out.println(Thread.currentThread().getName());
+										System.out.println(hexDumper.buildHexDump(request, bytesRead));
+										System.out.println();
+									}
 								}
 								streamToServer.flush();
 							} catch (IOException e) {
@@ -61,20 +65,23 @@ public class TcpProxy extends Thread {
 					try {
 						while ((bytesRead = streamFromServer.read(response)) != -1) {
 							streamToClient.write(response, 0, bytesRead);
-							System.out.println(Thread.currentThread().getName());
-							System.out.println(hexDumper.buildHexDump(request, bytesRead));
+							synchronized (System.out) {
+								System.out.println(Thread.currentThread().getName());
+								System.out.println(hexDumper.buildHexDump(response, bytesRead));
+								System.out.println();
+							}
 						}
 						streamToClient.flush();
 					} catch (IOException e) {
 					}
 					streamToClient.close();
 				} catch (IOException e) {
-					System.out.print("Streams to and from proxy failed\n ");
+					System.err.print("Streams to and from proxy failed\n ");
 					e.printStackTrace();
 				}
 			}
 		} catch (IOException e) {
-			System.out.print("ServerSocket open failed\n ");
+			System.err.print("ServerSocket open failed\n ");
 			e.printStackTrace();
 		}
 	}
@@ -83,31 +90,35 @@ public class TcpProxy extends Thread {
 		int remotePort = 0, localPort = 0;
 		String remoteHost = "localhost";
 		if (args.length == 0) {
-			System.out.println("Usage: net.kwami.TcpProxy <localPort:remoteHost:remotePort> ...");
+			System.err.println("Usage: net.kwami.TcpProxy <localPort:remoteHost:remotePort> ...");
 			return;
 		}
 		for (String proxyChannel : args) {
 			boolean valid = true;
 			String[] addressParts = proxyChannel.split(":");
-			if (addressParts.length != 3)
+			if (addressParts.length != 3) {
 				valid = false;
+			}
 			try {
-				localPort = Integer.parseInt(args[0]);
-				remoteHost = args[1];
-				remotePort = Integer.parseInt(args[2]);
+				localPort = Integer.parseInt(addressParts[0]);
+				remoteHost = addressParts[1];
+				remotePort = Integer.parseInt(addressParts[2]);
 			} catch (Throwable t) {
+				t.printStackTrace();
 				valid = false;
 			}
 			if (!valid) {
-				System.out.printf("Expecting, for example, 80:remoteHost:80 but got %s (trying the next parameter).\n",
+				System.err.printf("Expecting, for example, 80:remoteHost:80 but got %s (trying the next parameter).\n",
 						proxyChannel);
 				continue;
 			}
-			System.out.printf("Starting a proxy for %s\n", proxyChannel);
+			System.err.printf("Starting a proxy for %s\n", proxyChannel);
 			TcpProxy proxy = new TcpProxy(proxyChannel, localPort, remoteHost, remotePort);
 			proxy.setName("ReceivingThread[" + proxyChannel + "]:");
 			proxy.setDaemon(true);
 			proxy.start();
 		}
+		System.err.println("Hit enter to terminate");
+		new InputStreamReader(System.in).read();
 	}
 }
