@@ -72,7 +72,7 @@ public class HexDumper {
 	private String removeNonPrintable(byte[] bytes, int offset, int length) {
 		if (bytes.length == 0)
 			return "";
-		for (int i = 0; i < bytes.length; i++) {
+		for (int i = offset; i < (offset + length); i++) {
 			if (bytes[i] < 32 || bytes[i] > 126)
 				bytes[i] = 32;
 		}
