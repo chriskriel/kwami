@@ -40,6 +40,16 @@ public class MyLogger {
 			logger.log(FQCN, Level.INFO, String.format(format, args), t);
 	}
 
+	public void warn(final String message) {
+		if (logger.isInfoEnabled())
+			logger.log(FQCN, Level.WARN, message, null);
+	}
+
+	public void warn(final String format, final Object... args) {
+		if (logger.isInfoEnabled())
+			logger.log(FQCN, Level.WARN, String.format(format, args), null);
+	}
+
 	public void debug(final String message) {
 		if (logger.isDebugEnabled())
 			logger.log(FQCN, Level.DEBUG, message, null);
