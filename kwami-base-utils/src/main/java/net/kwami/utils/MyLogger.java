@@ -102,6 +102,10 @@ public class MyLogger {
 		logger.log(FQCN, Level.ERROR, String.format(format, args), null);
 	}
 
+	public void error(final Throwable t, final String format, final Object... args) {
+		logger.log(FQCN, Level.ERROR, String.format(format, args), t);
+	}
+
 	public void log(final Throwable t, final String format, final Object... args) {
 		logger.log(FQCN, Level.ERROR, String.format(format, args), t);
 	}
