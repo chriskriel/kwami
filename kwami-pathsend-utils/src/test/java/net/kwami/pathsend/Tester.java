@@ -19,8 +19,17 @@ public final class Tester {
 		parmBuf.addParameter("int-min", Integer.MIN_VALUE);
 		parmBuf.addParameter("long-min", Long.MIN_VALUE);
 		parmBuf.addParameter("bytes", "bbbbbbbbbbbbBBBBBBBccccccvalue".getBytes());
+		parmBuf.getStringValue("bytes");
 		parmBuf.addParameter("String", "bbbbbbbbbbbbBBBBBBBccccccvalue", false);
 		parmBuf.addParameter("string0", "bbbbbbbbbbbbBBBBBBBccccccvalue", true);
+		parmBuf.getStringValue("string0");
+		parmBuf.addParameter("string1", "bbbbbbbbbbbbBBBBBBBccccccvalue", true);
+		parmBuf.addParameter("string2", "bbbbbbbbbbbbBBBBBBBccccccvalue", true);
+		parmBuf.addParameter("string3", "bbbbbbbbbbbbBBBBBBBccccccvalue", true);
+		parmBuf.addParameter("string5", "bbbbbbbbbbbbBBBBBBBccccccvalue", true);
+		parmBuf.addParameter("string6", "bbbbbbbbbbbbBBBBBBBccccccvalue", true);
+		parmBuf.addParameter("USSD_STRING", "*909#", true);
+		System.out.println(parmBuf.getStringValue("USSD_STRING"));
 		byte[] payload = parmBuf.toByteArray();
 		StringBuilder sb = dumper.buildHexDump(payload);
 		System.out.println(sb.toString());

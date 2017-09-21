@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import net.kwami.utils.HexDumper;
+
 public final class PpfeParameterBuffer {
 
 	private static final int LEN1_OFFSET = 4;
@@ -13,8 +15,8 @@ public final class PpfeParameterBuffer {
 	private static final int MSG_ID_OFFSET = 8;
 	private static final short HDR_LEN = 10;
 	private static final byte TERMINATOR = 0;
-	private String charSetName = "UTF-8";
-	private int size = 32768;
+	private String charSetName = "ISO-8859-1";
+	private int size = Short.MAX_VALUE;
 	private ByteBuffer bb = null;
 	private Map<String, Integer> keys = null;
 
@@ -113,6 +115,8 @@ public final class PpfeParameterBuffer {
 
 	public PpfeParameterBuffer addParameter(String name, String value, boolean addNullTerminator)
 			throws UnsupportedEncodingException {
+		if (value == null)
+			return this;
 		setParameterName(name);
 		bb.putShort((short) (value.length() + (addNullTerminator ? 1 : 0)));
 		if (value.length() > 0) {
@@ -128,39 +132,43 @@ public final class PpfeParameterBuffer {
 	}
 
 	public byte getByteValue(String name) {
-		int pos = keys.get(name);
-		bb.position(pos + 2);
-		return bb.get();
+		if (keys.get(name) == null)
+			return 0;
+		return bb.get(keys.get(name) + 2);
 	}
 
 	public short getShortValue(String name) {
-		int pos = keys.get(name);
-		bb.position(pos + 2);
-		return bb.getShort();
+		if (keys.get(name) == null)
+			return 0;
+		return bb.getShort(keys.get(name) + 2);
 	}
 
 	public int getIntValue(String name) {
-		int pos = keys.get(name);
-		bb.position(pos + 2);
-		return bb.getInt();
+		if (keys.get(name) == null)
+			return 0;
+		return bb.getInt(keys.get(name) + 2);
 	}
 
 	public long getLongValue(String name) {
-		int pos = keys.get(name);
-		bb.position(pos + 2);
-		return bb.getLong();
+		if (keys.get(name) == null)
+			return 0;
+		return bb.getLong(keys.get(name) + 2);
 	}
 
 	public byte[] getByteArrayValue(String name) {
-		int pos = keys.get(name);
-		bb.position(pos);
+		if (keys.get(name) == null)
+			return null;
+		byte[] valueBytes = null;
+		int valuePosition = keys.get(name);
+		int putPosition = bb.position();
+		bb.position(valuePosition);
 		int valueLen = bb.getShort();
 		if (valueLen > 0) {
-			byte[] valueBytes = new byte[valueLen];
+			valueBytes = new byte[valueLen];
 			bb.get(valueBytes);
-			return valueBytes;
 		}
-		return null;
+		bb.position(putPosition);
+		return valueBytes;
 	}
 
 	public String getStringValue(String name) throws UnsupportedEncodingException {
