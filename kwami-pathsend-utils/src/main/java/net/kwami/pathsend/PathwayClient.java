@@ -24,7 +24,7 @@ public class PathwayClient {
 	}
 
 	public PpfeParameterBuffer transceive(String serverPath, PpfeParameterBuffer reqBuf) throws Exception {
-		logger.debug("serverPath={},msgId={}", serverPath, reqBuf.getMsgId());
+		logger.debug("serverPath=%s,msgId=%d", serverPath, reqBuf.getMsgId());
 		HexDumper hexDumper = new HexDumper();
 		String[] serverPathParts = serverPath.split(":");
 		String pathmonName = serverPathParts[0].trim().toUpperCase();
