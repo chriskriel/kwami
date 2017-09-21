@@ -15,7 +15,7 @@ public final class PpfeParameterBuffer {
 	private static final int MSG_ID_OFFSET = 8;
 	private static final short HDR_LEN = 10;
 	private static final byte TERMINATOR = 0;
-	private String charSetName = "ISO-8859-1";
+	private String charSetName = "UTF-8";
 	private int size = Short.MAX_VALUE;
 	private ByteBuffer bb = null;
 	private Map<String, Integer> keys = null;
@@ -27,6 +27,7 @@ public final class PpfeParameterBuffer {
 	public static PpfeParameterBuffer wrap(byte[] bytes, int offset, int length) {
 		PpfeParameterBuffer obj = new PpfeParameterBuffer();
 		obj.bb = ByteBuffer.wrap(bytes, offset, length);
+		obj.bb.position(length);
 		obj.keys = obj.keyMap();
 		return obj;
 	}

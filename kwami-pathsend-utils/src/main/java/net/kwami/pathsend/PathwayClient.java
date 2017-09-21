@@ -20,7 +20,7 @@ public class PathwayClient {
 		super();
 		this.timeoutCentiSecs = timeoutSecsX100;
 		this.latencyThresholdMillis = latencyThresholdMillis;
-		logger.debug("timeoutCentiSecs=%d, latencyThreshold=%dms", latencyThresholdMillis, timeoutSecsX100);
+		logger.debug("timeoutCentiSecs=%d, latencyThreshold=%dms", timeoutSecsX100, latencyThresholdMillis);
 	}
 
 	public PpfeParameterBuffer transceive(String serverPath, PpfeParameterBuffer reqBuf) throws Exception {
@@ -32,15 +32,16 @@ public class PathwayClient {
 		long latency = 0, startTime = System.currentTimeMillis();
 		byte[] receiveBuffer = new byte[32767];
 		byte[] payload = reqBuf.toByteArray();
-		logger.trace("payload.length=%d", payload.length);
-		logger.trace("requestBytes:\n%s", hexDumper.buildHexDump(payload));
+		logger.trace("requestBytes:(length=%d)\n%s", payload.length, hexDumper.buildHexDump(payload));
+
 		TsmpServer server = new TsmpServer(pathmonName, serverName);
 		server.setTimeout(timeoutCentiSecs);
 		int responseLength = server.service(payload, payload.length, receiveBuffer);
+
+		logger.trace("responseBytes:(length=%d)\n%s", responseLength,
+				hexDumper.buildHexDump(receiveBuffer, responseLength));
 		latency = System.currentTimeMillis() - startTime;
 		PpfeParameterBuffer respBuf = PpfeParameterBuffer.wrap(receiveBuffer, 0, responseLength);
-		byte[] responseBytes = respBuf.toByteArray();
-		logger.trace("responseBytes:\n%s", hexDumper.buildHexDump(responseBytes));
 		if (latency > latencyThresholdMillis)
 			logger.warn("Latency of %dms on server %s:%s exceeded threshold of %dms", latency, pathmonName, serverName,
 					latencyThresholdMillis);
