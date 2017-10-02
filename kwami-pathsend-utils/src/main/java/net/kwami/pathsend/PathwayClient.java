@@ -1,7 +1,5 @@
 package net.kwami.pathsend;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.google.gson.GsonBuilder;
 import com.tandem.tsmp.TsmpServer;
 
@@ -13,7 +11,7 @@ public class PathwayClient {
 	private static final MyLogger logger = new MyLogger(PathwayClient.class);
 	private long latencyThresholdMillis;
 	private int timeoutCentiSecs = 100;
-	private AtomicInteger receiveBufSize;
+	private int receiveBufSize;
 
 	public PathwayClient() {
 		super();
@@ -25,7 +23,7 @@ public class PathwayClient {
 
 	public PathwayClient(int timeoutSecsX100, long latencyThresholdMillis, int receiveBufSize) {
 		super();
-		this.receiveBufSize.set(receiveBufSize);
+		this.receiveBufSize = receiveBufSize;
 		this.timeoutCentiSecs = timeoutSecsX100;
 		this.latencyThresholdMillis = latencyThresholdMillis;
 		logger.debug("timeoutCentiSecs=%d, latencyThreshold=%dms", timeoutSecsX100, latencyThresholdMillis);
@@ -38,7 +36,7 @@ public class PathwayClient {
 		String pathmonName = serverPathParts[0].trim().toUpperCase();
 		String serverName = serverPathParts[1].trim().toUpperCase();
 		long latency = 0, startTime = System.currentTimeMillis();
-		byte[] receiveBuffer = new byte[receiveBufSize.get()];
+		byte[] receiveBuffer = new byte[receiveBufSize];
 		byte[] payload = reqBuf.toByteArray();
 		logger.trace("requestBytes:(length=%d)\n%s", payload.length, hexDumper.buildHexDump(payload));
 
@@ -46,10 +44,9 @@ public class PathwayClient {
 		server.setTimeout(timeoutCentiSecs);
 		int responseLength = server.service(payload, payload.length, receiveBuffer);
 
-		if (responseLength > receiveBufSize.get()) {
-			String errorMsg = String.format("failure: responseLength of %d > receiveBufSize of %d", responseLength, receiveBufSize);
-			logger.error(errorMsg + ", increasing receive buffer size to the latest response length plus 50 percent");
-			receiveBufSize.set(responseLength + responseLength / 2);
+		if (responseLength > receiveBufSize) {
+			String errorMsg = String.format("failure: responseLength of %d > receiveBufSize of %d", responseLength,
+					receiveBufSize);
 			throw new Exception(errorMsg);
 		}
 		logger.trace("responseBytes:(length=%d)\n%s", responseLength,
@@ -76,6 +73,14 @@ public class PathwayClient {
 
 	public void setTimeoutCentiSecs(int timeoutCentiSecs) {
 		this.timeoutCentiSecs = timeoutCentiSecs;
+	}
+
+	public int getReceiveBufSize() {
+		return receiveBufSize;
+	}
+
+	public void setReceiveBufSize(int receiveBufSize) {
+		this.receiveBufSize = receiveBufSize;
 	}
 
 	@Override
