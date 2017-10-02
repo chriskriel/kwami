@@ -1,5 +1,7 @@
 package net.kwami.pathsend;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.google.gson.GsonBuilder;
 import com.tandem.tsmp.TsmpServer;
 
@@ -11,13 +13,19 @@ public class PathwayClient {
 	private static final MyLogger logger = new MyLogger(PathwayClient.class);
 	private long latencyThresholdMillis;
 	private int timeoutCentiSecs = 100;
+	private AtomicInteger receiveBufSize;
 
 	public PathwayClient() {
 		super();
 	}
 
 	public PathwayClient(int timeoutSecsX100, long latencyThresholdMillis) {
+		this(timeoutSecsX100, latencyThresholdMillis, Short.MAX_VALUE / 16);
+	}
+
+	public PathwayClient(int timeoutSecsX100, long latencyThresholdMillis, int receiveBufSize) {
 		super();
+		this.receiveBufSize.set(receiveBufSize);
 		this.timeoutCentiSecs = timeoutSecsX100;
 		this.latencyThresholdMillis = latencyThresholdMillis;
 		logger.debug("timeoutCentiSecs=%d, latencyThreshold=%dms", timeoutSecsX100, latencyThresholdMillis);
@@ -30,7 +38,7 @@ public class PathwayClient {
 		String pathmonName = serverPathParts[0].trim().toUpperCase();
 		String serverName = serverPathParts[1].trim().toUpperCase();
 		long latency = 0, startTime = System.currentTimeMillis();
-		byte[] receiveBuffer = new byte[32767];
+		byte[] receiveBuffer = new byte[receiveBufSize.get()];
 		byte[] payload = reqBuf.toByteArray();
 		logger.trace("requestBytes:(length=%d)\n%s", payload.length, hexDumper.buildHexDump(payload));
 
@@ -38,6 +46,12 @@ public class PathwayClient {
 		server.setTimeout(timeoutCentiSecs);
 		int responseLength = server.service(payload, payload.length, receiveBuffer);
 
+		if (responseLength > receiveBufSize.get()) {
+			String errorMsg = String.format("failure: responseLength of %d > receiveBufSize of %d", responseLength, receiveBufSize);
+			logger.error(errorMsg + ", increasing receive buffer size to the latest response length plus 50 percent");
+			receiveBufSize.set(responseLength + responseLength / 2);
+			throw new Exception(errorMsg);
+		}
 		logger.trace("responseBytes:(length=%d)\n%s", responseLength,
 				hexDumper.buildHexDump(receiveBuffer, responseLength));
 		latency = System.currentTimeMillis() - startTime;
