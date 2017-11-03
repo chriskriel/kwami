@@ -4,7 +4,7 @@
   <groupId>net.kwami</groupId>
   <artifactId>kwami-mybatis-utils</artifactId>
   <name>kwami-mybatis-utils</name>
-  <version>1</version>
+  <version>2</version>
   <url>http://maven.apache.org</url>
   <build>
     <plugins>
@@ -42,7 +42,7 @@
     <dependency>
       <groupId>net.kwami</groupId>
       <artifactId>kwami-base-utils</artifactId>
-      <version>2</version>
+      <version>3</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

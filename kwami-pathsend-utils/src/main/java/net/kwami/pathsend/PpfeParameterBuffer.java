@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import net.kwami.utils.HexDumper;
-
 public final class PpfeParameterBuffer {
 
 	private static final int LEN1_OFFSET = 4;
