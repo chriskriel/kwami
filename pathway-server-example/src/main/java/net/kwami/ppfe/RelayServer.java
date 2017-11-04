@@ -1,6 +1,4 @@
-package net.kwami;
-
-import org.apache.tomcat.jdbc.pool.DataSource;
+package net.kwami.ppfe;
 
 public class RelayServer extends PathwayServer {
 
@@ -10,11 +8,6 @@ public class RelayServer extends PathwayServer {
 	
 	public PpfeApplication createApplication() throws Exception {
 		return new RelayApplication(this);
-	}
-
-	@Override
-	public DataSource getDataSource() {
-		return null;
 	}
 	
 	public static void main(String[] args) throws Exception {

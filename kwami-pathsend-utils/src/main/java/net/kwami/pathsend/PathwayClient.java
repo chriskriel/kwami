@@ -5,6 +5,7 @@ import com.tandem.tsmp.TsmpServer;
 
 import net.kwami.utils.HexDumper;
 import net.kwami.utils.MyLogger;
+import net.kwami.utils.ParameterBuffer;
 
 public class PathwayClient {
 
@@ -29,7 +30,7 @@ public class PathwayClient {
 		logger.debug("timeoutCentiSecs=%d, latencyThreshold=%dms", timeoutSecsX100, latencyThresholdMillis);
 	}
 
-	public PpfeParameterBuffer transceive(String serverPath, PpfeParameterBuffer reqBuf) throws Exception {
+	public ParameterBuffer transceive(String serverPath, ParameterBuffer reqBuf) throws Exception {
 		logger.debug("serverPath=%s,msgId=%d", serverPath, reqBuf.getMsgId());
 		HexDumper hexDumper = new HexDumper();
 		String[] serverPathParts = serverPath.split("\\.");
@@ -52,7 +53,7 @@ public class PathwayClient {
 		logger.trace("responseBytes:(length=%d)\n%s", responseLength,
 				hexDumper.buildHexDump(receiveBuffer, responseLength));
 		latency = System.currentTimeMillis() - startTime;
-		PpfeParameterBuffer respBuf = PpfeParameterBuffer.wrap(receiveBuffer, 0, responseLength);
+		ParameterBuffer respBuf = ParameterBuffer.wrap(receiveBuffer, 0, responseLength);
 		if (latency > latencyThresholdMillis)
 			logger.warn("Latency of %dms on server %s:%s exceeded threshold of %dms", latency, pathmonName, serverName,
 					latencyThresholdMillis);

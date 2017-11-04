@@ -1,4 +1,4 @@
-package net.kwami;
+package net.kwami.ppfe;
 
 import java.util.Properties;
 
@@ -12,9 +12,9 @@ import com.tandem.ext.guardian.ReceiveInfo;
 import com.tandem.ext.guardian.ReceiveNoOpeners;
 
 import net.kwami.pathsend.PathwayClient;
-import net.kwami.pathsend.PpfeParameterBuffer;
 import net.kwami.utils.Configurator;
 import net.kwami.utils.MyLogger;
+import net.kwami.utils.ParameterBuffer;
 
 public abstract class PathwayServer implements PpfeContainer {
 	private MyLogger logger = new MyLogger(PathwayServer.class);
@@ -75,7 +75,7 @@ public abstract class PathwayServer implements PpfeContainer {
 	@Override
 	public PpfeMessage sendRequest(String destination, PpfeMessage message) {
 		PpfeMessage response = new PpfeMessage();
-		PpfeParameterBuffer data = null;
+		ParameterBuffer data = null;
 		try {
 			PathwayClient pwClient = new PathwayClient(200, 5000);
 			data = pwClient.transceive(destination, message.getData());
@@ -108,7 +108,7 @@ public abstract class PathwayServer implements PpfeContainer {
 							continue;
 					} else {
 						message = new PpfeMessage();
-						message.setData(PpfeParameterBuffer.wrap(maxMsg, 0, bytesReadCount));
+						message.setData(ParameterBuffer.wrap(maxMsg, 0, bytesReadCount));
 						message.setContext(ri);
 					}
 				}

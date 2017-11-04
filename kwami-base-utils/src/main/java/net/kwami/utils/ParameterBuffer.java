@@ -1,4 +1,4 @@
-package net.kwami.pathsend;
+package net.kwami.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public final class PpfeParameterBuffer {
+public final class ParameterBuffer {
 
 	private static final int LEN1_OFFSET = 4;
 	private static final int LEN2_OFFSET = 6;
@@ -18,33 +18,33 @@ public final class PpfeParameterBuffer {
 	private ByteBuffer bb = null;
 	private Map<String, Integer> keys = null;
 
-	public static PpfeParameterBuffer wrap(byte[] bytes) {
+	public static ParameterBuffer wrap(byte[] bytes) {
 		return wrap(bytes, 0, bytes.length);
 	}
 
-	public static PpfeParameterBuffer wrap(byte[] bytes, int offset, int length) {
-		PpfeParameterBuffer obj = new PpfeParameterBuffer();
+	public static ParameterBuffer wrap(byte[] bytes, int offset, int length) {
+		ParameterBuffer obj = new ParameterBuffer();
 		obj.bb = ByteBuffer.wrap(bytes, offset, length);
 		obj.bb.position(length);
 		obj.keys = obj.keyMap();
 		return obj;
 	}
 
-	private PpfeParameterBuffer() {
+	private ParameterBuffer() {
 	}
 
-	public PpfeParameterBuffer(short msgId) {
+	public ParameterBuffer(short msgId) {
 		bb = ByteBuffer.allocate(size);
 		initialize(msgId);
 	}
 
-	public PpfeParameterBuffer(short msgId, int size) {
+	public ParameterBuffer(short msgId, int size) {
 		this.size = size;
 		bb = ByteBuffer.allocate(size);
 		initialize(msgId);
 	}
 
-	public PpfeParameterBuffer initialize(short newMsgId) {
+	public ParameterBuffer initialize(short newMsgId) {
 		keys = new HashMap<String, Integer>();
 		bb.clear();
 		bb.putInt(0);
@@ -71,21 +71,21 @@ public final class PpfeParameterBuffer {
 		return bb.getShort(8);
 	}
 
-	public PpfeParameterBuffer addParameter(String name, byte value) throws UnsupportedEncodingException {
+	public ParameterBuffer addParameter(String name, byte value) throws UnsupportedEncodingException {
 		setParameterName(name);
 		bb.putShort((short) (Byte.SIZE / Byte.SIZE));
 		bb.put(value);
 		return this;
 	}
 
-	public PpfeParameterBuffer addParameter(String name, short value) throws UnsupportedEncodingException {
+	public ParameterBuffer addParameter(String name, short value) throws UnsupportedEncodingException {
 		setParameterName(name);
 		bb.putShort((short) (Short.SIZE / Byte.SIZE));
 		bb.putShort(value);
 		return this;
 	}
 
-	public PpfeParameterBuffer addParameter(String name, int value) throws UnsupportedEncodingException {
+	public ParameterBuffer addParameter(String name, int value) throws UnsupportedEncodingException {
 		bb.put(name.getBytes(charSetName));
 		bb.put(TERMINATOR);
 		bb.putShort((short) (Integer.SIZE / Byte.SIZE));
@@ -93,18 +93,18 @@ public final class PpfeParameterBuffer {
 		return this;
 	}
 
-	public PpfeParameterBuffer addParameter(String name, long value) throws UnsupportedEncodingException {
+	public ParameterBuffer addParameter(String name, long value) throws UnsupportedEncodingException {
 		setParameterName(name);
 		bb.putShort((short) (Long.SIZE / Byte.SIZE));
 		bb.putLong(value);
 		return this;
 	}
 
-	public PpfeParameterBuffer addParameter(String name, byte[] value) throws UnsupportedEncodingException {
+	public ParameterBuffer addParameter(String name, byte[] value) throws UnsupportedEncodingException {
 		return addParameter(name, value, 0, (short) value.length);
 	}
 
-	public PpfeParameterBuffer addParameter(String name, byte[] value, int offset, short length)
+	public ParameterBuffer addParameter(String name, byte[] value, int offset, short length)
 			throws UnsupportedEncodingException {
 		setParameterName(name);
 		bb.putShort(length);
@@ -112,7 +112,7 @@ public final class PpfeParameterBuffer {
 		return this;
 	}
 
-	public PpfeParameterBuffer addParameter(String name, String value, boolean addNullTerminator)
+	public ParameterBuffer addParameter(String name, String value, boolean addNullTerminator)
 			throws UnsupportedEncodingException {
 		if (value == null)
 			return this;

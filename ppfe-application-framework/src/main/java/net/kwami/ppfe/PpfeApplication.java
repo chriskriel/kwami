@@ -1,4 +1,4 @@
-package net.kwami;
+package net.kwami.ppfe;
 
 import net.kwami.utils.MyLogger;
 
@@ -6,6 +6,10 @@ public abstract class PpfeApplication implements Runnable {
 	private static MyLogger logger = new MyLogger(PpfeApplication.class);
 	private PpfeContainer ppfeContainer = null;
 	private int messageBufferSize = 8092;
+
+	public PpfeApplication() {
+		super();
+	}
 
 	public PpfeApplication(PpfeContainer server) throws Exception {
 		super();
@@ -27,14 +31,6 @@ public abstract class PpfeApplication implements Runnable {
 	}
 
 	public abstract void process(PpfeMessage message);
-
-	public PpfeContainer getService() {
-		return ppfeContainer;
-	}
-
-	public void setService(PpfeContainer service) {
-		this.ppfeContainer = service;
-	}
 
 	public int getMessageBufferSize() {
 		return messageBufferSize;

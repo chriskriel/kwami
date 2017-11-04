@@ -2,6 +2,7 @@ package net.kwami.pathsend;
 
 import net.kwami.utils.Configurator;
 import net.kwami.utils.HexDumper;
+import net.kwami.utils.ParameterBuffer;
 
 public final class Tester {
 
@@ -9,7 +10,7 @@ public final class Tester {
 		HexDumper dumper = new HexDumper();
 		PathwayClient client = Configurator.get(PathwayClient.class);
 		System.out.println(client.toString());
-		PpfeParameterBuffer parmBuf = new PpfeParameterBuffer((short)99);
+		ParameterBuffer parmBuf = new ParameterBuffer((short)99);
 		parmBuf.addParameter("byte-max", Byte.MAX_VALUE);
 		parmBuf.addParameter("short-max", Short.MAX_VALUE);
 		parmBuf.addParameter("int-max", Integer.MAX_VALUE);
@@ -33,7 +34,7 @@ public final class Tester {
 		byte[] payload = parmBuf.toByteArray();
 		StringBuilder sb = dumper.buildHexDump(payload);
 		System.out.println(sb.toString());
-		parmBuf = PpfeParameterBuffer.wrap(payload);
+		parmBuf = ParameterBuffer.wrap(payload);
 		sb = dumper.buildHexDump(payload);
 		System.out.println(sb.toString());
 		for (String key : parmBuf.keySet()) {

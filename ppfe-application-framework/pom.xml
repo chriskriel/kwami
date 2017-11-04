@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>net.kwami</groupId>
-	<artifactId>pathway-server-example</artifactId>
+	<artifactId>ppfe-application-framework</artifactId>
 	<version>1</version>
 	<packaging>jar</packaging>
 
-	<name>pathway-server-example</name>
+	<name>ppfe-application-framework</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>
@@ -16,46 +16,22 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.hp.tandem</groupId>
-			<artifactId>tdmext</artifactId>
-			<version>H10</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>net.kwami</groupId>
-			<artifactId>ppfe-application-framework</artifactId>
-			<version>1</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>net.kwami</groupId>
-			<artifactId>kwami-pathsend-utils</artifactId>
-			<version>2</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
 			<groupId>net.kwami</groupId>
 			<artifactId>kwami-base-utils</artifactId>
 			<version>4</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.hp.tandem</groupId>
-			<artifactId>jdbcMx</artifactId>
-			<version>R30</version>
-			<scope>provided</scope>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.tomcat</groupId>
 			<artifactId>tomcat-jdbc</artifactId>
 			<version>7.0.70</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.7</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<build>

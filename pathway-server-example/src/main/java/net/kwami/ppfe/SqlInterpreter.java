@@ -1,4 +1,4 @@
-package net.kwami;
+package net.kwami.ppfe;
 
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
@@ -9,8 +9,8 @@ import java.util.List;
 
 import org.apache.tomcat.jdbc.pool.DataSource;
 
-import net.kwami.pathsend.PpfeParameterBuffer;
 import net.kwami.utils.MyLogger;
+import net.kwami.utils.ParameterBuffer;
 
 public class SqlInterpreter extends PpfeApplication {
 	private static final short MSG_ID = 0;
@@ -24,7 +24,7 @@ public class SqlInterpreter extends PpfeApplication {
 
 	public void process(PpfeMessage message) {
 		String sqlStatement = "";
-		PpfeParameterBuffer data = message.getData();
+		ParameterBuffer data = message.getData();
 		try {
 			sqlStatement = data.getStringValue("SQL");
 		} catch (UnsupportedEncodingException e1) {

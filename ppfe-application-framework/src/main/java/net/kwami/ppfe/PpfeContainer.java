@@ -1,4 +1,4 @@
-package net.kwami;
+package net.kwami.ppfe;
 
 import org.apache.tomcat.jdbc.pool.DataSource;
 

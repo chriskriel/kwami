@@ -1,4 +1,4 @@
-package net.kwami;
+package net.kwami.ppfe;
 
 import java.util.ArrayList;
 import java.util.HashSet;

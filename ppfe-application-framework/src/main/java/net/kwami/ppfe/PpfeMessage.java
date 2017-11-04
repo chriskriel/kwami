@@ -1,10 +1,10 @@
-package net.kwami;
+package net.kwami.ppfe;
 
-import net.kwami.pathsend.PpfeParameterBuffer;
+import net.kwami.utils.ParameterBuffer;
 
 public class PpfeMessage {
 	private Object context;
-	private PpfeParameterBuffer data;
+	private ParameterBuffer data;
 
 	public Object getContext() {
 		return context;
@@ -14,11 +14,11 @@ public class PpfeMessage {
 		this.context = context;
 	}
 
-	public PpfeParameterBuffer getData() {
+	public ParameterBuffer getData() {
 		return data;
 	}
 
-	public void setData(PpfeParameterBuffer data) {
+	public void setData(ParameterBuffer data) {
 		this.data = data;
 	}
 }

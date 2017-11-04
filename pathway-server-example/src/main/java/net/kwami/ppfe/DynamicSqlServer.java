@@ -1,4 +1,4 @@
-package net.kwami;
+package net.kwami.ppfe;
 
 public class DynamicSqlServer extends PathwayServer {
 
