@@ -14,6 +14,6 @@ public class RelayApplication extends PpfeApplication {
 
 	public void process(PpfeMessage message) {
 		Properties properties = Configurator.get(Properties.class);
-		container.sendRequest(properties.getProperty("nextServerPath"), message);
+		container.sendRequest(properties.getProperty("nextServerPath"), message, 2000);
 	}
 }

@@ -6,11 +6,11 @@ public interface PpfeContainer {
 
 	PpfeApplication createApplication() throws Exception;
 
-	PpfeMessage sendRequest(String destination, PpfeMessage message);
+	PpfeMessage sendRequest(String destination, PpfeMessage message, long timeoutMillis);
 
 	PpfeMessage getRequest(int maxBuf);
 
-	int sendReply(PpfeMessage message);
+	Outcome sendReply(PpfeMessage message);
 	
 	DataSource getDataSource();
 

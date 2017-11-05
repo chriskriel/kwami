@@ -73,14 +73,18 @@ public abstract class PathwayServer implements PpfeContainer {
 	}
 	
 	@Override
-	public PpfeMessage sendRequest(String destination, PpfeMessage message) {
+	public PpfeMessage sendRequest(String destination, PpfeMessage message, long timeoutMillis) {
 		PpfeMessage response = new PpfeMessage();
+		Outcome outcome = response.getOutcome();
 		ParameterBuffer data = null;
+		int timeoutCentiSecs = Integer.parseInt(String.valueOf(timeoutMillis)) / 10;
 		try {
-			PathwayClient pwClient = new PathwayClient(200, 5000);
+			PathwayClient pwClient = new PathwayClient(timeoutCentiSecs, 5000);
 			data = pwClient.transceive(destination, message.getData());
 			response.setData(data);
 		} catch (Exception e) {
+			outcome.setReturnCode(ReturnCode.FAILURE);
+			outcome.setMessage(e.toString());
 		}
 		return response;
 	}
@@ -133,15 +137,19 @@ public abstract class PathwayServer implements PpfeContainer {
 	}
 
 	@Override
-	public int sendReply(PpfeMessage message) {
+	public Outcome sendReply(PpfeMessage message) {
+		Outcome outcome = new Outcome(ReturnCode.SUCCESS, "replied with %d bytes");
 		try {
 			byte[] response = message.getData().toByteArray();
 			logger.debug("about to write " + response.length + " chars to $Receive");
-			return $receive.reply(response, response.length, (ReceiveInfo)message.getContext(), GError.EOK);
+			int bytesSent = $receive.reply(response, response.length, (ReceiveInfo)message.getContext(), GError.EOK);
+			outcome.setReturnCode(ReturnCode.SUCCESS);
+			outcome.setMessage(String.format(outcome.getMessage(), bytesSent));
 		} catch (Exception ex) {
-			logger.error(ex, ex.getMessage());
-			return 0;
+			outcome.setReturnCode(ReturnCode.FAILURE);
+			outcome.setMessage(ex.toString());
 		}
+		return outcome;
 	}
 
 	@Override

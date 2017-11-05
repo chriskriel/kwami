@@ -25,8 +25,13 @@ public abstract class PpfeApplication implements Runnable {
 			} catch (Exception e) {
 				logger.error(e, e.toString());
 			}
-			int bytesSent = ppfeContainer.sendReply(message);
-			logger.debug("replied with " + bytesSent + " bytes");
+			Outcome outcome = ppfeContainer.sendReply(message);
+			String msg = "Outcome on sending reply: %s";
+			if (outcome.getReturnCode()==ReturnCode.SUCCESS) {
+				logger.debug(msg, outcome.toString());
+			} else {
+				logger.error(msg, outcome.toString());			
+			}
 		}
 	}
 
