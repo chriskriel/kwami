@@ -4,7 +4,7 @@
 
 	<groupId>net.kwami</groupId>
 	<artifactId>kwami-base-utils</artifactId>
-	<version>4</version>
+	<version>5</version>
 	<packaging>jar</packaging>
 
 	<name>kwami-base-utils</name>

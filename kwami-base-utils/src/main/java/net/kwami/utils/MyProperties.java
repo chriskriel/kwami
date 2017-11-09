@@ -96,4 +96,24 @@ public class MyProperties extends Properties {
 		}
 		return defaultValue;
 	}
+	
+
+	public String getProperty(String key, String defaultValue) {
+		String original = super.getProperty(key, defaultValue);
+		if (!original.contains("${"))
+			return original;
+		StringBuilder bldr = new StringBuilder(original);
+		int start = bldr.indexOf("${");
+		int end = bldr.indexOf("}", start + 2);
+		if (end < 0)
+			return original;
+		String sysProp = System.getProperty(bldr.substring(start + 2, end));
+		if (sysProp == null)
+			return original;
+		bldr.replace(start, end + 1, sysProp);
+		String newValue = bldr.toString();
+		logger.debug("key=%s,original='%s',new='%s'", key, original, newValue);
+		return newValue;
+	}
+
 }

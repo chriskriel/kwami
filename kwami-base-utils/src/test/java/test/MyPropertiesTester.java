@@ -30,7 +30,8 @@ public class MyPropertiesTester {
 		testProps.setLongProperty("long.property.min", Long.MIN_VALUE);
 		testProps.setShortProperty("short.property.max", Short.MAX_VALUE);
 		testProps.setShortProperty("short.property.min", Short.MIN_VALUE);
-		Gson gson = new GsonBuilder().create();
+		testProps.setProperty("with.sys.var", "this is my home: '${user.home}' and that is that.");
+		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 		String serialized = gson.toJson(testProps);
 		System.out.println(serialized);
 		testProps = gson.fromJson(serialized, MyProperties.class);
@@ -41,5 +42,6 @@ public class MyPropertiesTester {
 		assertEquals(Integer.MIN_VALUE, testProps.getIntProperty("int.property.min", 0));
 		assertEquals(Long.MIN_VALUE, testProps.getLongProperty("long.property.min", 0L));
 		assertEquals(Short.MAX_VALUE, testProps.getShortProperty("int.property.max", Short.MAX_VALUE));
+		assertEquals("this is my home: '/home/chris' and that is that.", testProps.getProperty("with.sys.var", "bad value"));
 	}
 }
