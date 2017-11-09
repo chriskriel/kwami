@@ -110,7 +110,6 @@ public abstract class Configurator {
 	 * @return an object of the specified class is returned
 	 */
 	public static <T> T get(Class<T> classT, String resourceName, boolean useCache) {
-		logger.debug("resource=%s", resourceName);
 		URL url = classT.getResource(resourceName);
 		T t = null;
 		if (useCache && (t = getCachedObject(resourceName, url)) != null)
@@ -119,6 +118,7 @@ public abstract class Configurator {
 			if (useCache && (t = getCachedObject(resourceName, url)) != null)
 				return t;
 			try (InputStream is = classT.getResourceAsStream(resourceName)) {
+				logger.debug("resource=%s", resourceName);
 				InputStreamReader rdr = new InputStreamReader(is);
 				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 				t = gson.fromJson(rdr, classT);
