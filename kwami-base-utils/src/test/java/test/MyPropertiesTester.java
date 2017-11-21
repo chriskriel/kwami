@@ -43,5 +43,6 @@ public class MyPropertiesTester {
 		assertEquals(Long.MIN_VALUE, testProps.getLongProperty("long.property.min", 0L));
 		assertEquals(Short.MAX_VALUE, testProps.getShortProperty("int.property.max", Short.MAX_VALUE));
 		assertEquals("this is my home: '/home/chris' and that is that.", testProps.getProperty("with.sys.var", "bad value"));
+		assertEquals("this is my home: '/home/chris' and that is that.", testProps.getProperty("with.sys.var"));
 	}
 }
