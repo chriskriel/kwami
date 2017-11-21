@@ -15,11 +15,36 @@ import net.kwami.utils.ParameterBuffer;
 public class SqlInterpreter extends PpfeApplication {
 	private static final short MSG_ID = 0;
 	private static MyLogger logger = new MyLogger(SqlInterpreter.class);
+	private int messageBufferSize = 8092;
 	private DataSource ds;
+	PpfeMessage message;
 
-	public SqlInterpreter(PpfeContainer server) throws Exception {
-		super(server);
-		ds = server.getDataSource();
+	public SqlInterpreter(PpfeContainer container, PpfeMessage firstRequest) throws Exception {
+		super(container, firstRequest);
+		message = firstRequest;
+		ds = container.getDataSource();		
+	}
+
+	@Override
+	public void run() {
+		logger.info("Going to process first message");
+		do {
+			try {
+				process(message);
+			} catch (Exception e) {
+				message.setData(null);
+				message.getOutcome().setReturnCode(ReturnCode.FAILURE);
+				message.getOutcome().setMessage(e.toString());
+				logger.error(e, e.toString());
+			}
+			Outcome outcome = getContainer().sendReply(message);
+			String msg = "Outcome on sending reply: %s";
+			if (outcome.getReturnCode() == ReturnCode.SUCCESS) {
+				logger.debug(msg, outcome.toString());
+			} else {
+				logger.error(msg, outcome.toString());
+			}
+		} while ((message = getContainer().getRequest(messageBufferSize)) != null);
 	}
 
 	public void process(PpfeMessage message) {

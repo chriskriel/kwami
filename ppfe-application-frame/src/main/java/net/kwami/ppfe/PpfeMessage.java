@@ -11,6 +11,12 @@ public class PpfeMessage {
 		super();
 		outcome = new Outcome(ReturnCode.SUCCESS);
 	}
+	
+	public PpfeMessage(PpfeMessage from) {
+		this.context = from.context;
+		this.outcome = from.outcome;
+		this.data = from.data;
+	}
 
 	public Object getContext() {
 		return context;

@@ -13,6 +13,6 @@ public class DynamicSqlServer extends PathwayServer {
 
 	public static void main(String[] args) throws Exception {
 		new DynamicSqlServer();
-		Thread.sleep(5000); // so everybody has a change to terminate
+		Thread.sleep(5000); // so everybody has a chance to terminate
 	}
 }

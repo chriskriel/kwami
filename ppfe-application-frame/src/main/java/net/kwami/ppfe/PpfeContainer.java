@@ -4,7 +4,7 @@ import org.apache.tomcat.jdbc.pool.DataSource;
 
 public interface PpfeContainer {
 
-	PpfeApplication createApplication() throws Exception;
+	PpfeApplication createApplication(PpfeMessage firstRequest) throws Exception;
 
 	PpfeMessage sendRequest(String destination, PpfeMessage message, long timeoutMillis);
 

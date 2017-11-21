@@ -97,11 +97,24 @@ public class MyProperties extends Properties {
 		return defaultValue;
 	}
 	
-
+	public String getProperty(String key) {
+		return this.getProperty(key, null);
+	}
+	
 	public String getProperty(String key, String defaultValue) {
-		String original = super.getProperty(key, defaultValue);
+		String original;
+		if (defaultValue == null)
+			original = super.getProperty(key);
+		else
+			original = super.getProperty(key, defaultValue);			
 		if (!original.contains("${"))
 			return original;
+		String newValue = replaceVarWithSystemProperty(original);
+		logger.debug("key=%s,original='%s',new='%s'", key, original, newValue);
+		return newValue;
+	}
+
+	private String replaceVarWithSystemProperty(String original) {
 		StringBuilder bldr = new StringBuilder(original);
 		int start = bldr.indexOf("${");
 		int end = bldr.indexOf("}", start + 2);
@@ -112,7 +125,6 @@ public class MyProperties extends Properties {
 			return original;
 		bldr.replace(start, end + 1, sysProp);
 		String newValue = bldr.toString();
-		logger.debug("key=%s,original='%s',new='%s'", key, original, newValue);
 		return newValue;
 	}
 

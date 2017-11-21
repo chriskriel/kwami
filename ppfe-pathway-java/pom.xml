@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>net.kwami.ppfe</groupId>
-	<artifactId>pathway-server</artifactId>
+	<artifactId>ppfe-pathway-java</artifactId>
 	<version>1</version>
 	<packaging>jar</packaging>
 
-	<name>pathway-server</name>
+	<name>ppfe-pathway-java</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>
