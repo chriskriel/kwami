@@ -128,4 +128,9 @@ public class MyProperties extends Properties {
 		return newValue;
 	}
 
+	@Override
+	public String toString() {
+		return new GsonBuilder().create().toJson(this);
+	}
+
 }

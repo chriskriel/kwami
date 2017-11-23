@@ -2,23 +2,16 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.kwami.ppfe</groupId>
-	<artifactId>ppfe-tomcat-impl</artifactId>
+	<artifactId>ppfe-application-examples</artifactId>
 	<version>1</version>
-	<packaging>war</packaging>
-	<name>ppfe-tomcat-impl</name>
-	<description>An example of a PPFE server running in Tomcat</description>
+	<packaging>jar</packaging>
+	<name>ppfe-application-examples</name>
+	<description>An example of a PPFE Container application</description>
 	<dependencies>
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
-			<version>2.5</version>
-			<type>jar</type>
-			<scope>provided</scope>
-		</dependency>
 		<dependency>
 			<groupId>net.kwami</groupId>
 			<artifactId>kwami-base-utils</artifactId>
-			<version>5</version>
+			<version>6</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -28,22 +21,16 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.tomcat</groupId>
-			<artifactId>tomcat-jdbc</artifactId>
-			<version>7.0.70</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>4.3.6</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.7</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-jdbc</artifactId>
+			<version>7.0.70</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 	<build>
