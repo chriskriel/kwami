@@ -12,17 +12,17 @@ import net.kwami.utils.MyLogger;
 import net.kwami.utils.MyProperties;
 
 public class SqlInterpreter extends PpfeApplication {
-	private static MyLogger logger = new MyLogger(SqlInterpreter.class);
+	private static final MyLogger logger = new MyLogger(SqlInterpreter.class);
 	private DataSource ds;
 	PpfeMessage message;
 
 	public SqlInterpreter() throws Exception {
 		super();
-		ds = getContainer().getDataSource();
 	}
 
 	@Override
 	public void run() {
+		ds = getContainer().getDataSource();
 		logger.info("Going to process messages");
 		while ((message = getContainer().getRequest()) != null) {
 			try {

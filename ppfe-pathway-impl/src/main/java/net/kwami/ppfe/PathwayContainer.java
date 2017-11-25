@@ -1,6 +1,7 @@
 package net.kwami.ppfe;
 
-import java.util.Properties;
+import java.io.UnsupportedEncodingException;
+import java.util.Set;
 
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
@@ -17,23 +18,33 @@ import net.kwami.utils.MyLogger;
 import net.kwami.utils.MyProperties;
 import net.kwami.utils.ParameterBuffer;
 
-public abstract class PathwayServer implements PpfeContainer {
-	private MyLogger logger = new MyLogger(PathwayServer.class);
+public class PathwayContainer implements PpfeContainer {
+	private static final MyLogger LOGGER = new MyLogger(PathwayContainer.class);
 	private boolean serverTerminating = false;
 	private Receive $receive = null;
 	private DataSource dataSource;
 
-	public PathwayServer() throws Exception {
+	public PathwayContainer() throws Exception {
 		super();
-		Properties properties = Configurator.get(Properties.class);
-		String schemaName = properties.getProperty("schemaName", "Dev.Rms");
-		String resourceName = String.format("/%s.js", schemaName);
-		logger.info("configuring schema from the file %s", resourceName);
-		PoolProperties pp = Configurator.get(PoolProperties.class, resourceName);
+		MyProperties properties = Configurator.get(MyProperties.class, "/Properties.js");
+		String resourceName = properties.getProperty("datasourceConfig", "DevRms");
+		LOGGER.info("configuring the datasource from the file '%s'", resourceName);
+		PoolProperties pp = Configurator.get(PoolProperties.class, "/" + resourceName);
 		DataSource ds = new DataSource();
 		ds.setPoolProperties(pp);
 		this.dataSource = ds;
-		start();
+	}
+	
+	public static void main(String[] args) {
+		try {
+			PathwayContainer me = new PathwayContainer();
+			me.start();
+			while (!me.serverTerminating) {
+				Thread.sleep(10000);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void start() {
@@ -47,27 +58,27 @@ public abstract class PathwayServer implements PpfeContainer {
 				e.printStackTrace();
 			}
 		} catch (GuardianException ex) {
-			logger.error("Unable to open $RECEIVE", ex);
+			LOGGER.error(ex, "Unable to open $RECEIVE");
 			return;
 		}
 		try {
 			for (int i = 0; i < $receive.getReceiveDepth(); i++) {
-				logger.debug("starting thread " + i);
+				LOGGER.debug("starting thread " + i);
 				Thread t = new Thread(createApplication());
 				t.setDaemon(true);
 				t.start();
 			}
 		} catch (InterruptedException e) {
 			try {
-				logger.error("Server interrupted, going to cancel read from $Receive file");
+				LOGGER.error("Server interrupted, going to cancel read from $Receive file");
 				serverTerminating = true;
 				$receive.cancelRead();
 			} catch (Exception ge) {
 			}
-			logger.error("Terminating normally after interrupt");
+			LOGGER.error("Terminating normally after interrupt");
 			return;
 		} catch (Exception e) {
-			logger.error("Terminating abnormally because of Exception", e);
+			LOGGER.error(e, "Terminating abnormally because of Exception");
 			serverTerminating = true;
 			return;
 		}
@@ -149,7 +160,7 @@ public abstract class PathwayServer implements PpfeContainer {
 					$receive.cancelRead();
 				} catch (Exception e) {
 				}
-				logger.info("Terminating normally (no more work)");
+				LOGGER.info("Terminating normally (no more work)");
 				serverTerminating = true;
 				
 			} catch (Exception ex) {
@@ -157,7 +168,7 @@ public abstract class PathwayServer implements PpfeContainer {
 					$receive.cancelRead();
 				} catch (Exception e) {
 				}
-				logger.error(ex, "Terminating after Exception");
+				LOGGER.error(ex, "Terminating after Exception");
 				serverTerminating = true;
 			}
 		}
@@ -165,11 +176,28 @@ public abstract class PathwayServer implements PpfeContainer {
 	}
 	
 	private MyProperties toProperties(ParameterBuffer buffer) {
-		return new MyProperties();
+		MyProperties result = new MyProperties();
+		Set<String> keys = buffer.keySet();
+		for (String key : keys) {
+			try {
+				result.setProperty(key, buffer.getStringValue(key));
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+		}
+		return result;
 	}
 	
 	private ParameterBuffer toParameterBuffer(MyProperties properties) {
-		return new ParameterBuffer((short)0);
+		ParameterBuffer result = new ParameterBuffer((short)0);
+		for (String name : properties.stringPropertyNames()) {
+			try {
+				result.addParameter(name, properties.getProperty(name, ""), true);
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -178,7 +206,7 @@ public abstract class PathwayServer implements PpfeContainer {
 		try {
 			ParameterBuffer buffer = toParameterBuffer(message.getData());
 			byte[] response = buffer.toByteArray();
-			logger.debug("about to write " + response.length + " chars to $Receive");
+			LOGGER.debug("about to write " + response.length + " chars to $Receive");
 			int bytesSent = $receive.reply(response, response.length, (ReceiveInfo)message.getContext(), GError.EOK);
 			outcome.setReturnCode(ReturnCode.SUCCESS);
 			outcome.setMessage(String.format(outcome.getMessage(), bytesSent));
