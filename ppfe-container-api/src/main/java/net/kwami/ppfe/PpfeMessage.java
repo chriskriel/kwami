@@ -3,7 +3,7 @@ package net.kwami.ppfe;
 import net.kwami.utils.MyProperties;
 
 public class PpfeMessage {
-	Object context;
+	private Object context;
 	private Outcome outcome;
 	private MyProperties data = new MyProperties();
 
