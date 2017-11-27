@@ -116,7 +116,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	}
 
 	@Override
-	public PpfeMessage sendRequest(String destination, PpfeMessage message, long timeoutMillis) {
+	public PpfeMessage sendRequest(String destination, PpfeMessage message) {
 		HttpServletRequest request = threadServletRequest.get();
 		HttpServletResponse response = threadServletResponse.get();
 		PpfeMessage responseMsg = new PpfeMessage(message);

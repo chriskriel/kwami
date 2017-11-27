@@ -24,10 +24,14 @@ public class Tester {
 		dest.setName("localRouter");
 		dest.setApplicationName("router");
 		dest.setUri("/localRouter");
+		dest.setLatencyThresholdMillis(8000);
+		dest.setClientTimeoutMillis(20000);
 		config.addDestination(dest);
 		dest = new Destination();
 		dest.setName("remoteSql");
 		dest.setApplicationName("sqlInterpreter");
+		dest.setLatencyThresholdMillis(8000);
+		dest.setClientTimeoutMillis(20000);
 		Destination.Remote remoteDest = new Destination.Remote();
 		remoteDest.setScheme("http");
 		remoteDest.setHostName("host2.bcx.co.za");
@@ -35,6 +39,8 @@ public class Tester {
 		dest.setUri("/ppfe");
 		dest.setRemote(remoteDest);
 		config.addDestination(dest);
+		dest.setLatencyThresholdMillis(8000);
+		dest.setClientTimeoutMillis(20000);
 		String json = config.toString();
 		System.out.println(json);
 		Gson gson = new GsonBuilder().create();

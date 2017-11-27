@@ -5,7 +5,7 @@ import net.kwami.utils.MyProperties;
 public class PpfeMessage {
 	Object context;
 	private Outcome outcome;
-	private MyProperties data;
+	private MyProperties data = new MyProperties();
 
 	public PpfeMessage() {
 		super();

@@ -28,7 +28,6 @@ public class SqlInterpreter extends PpfeApplication {
 			try {
 				process(message);
 			} catch (Exception e) {
-				message.setData(null);
 				message.getOutcome().setReturnCode(ReturnCode.FAILURE);
 				message.getOutcome().setMessage(e.toString());
 				logger.error(e, e.toString());
@@ -36,7 +35,7 @@ public class SqlInterpreter extends PpfeApplication {
 			Outcome outcome = getContainer().sendReply(message);
 			String msg = "Outcome on sending reply: %s";
 			if (outcome.getReturnCode() == ReturnCode.SUCCESS) {
-				logger.debug(msg, outcome.toString());
+				logger.trace(msg, outcome.toString());
 			} else {
 				logger.error(msg, outcome.toString());
 			}
@@ -46,14 +45,16 @@ public class SqlInterpreter extends PpfeApplication {
 	public void process(PpfeMessage message) {
 		String sqlStatement = "";
 		MyProperties data = message.getData();
+		logger.debug("Request data: %s", data.toString());
 		sqlStatement = data.getProperty("SQL");
 		try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(sqlStatement)) {
 			int sqlParameterCount = data.getIntProperty("PARM-CNT", 0);
-			for (int i = 0; i <= sqlParameterCount; i++) {
-				String key = "P" + i;
-				ps.setString(i, data.getProperty(key));
+			for (int i = 0; i < sqlParameterCount; i++) {
+				String key = "P" + String.valueOf(i);
+				ps.setString(i + 1, data.getProperty(key));
 			}
 			data = new MyProperties();
+			message.setData(data);
 			ResultSet rs = ps.executeQuery();
 			ResultSetMetaData meta = rs.getMetaData();
 			SqlResult sqlResult = new SqlResult();
@@ -68,6 +69,7 @@ public class SqlInterpreter extends PpfeApplication {
 			}
 			data.setProperty("SQL-RESULT", sqlResult.toString());
 			data.setProperty("RETURN_CODE", "0");
+			logger.debug("Response data: %s", data.toString());
 			return;
 		} catch (Exception e) {
 			logger.error(e, e.toString());

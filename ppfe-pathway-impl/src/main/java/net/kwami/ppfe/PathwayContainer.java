@@ -14,6 +14,7 @@ import com.tandem.ext.guardian.ReceiveNoOpeners;
 
 import net.kwami.pathsend.PathwayClient;
 import net.kwami.utils.Configurator;
+import net.kwami.utils.HexDumper;
 import net.kwami.utils.MyLogger;
 import net.kwami.utils.MyProperties;
 import net.kwami.utils.ParameterBuffer;
@@ -28,7 +29,6 @@ public class PathwayContainer implements PpfeContainer {
 		super();
 		MyProperties properties = Configurator.get(MyProperties.class, "/Properties.js");
 		String resourceName = properties.getProperty("datasourceConfig", "DevRms");
-		LOGGER.info("configuring the datasource from the file '%s'", resourceName);
 		PoolProperties pp = Configurator.get(PoolProperties.class, "/" + resourceName);
 		DataSource ds = new DataSource();
 		ds.setPoolProperties(pp);
@@ -48,10 +48,12 @@ public class PathwayContainer implements PpfeContainer {
 	}
 	
 	private void start() {
+		MyProperties properties = Configurator.get(MyProperties.class, "/Properties.js");
+		int receiveDepth = properties.getIntProperty("receiveDepth", 10);
 		try {
 			$receive = Receive.getInstance();
 			$receive.setSystemMessageMask(Receive.SMM_OPEN);
-			$receive.setReceiveDepth(10);
+			$receive.setReceiveDepth(receiveDepth);
 			try {
 				$receive.open();
 			} catch (IllegalAccessException e) {
@@ -63,7 +65,7 @@ public class PathwayContainer implements PpfeContainer {
 		}
 		try {
 			for (int i = 0; i < $receive.getReceiveDepth(); i++) {
-				LOGGER.debug("starting thread " + i);
+				LOGGER.trace("starting thread " + i);
 				Thread t = new Thread(createApplication());
 				t.setDaemon(true);
 				t.start();
@@ -95,7 +97,7 @@ public class PathwayContainer implements PpfeContainer {
 	}
 	
 	@Override
-	public PpfeMessage sendRequest(String destinationName, PpfeMessage message, long timeoutMillis) {
+	public PpfeMessage sendRequest(String destinationName, PpfeMessage message) {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		PpfeMessage response = new PpfeMessage();
 		Outcome outcome = response.getOutcome();
@@ -113,15 +115,21 @@ public class PathwayContainer implements PpfeContainer {
 		}
 		ParameterBuffer requestBuffer = toParameterBuffer(message.getData());
 		ParameterBuffer responseBuffer = null;
-		int timeoutCentiSecs = Integer.parseInt(String.valueOf(timeoutMillis)) / 10;
+		int timeoutCentiSecs = Integer.parseInt(String.valueOf(destSelected.getClientTimeoutMillis())) / 10;
 		try {
-			PathwayClient pwClient = new PathwayClient(timeoutCentiSecs, 5000);
-			responseBuffer = pwClient.transceive(destinationName, requestBuffer);
+			LOGGER.trace("sending to: %s", destSelected.getUri());
+			PathwayClient pwClient = new PathwayClient(timeoutCentiSecs, destSelected.getLatencyThresholdMillis());
+			responseBuffer = pwClient.transceive(destSelected.getUri(), requestBuffer);
+			LOGGER.trace("sendRequest.response=%s", new HexDumper().buildHexDump(responseBuffer.toByteArray()).toString());
 			MyProperties responseProperties = toProperties(responseBuffer);
 			response.setData(responseProperties);
 		} catch (Exception e) {
+			String err = e.toString();
+			if (err.contains("File system error 40"))
+				err = "TIMEOUT: " + err;
+			LOGGER.error(e, "sending request");
 			outcome.setReturnCode(ReturnCode.FAILURE);
-			outcome.setMessage(e.toString());
+			outcome.setMessage(err);
 		}
 		return response;
 	}
@@ -206,11 +214,12 @@ public class PathwayContainer implements PpfeContainer {
 		try {
 			ParameterBuffer buffer = toParameterBuffer(message.getData());
 			byte[] response = buffer.toByteArray();
-			LOGGER.debug("about to write " + response.length + " chars to $Receive");
+			LOGGER.trace("about to write " + response.length + " chars to $Receive");
 			int bytesSent = $receive.reply(response, response.length, (ReceiveInfo)message.getContext(), GError.EOK);
 			outcome.setReturnCode(ReturnCode.SUCCESS);
 			outcome.setMessage(String.format(outcome.getMessage(), bytesSent));
 		} catch (Exception ex) {
+			LOGGER.error(ex, "sending Reply");
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(ex.toString());
 		}

@@ -39,6 +39,8 @@ public class Destination {
 	private String name;
 	private String applicationName;
 	private String uri;
+	private int clientTimeoutMillis = 15000;
+	private int latencyThresholdMillis = 8000;
 	private Remote remote;
 
 	public Destination() {
@@ -75,5 +77,21 @@ public class Destination {
 
 	public void setUri(String uri) {
 		this.uri = uri;
+	}
+
+	public int getClientTimeoutMillis() {
+		return clientTimeoutMillis;
+	}
+
+	public void setClientTimeoutMillis(int clientTimeoutMillis) {
+		this.clientTimeoutMillis = clientTimeoutMillis;
+	}
+
+	public int getLatencyThresholdMillis() {
+		return latencyThresholdMillis;
+	}
+
+	public void setLatencyThresholdMillis(int latencyThresholdMillis) {
+		this.latencyThresholdMillis = latencyThresholdMillis;
 	}
 }
