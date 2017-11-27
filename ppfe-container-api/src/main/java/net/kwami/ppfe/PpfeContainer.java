@@ -4,11 +4,11 @@ import org.apache.tomcat.jdbc.pool.DataSource;
 
 public interface PpfeContainer {
 
-	PpfeMessage sendRequest(String destination, PpfeMessage message);
+	PpfeResponse sendRequest(String destination, PpfeRequest request);
 
-	PpfeMessage getRequest();
+	PpfeRequest getRequest();
 
-	Outcome sendReply(PpfeMessage message);
+	Outcome sendReply(Object requestContext, PpfeResponse response);
 	
 	DataSource getDataSource();
 

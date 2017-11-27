@@ -77,8 +77,8 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 		return ppfeApp;
 	}
 
-	private PpfeMessage preparePpfeMessage(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		PpfeMessage message = new PpfeMessage();
+	private PpfeRequest preparePpfeMessage(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		PpfeRequest ppfeRequest = new PpfeRequest();
 		Gson gson = new GsonBuilder().create();
 		String jsonData = request.getAttribute(PPFE_PARM).toString().trim();
 		MyProperties requestData;
@@ -86,8 +86,8 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 			jsonData = request.getParameter(PPFE_PARM).toString().trim();
 		}
 		requestData = gson.fromJson(jsonData, MyProperties.class);
-		message.setData(requestData);
-		return message;
+		ppfeRequest.setData(requestData);
+		return ppfeRequest;
 	}
 
 	private void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
@@ -116,12 +116,11 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	}
 
 	@Override
-	public PpfeMessage sendRequest(String destination, PpfeMessage message) {
+	public PpfeResponse sendRequest(String destination, PpfeRequest ppfeRequest) {
 		HttpServletRequest request = threadServletRequest.get();
 		HttpServletResponse response = threadServletResponse.get();
-		PpfeMessage responseMsg = new PpfeMessage(message);
-		Outcome outcome = responseMsg.getOutcome();
-		responseMsg.setData(null);
+		PpfeResponse ppfeResponse = new PpfeResponse();
+		Outcome outcome = ppfeResponse.getOutcome();
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		Destination destSelected = null;
 		for (Destination dest : config.getDestinations()) {
@@ -133,57 +132,53 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 		if (destSelected == null) {
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(String.format("The specified destination of '%s' is not configured", destination));
-			responseMsg.setData(null);
-			return responseMsg;
+			return ppfeResponse;
 		}
 		String responseStr = null;
 		try {
 			if (destSelected.getRemote() != null) {
 				HttpClient httpClient = new HttpClient(destSelected.getRemote().getScheme(),
 						destSelected.getRemote().getHostName(), destSelected.getRemote().getPort());
-				responseStr = httpClient.post(destSelected.getUri(), message.getData().toString());
+				responseStr = httpClient.post(destSelected.getUri(), ppfeRequest.getData().toString());
 			} else {
 				threadServletRequest.get().getRequestDispatcher(destSelected.getUri()).include(request, response);
 				responseStr = request.getAttribute(PPFE_PARM).toString();
 			}
 			Gson gson = new GsonBuilder().create();
 			MyProperties props = gson.fromJson(responseStr, MyProperties.class);
-			responseMsg.setData(props);
+			ppfeResponse.setData(props);
 		} catch (Exception e) {
+			LOGGER.error(e, "unable to sendRequest()");
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(e.toString());
-			responseMsg.setData(null);
 		}
-		return responseMsg;
+		return ppfeResponse;
 	}
 
 	@Override
-	public synchronized PpfeMessage getRequest() {
+	public synchronized PpfeRequest getRequest() {
 		HttpServletRequest request = threadServletRequest.get();
 		HttpServletResponse response = threadServletResponse.get();
-		PpfeMessage msg = new PpfeMessage();		
+		PpfeRequest msg = new PpfeRequest();		
 		if (request.getAttribute(PPFE_END) != null)
 			return null;
-		request.setAttribute(PPFE_END, "X");
+		request.setAttribute(PPFE_END, "end");
 		try {
 			msg = preparePpfeMessage(request, response);
 		} catch (Exception e) {
-			LOGGER.error(e, "unable to get request");
-			Outcome outcome = msg.getOutcome();
-			outcome.setReturnCode(ReturnCode.FAILURE);
-			outcome.setMessage(e.toString());
-			msg.setData(null);
+			LOGGER.error(e, "unable to get a request");
+			return null;
 		}
 		return msg;
 	}
 
 	@Override
-	public Outcome sendReply(PpfeMessage message) {
+	public Outcome sendReply(Object requestContext, PpfeResponse ppfeResponse) {
 		HttpServletRequest request = threadServletRequest.get();
 		HttpServletResponse response = threadServletResponse.get();
 		Outcome outcome = new Outcome(ReturnCode.SUCCESS, "replied with '%s'");
 		try {
-			String body = message.getData().toString();
+			String body = ppfeResponse.getData().toString();
 			LOGGER.debug("about to reply with '%s'", body);
 			if (request.getAttribute(PPFE_PARM) != null) {
 				request.setAttribute(PPFE_PARM, body);
@@ -193,6 +188,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 			outcome.setReturnCode(ReturnCode.SUCCESS);
 			outcome.setMessage(String.format(outcome.getMessage(), body));
 		} catch (Exception ex) {
+			LOGGER.error(ex, "unable to get a sendReply()");
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(ex.toString());
 		}

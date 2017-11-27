@@ -38,13 +38,13 @@ public class PathwayTester extends Thread {
 	}
 
 	private static void sendRequest() {
-		PpfeMessage request = new PpfeMessage();
+		PpfeRequest request = new PpfeRequest();
 		MyProperties parameters = new MyProperties();
 		parameters.setProperty("SQL", "select * from users where username = ? browse access");
 		parameters.setProperty("PARM-CNT", "1");
 		parameters.setProperty("P0", "ckriel");
 		request.setData(parameters);
-		PpfeMessage response = sendRequest("Router", request, 60000);
+		PpfeResponse response = sendRequest("Router", request, 60000);
 		if (response.getOutcome().getReturnCode() == ReturnCode.SUCCESS)
 			System.out.println(response.getData().getProperty("SQL-RESULT"));
 		else if (response.getOutcome().getReturnCode() == ReturnCode.TIMEOUT)
@@ -53,9 +53,9 @@ public class PathwayTester extends Thread {
 			System.out.println("Failed: " + response.getOutcome().getMessage());
 	}
 
-	public static PpfeMessage sendRequest(String destinationName, PpfeMessage message, long timeoutMillis) {
+	public static PpfeResponse sendRequest(String destinationName, PpfeRequest message, long timeoutMillis) {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
-		PpfeMessage response = new PpfeMessage();
+		PpfeResponse response = new PpfeResponse();
 		Outcome outcome = response.getOutcome();
 		Destination destSelected = null;
 		for (Destination dest : config.getDestinations()) {

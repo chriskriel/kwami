@@ -97,10 +97,10 @@ public class PathwayContainer implements PpfeContainer {
 	}
 	
 	@Override
-	public PpfeMessage sendRequest(String destinationName, PpfeMessage message) {
+	public PpfeResponse sendRequest(String destinationName, PpfeRequest ppfeRequest) {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
-		PpfeMessage response = new PpfeMessage();
-		Outcome outcome = response.getOutcome();
+		PpfeResponse ppfeResponse = new PpfeResponse();
+		Outcome outcome = ppfeResponse.getOutcome();
 		Destination destSelected = null;
 		for (Destination dest : config.getDestinations()) {
 			if (dest.getName().equals(destinationName)) {
@@ -111,9 +111,9 @@ public class PathwayContainer implements PpfeContainer {
 		if (destSelected == null) {
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(String.format("Destination '%s' was requested but there is no configuration for it", destinationName));
-			return response;
+			return ppfeResponse;
 		}
-		ParameterBuffer requestBuffer = toParameterBuffer(message.getData());
+		ParameterBuffer requestBuffer = toParameterBuffer(ppfeRequest.getData());
 		ParameterBuffer responseBuffer = null;
 		int timeoutCentiSecs = Integer.parseInt(String.valueOf(destSelected.getClientTimeoutMillis())) / 10;
 		try {
@@ -122,7 +122,7 @@ public class PathwayContainer implements PpfeContainer {
 			responseBuffer = pwClient.transceive(destSelected.getUri(), requestBuffer);
 			LOGGER.trace("sendRequest.response=%s", new HexDumper().buildHexDump(responseBuffer.toByteArray()).toString());
 			MyProperties responseProperties = toProperties(responseBuffer);
-			response.setData(responseProperties);
+			ppfeResponse.setData(responseProperties);
 		} catch (Exception e) {
 			String err = e.toString();
 			if (err.contains("File system error 40"))
@@ -131,15 +131,15 @@ public class PathwayContainer implements PpfeContainer {
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(err);
 		}
-		return response;
+		return ppfeResponse;
 	}
 
 	@Override
-	public synchronized PpfeMessage getRequest() {
+	public synchronized PpfeRequest getRequest() {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		Application app = config.getApplications().get(0);
 		ReceiveInfo ri = null;
-		PpfeMessage message = null;
+		PpfeRequest ppfeRequest = null;
 		int bytesReadCount = 0;
 		byte[] maxMsg = new byte[app.getMaxMessageSize()];
 		short sysNum;
@@ -158,9 +158,9 @@ public class PathwayContainer implements PpfeContainer {
 						} else
 							continue;
 					} else {
-						message = new PpfeMessage();
-						message.setData(toProperties(ParameterBuffer.wrap(maxMsg, 0, bytesReadCount)));
-						message.setContext(ri);
+						ppfeRequest = new PpfeRequest();
+						ppfeRequest.setData(toProperties(ParameterBuffer.wrap(maxMsg, 0, bytesReadCount)));
+						ppfeRequest.setContext(ri);
 					}
 				}
 			} catch (ReceiveNoOpeners ex) {
@@ -180,7 +180,7 @@ public class PathwayContainer implements PpfeContainer {
 				serverTerminating = true;
 			}
 		}
-		return message;
+		return ppfeRequest;
 	}
 	
 	private MyProperties toProperties(ParameterBuffer buffer) {
@@ -209,13 +209,13 @@ public class PathwayContainer implements PpfeContainer {
 	}
 
 	@Override
-	public Outcome sendReply(PpfeMessage message) {
+	public Outcome sendReply(Object requestContext, PpfeResponse message) {
 		Outcome outcome = new Outcome(ReturnCode.SUCCESS, "replied with %d bytes");
 		try {
 			ParameterBuffer buffer = toParameterBuffer(message.getData());
 			byte[] response = buffer.toByteArray();
 			LOGGER.trace("about to write " + response.length + " chars to $Receive");
-			int bytesSent = $receive.reply(response, response.length, (ReceiveInfo)message.getContext(), GError.EOK);
+			int bytesSent = $receive.reply(response, response.length, (ReceiveInfo)requestContext, GError.EOK);
 			outcome.setReturnCode(ReturnCode.SUCCESS);
 			outcome.setMessage(String.format(outcome.getMessage(), bytesSent));
 		} catch (Exception ex) {

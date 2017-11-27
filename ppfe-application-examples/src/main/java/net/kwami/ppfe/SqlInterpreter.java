@@ -14,7 +14,6 @@ import net.kwami.utils.MyProperties;
 public class SqlInterpreter extends PpfeApplication {
 	private static final MyLogger logger = new MyLogger(SqlInterpreter.class);
 	private DataSource ds;
-	PpfeMessage message;
 
 	public SqlInterpreter() throws Exception {
 		super();
@@ -23,17 +22,19 @@ public class SqlInterpreter extends PpfeApplication {
 	@Override
 	public void run() {
 		ds = getContainer().getDataSource();
-		logger.info("Going to process messages");
-		while ((message = getContainer().getRequest()) != null) {
+		PpfeResponse ppfeResponse = new PpfeResponse();
+		PpfeRequest ppfeRequest;
+		logger.info("Getting PpfeRequests");
+		while ((ppfeRequest = getContainer().getRequest()) != null) {
 			try {
-				process(message);
+				ppfeResponse = process(ppfeRequest);
 			} catch (Exception e) {
-				message.getOutcome().setReturnCode(ReturnCode.FAILURE);
-				message.getOutcome().setMessage(e.toString());
+				ppfeResponse.getOutcome().setReturnCode(ReturnCode.FAILURE);
+				ppfeResponse.getOutcome().setMessage(e.toString());
 				logger.error(e, e.toString());
 			}
-			Outcome outcome = getContainer().sendReply(message);
-			String msg = "Outcome on sending reply: %s";
+			Outcome outcome = getContainer().sendReply(ppfeRequest.getContext(), ppfeResponse);
+			String msg = "Outcome of sendReply(): %s";
 			if (outcome.getReturnCode() == ReturnCode.SUCCESS) {
 				logger.trace(msg, outcome.toString());
 			} else {
@@ -42,19 +43,17 @@ public class SqlInterpreter extends PpfeApplication {
 		}
 	}
 
-	public void process(PpfeMessage message) {
-		String sqlStatement = "";
-		MyProperties data = message.getData();
-		logger.debug("Request data: %s", data.toString());
-		sqlStatement = data.getProperty("SQL");
+	public PpfeResponse process(PpfeRequest ppfeRequest) throws Exception {
+		logger.debug("Request data: %s", ppfeRequest.getData().toString());
+		PpfeResponse ppfeResponse = new PpfeResponse();
+		MyProperties requestData = ppfeRequest.getData();
+		String sqlStatement = requestData.getProperty("SQL", "");
 		try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(sqlStatement)) {
-			int sqlParameterCount = data.getIntProperty("PARM-CNT", 0);
+			int sqlParameterCount = requestData.getIntProperty("PARM-CNT", 0);
 			for (int i = 0; i < sqlParameterCount; i++) {
 				String key = "P" + String.valueOf(i);
-				ps.setString(i + 1, data.getProperty(key));
+				ps.setString(i + 1, requestData.getProperty(key));
 			}
-			data = new MyProperties();
-			message.setData(data);
 			ResultSet rs = ps.executeQuery();
 			ResultSetMetaData meta = rs.getMetaData();
 			SqlResult sqlResult = new SqlResult();
@@ -67,12 +66,10 @@ public class SqlInterpreter extends PpfeApplication {
 					row.add(rs.getString(i));
 				}
 			}
-			data.setProperty("SQL-RESULT", sqlResult.toString());
-			data.setProperty("RETURN_CODE", "0");
-			logger.debug("Response data: %s", data.toString());
-			return;
-		} catch (Exception e) {
-			logger.error(e, e.toString());
+			ppfeResponse.getData().setProperty("SQL-RESULT", sqlResult.toString());
+			ppfeResponse.getData().setProperty("RETURN_CODE", "0");
+			logger.debug("Response data: %s", ppfeResponse.getData().toString());
 		}
+		return ppfeResponse;
 	}
 }

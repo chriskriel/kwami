@@ -11,21 +11,21 @@ public class RelayApplication extends PpfeApplication {
 
 	@Override
 	public void run() {
-		PpfeMessage message = null;
-		logger.trace("Going to get data");
+		PpfeRequest ppfeRequest = null;
 		Object requestContext = null;
-		while ((message = getContainer().getRequest()) != null) {
+		PpfeResponse ppfeResponse = new PpfeResponse();
+		logger.trace("get PpfeRequests");
+		while ((ppfeRequest = getContainer().getRequest()) != null) {
 			try {
-				requestContext = message.getContext();
-				process(message);
+				requestContext = ppfeRequest.getContext();
+				ppfeResponse = getContainer().sendRequest("Sql", ppfeRequest);
 			} catch (Exception e) {
-				message.setData(null);
-				message.getOutcome().setReturnCode(ReturnCode.FAILURE);
-				message.getOutcome().setMessage(e.toString());
+				ppfeResponse.getOutcome().setReturnCode(ReturnCode.FAILURE);
+				ppfeResponse.getOutcome().setMessage(e.toString());
 				logger.error(e, e.toString());
 			}
-			message.setContext(requestContext);
-			Outcome outcome = getContainer().sendReply(message);
+			ppfeRequest.setContext(requestContext);
+			Outcome outcome = getContainer().sendReply(ppfeRequest.getContext(), ppfeResponse);
 			String msg = "Outcome on sending reply: %s";
 			if (outcome.getReturnCode() == ReturnCode.SUCCESS) {
 				logger.trace(msg, outcome.toString());
@@ -33,11 +33,5 @@ public class RelayApplication extends PpfeApplication {
 				logger.error(msg, outcome.toString());
 			}
 		}
-	}
-
-	private void process(PpfeMessage message) {
-		PpfeMessage response = getContainer().sendRequest("Sql", message);
-		message.setData(response.getData());
-		message.setOutcome(response.getOutcome());
 	}
 }

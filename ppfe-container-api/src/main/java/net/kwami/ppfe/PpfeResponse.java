@@ -2,27 +2,14 @@ package net.kwami.ppfe;
 
 import net.kwami.utils.MyProperties;
 
-public class PpfeMessage {
-	private Object context;
+public class PpfeResponse {
 	private Outcome outcome;
-	private MyProperties data = new MyProperties();
+	private MyProperties data;
 
-	public PpfeMessage() {
+	public PpfeResponse() {
 		super();
 		outcome = new Outcome(ReturnCode.SUCCESS);
-	}
-
-	public PpfeMessage(PpfeMessage from) {
-		this.outcome = from.outcome;
-		this.data = from.data;
-	}
-
-	public Object getContext() {
-		return context;
-	}
-
-	public void setContext(Object context) {
-		this.context = context;
+		data = new MyProperties();	
 	}
 
 	public MyProperties getData() {
