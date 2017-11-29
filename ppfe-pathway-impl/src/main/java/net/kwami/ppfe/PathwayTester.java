@@ -9,16 +9,23 @@ import net.kwami.utils.MyProperties;
 import net.kwami.utils.ParameterBuffer;
 
 public class PathwayTester extends Thread {
+	private int msgPerThread;
 
 	public static void main(String[] args) {
-		PathwayTester[] testThreads = new PathwayTester[10];
-		for (int i = 0; i < 10; i++) {
+		if (args.length == 0) {
+			System.out.println("Usage: ./test <threads> <messagesPerThread>");
+			return;
+		}
+		int threads = Integer.parseInt(args[0]);
+		PathwayTester[] testThreads = new PathwayTester[threads];
+		for (int i = 0; i < threads; i++) {
 			testThreads[i] = new PathwayTester();
 			testThreads[i].setDaemon(true);
 			testThreads[i].setName("T H R E A D   " + String.valueOf(i));
+			testThreads[i].msgPerThread = Integer.parseInt(args[1]);
 			testThreads[i].start();
 		}
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < threads; i++) {
 			try {
 				testThreads[i].join();
 			} catch (InterruptedException e) {
@@ -29,7 +36,7 @@ public class PathwayTester extends Thread {
 
 	@Override
 	public void run() {
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < msgPerThread; i++) {
 			long now = System.currentTimeMillis();
 			sendRequest();
 			System.out.println(Thread.currentThread().getName() + " :   L A T E N C Y :   "

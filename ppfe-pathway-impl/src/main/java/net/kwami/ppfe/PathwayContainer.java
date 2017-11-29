@@ -1,6 +1,7 @@
 package net.kwami.ppfe;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.tomcat.jdbc.pool.DataSource;
@@ -97,7 +98,7 @@ public class PathwayContainer implements PpfeContainer {
 	}
 	
 	@Override
-	public PpfeResponse sendRequest(String destinationName, PpfeRequest ppfeRequest) {
+	public PpfeResponse sendRequest(String destinationName, MyProperties requestParameters) {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		PpfeResponse ppfeResponse = new PpfeResponse();
 		Outcome outcome = ppfeResponse.getOutcome();
@@ -113,7 +114,7 @@ public class PathwayContainer implements PpfeContainer {
 			outcome.setMessage(String.format("Destination '%s' was requested but there is no configuration for it", destinationName));
 			return ppfeResponse;
 		}
-		ParameterBuffer requestBuffer = toParameterBuffer(ppfeRequest.getData());
+		ParameterBuffer requestBuffer = toParameterBuffer(requestParameters);
 		ParameterBuffer responseBuffer = null;
 		int timeoutCentiSecs = Integer.parseInt(String.valueOf(destSelected.getClientTimeoutMillis())) / 10;
 		try {
@@ -196,7 +197,7 @@ public class PathwayContainer implements PpfeContainer {
 		return result;
 	}
 	
-	private ParameterBuffer toParameterBuffer(MyProperties properties) {
+	private ParameterBuffer toParameterBuffer(Properties properties) {
 		ParameterBuffer result = new ParameterBuffer((short)0);
 		for (String name : properties.stringPropertyNames()) {
 			try {
@@ -209,10 +210,10 @@ public class PathwayContainer implements PpfeContainer {
 	}
 
 	@Override
-	public Outcome sendReply(Object requestContext, PpfeResponse message) {
+	public Outcome sendReply(Object requestContext, MyProperties responseParameters) {
 		Outcome outcome = new Outcome(ReturnCode.SUCCESS, "replied with %d bytes");
 		try {
-			ParameterBuffer buffer = toParameterBuffer(message.getData());
+			ParameterBuffer buffer = toParameterBuffer(responseParameters);
 			byte[] response = buffer.toByteArray();
 			LOGGER.trace("about to write " + response.length + " chars to $Receive");
 			int bytesSent = $receive.reply(response, response.length, (ReceiveInfo)requestContext, GError.EOK);

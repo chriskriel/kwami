@@ -116,7 +116,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	}
 
 	@Override
-	public PpfeResponse sendRequest(String destination, PpfeRequest ppfeRequest) {
+	public PpfeResponse sendRequest(String destination, MyProperties requestParameters) {
 		HttpServletRequest request = threadServletRequest.get();
 		HttpServletResponse response = threadServletResponse.get();
 		PpfeResponse ppfeResponse = new PpfeResponse();
@@ -139,7 +139,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 			if (destSelected.getRemote() != null) {
 				HttpClient httpClient = new HttpClient(destSelected.getRemote().getScheme(),
 						destSelected.getRemote().getHostName(), destSelected.getRemote().getPort());
-				responseStr = httpClient.post(destSelected.getUri(), ppfeRequest.getData().toString());
+				responseStr = httpClient.post(destSelected.getUri(), requestParameters.toString());
 			} else {
 				threadServletRequest.get().getRequestDispatcher(destSelected.getUri()).include(request, response);
 				responseStr = request.getAttribute(PPFE_PARM).toString();
@@ -173,12 +173,12 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	}
 
 	@Override
-	public Outcome sendReply(Object requestContext, PpfeResponse ppfeResponse) {
+	public Outcome sendReply(Object requestContext, MyProperties responseParameters) {
 		HttpServletRequest request = threadServletRequest.get();
 		HttpServletResponse response = threadServletResponse.get();
 		Outcome outcome = new Outcome(ReturnCode.SUCCESS, "replied with '%s'");
 		try {
-			String body = ppfeResponse.getData().toString();
+			String body = responseParameters.toString();
 			LOGGER.debug("about to reply with '%s'", body);
 			if (request.getAttribute(PPFE_PARM) != null) {
 				request.setAttribute(PPFE_PARM, body);

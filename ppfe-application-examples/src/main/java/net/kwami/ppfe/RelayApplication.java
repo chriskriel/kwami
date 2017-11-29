@@ -18,14 +18,14 @@ public class RelayApplication extends PpfeApplication {
 		while ((ppfeRequest = getContainer().getRequest()) != null) {
 			try {
 				requestContext = ppfeRequest.getContext();
-				ppfeResponse = getContainer().sendRequest("Sql", ppfeRequest);
+				ppfeResponse = getContainer().sendRequest("Sql", ppfeRequest.getData());
 			} catch (Exception e) {
 				ppfeResponse.getOutcome().setReturnCode(ReturnCode.FAILURE);
 				ppfeResponse.getOutcome().setMessage(e.toString());
 				logger.error(e, e.toString());
 			}
 			ppfeRequest.setContext(requestContext);
-			Outcome outcome = getContainer().sendReply(ppfeRequest.getContext(), ppfeResponse);
+			Outcome outcome = getContainer().sendReply(ppfeRequest.getContext(), ppfeResponse.getData());
 			String msg = "Outcome on sending reply: %s";
 			if (outcome.getReturnCode() == ReturnCode.SUCCESS) {
 				logger.trace(msg, outcome.toString());

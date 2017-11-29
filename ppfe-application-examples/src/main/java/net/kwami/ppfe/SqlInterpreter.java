@@ -33,7 +33,7 @@ public class SqlInterpreter extends PpfeApplication {
 				ppfeResponse.getOutcome().setMessage(e.toString());
 				logger.error(e, e.toString());
 			}
-			Outcome outcome = getContainer().sendReply(ppfeRequest.getContext(), ppfeResponse);
+			Outcome outcome = getContainer().sendReply(ppfeRequest.getContext(), ppfeResponse.getData());
 			String msg = "Outcome of sendReply(): %s";
 			if (outcome.getReturnCode() == ReturnCode.SUCCESS) {
 				logger.trace(msg, outcome.toString());
