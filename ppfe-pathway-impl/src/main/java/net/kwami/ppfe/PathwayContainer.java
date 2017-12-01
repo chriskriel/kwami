@@ -22,9 +22,19 @@ import net.kwami.utils.ParameterBuffer;
 
 public class PathwayContainer implements PpfeContainer {
 	private static final MyLogger LOGGER = new MyLogger(PathwayContainer.class);
+
+	static class Context {
+		String appName;
+		long startTime;
+		ReceiveInfo receiveInfo;
+	}
+
+	@SuppressWarnings("rawtypes")
+	private Class appClass = null;;
 	private boolean serverTerminating = false;
 	private Receive $receive = null;
 	private DataSource dataSource;
+	private Object readLock = new Object();
 
 	public PathwayContainer() throws Exception {
 		super();
@@ -35,7 +45,7 @@ public class PathwayContainer implements PpfeContainer {
 		ds.setPoolProperties(pp);
 		this.dataSource = ds;
 	}
-	
+
 	public static void main(String[] args) {
 		try {
 			PathwayContainer me = new PathwayContainer();
@@ -47,7 +57,7 @@ public class PathwayContainer implements PpfeContainer {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void start() {
 		MyProperties properties = Configurator.get(MyProperties.class, "/Properties.js");
 		int receiveDepth = properties.getIntProperty("receiveDepth", 10);
@@ -66,8 +76,9 @@ public class PathwayContainer implements PpfeContainer {
 		}
 		try {
 			for (int i = 0; i < $receive.getReceiveDepth(); i++) {
-				LOGGER.trace("starting thread " + i);
-				Thread t = new Thread(createApplication());
+				PpfeApplication app = createApplication();
+				Thread t = new Thread(app);
+				t.setName(app.getClass().getSimpleName() + "-" + String.valueOf(i));
 				t.setDaemon(true);
 				t.start();
 			}
@@ -86,17 +97,17 @@ public class PathwayContainer implements PpfeContainer {
 			return;
 		}
 	}
-	
+
 	private PpfeApplication createApplication() throws Exception {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		Application thisApp = config.getApplications().get(0);
-		@SuppressWarnings("rawtypes")
-		Class appClass = Class.forName(thisApp.getClassName());
-		PpfeApplication ppfeApp = (PpfeApplication)appClass.newInstance();
+		if (appClass == null)
+			appClass = Class.forName(thisApp.getClassName());
+		PpfeApplication ppfeApp = (PpfeApplication) appClass.newInstance();
 		ppfeApp.setContainer(this);
 		return ppfeApp;
 	}
-	
+
 	@Override
 	public PpfeResponse sendRequest(String destinationName, MyProperties requestParameters) {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
@@ -111,7 +122,8 @@ public class PathwayContainer implements PpfeContainer {
 		}
 		if (destSelected == null) {
 			outcome.setReturnCode(ReturnCode.FAILURE);
-			outcome.setMessage(String.format("Destination '%s' was requested but there is no configuration for it", destinationName));
+			outcome.setMessage(String.format("Destination '%s' was requested but there is no configuration for it",
+					destinationName));
 			return ppfeResponse;
 		}
 		ParameterBuffer requestBuffer = toParameterBuffer(requestParameters);
@@ -121,7 +133,8 @@ public class PathwayContainer implements PpfeContainer {
 			LOGGER.trace("sending to: %s", destSelected.getUri());
 			PathwayClient pwClient = new PathwayClient(timeoutCentiSecs, destSelected.getLatencyThresholdMillis());
 			responseBuffer = pwClient.transceive(destSelected.getUri(), requestBuffer);
-			LOGGER.trace("sendRequest.response=%s", new HexDumper().buildHexDump(responseBuffer.toByteArray()).toString());
+			LOGGER.trace("sendRequest.response=%s",
+					new HexDumper().buildHexDump(responseBuffer.toByteArray()).toString());
 			MyProperties responseProperties = toProperties(responseBuffer);
 			ppfeResponse.setData(responseProperties);
 		} catch (Exception e) {
@@ -136,7 +149,7 @@ public class PathwayContainer implements PpfeContainer {
 	}
 
 	@Override
-	public synchronized PpfeRequest getRequest() {
+	public PpfeRequest getRequest() {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		Application app = config.getApplications().get(0);
 		ReceiveInfo ri = null;
@@ -148,8 +161,10 @@ public class PathwayContainer implements PpfeContainer {
 		if (!serverTerminating) {
 			try {
 				while (bytesReadCount == 0) {
-					bytesReadCount = $receive.read(maxMsg, maxMsg.length);
-					ri = $receive.getLastMessageInfo();
+					synchronized (readLock) {
+						bytesReadCount = $receive.read(maxMsg, maxMsg.length);
+						ri = $receive.getLastMessageInfo();
+					}
 					if (ri.isSystemMessage()) {
 						bytesReadCount = 0;
 						sysNum = ri.getSystemMessageNumber(maxMsg);
@@ -161,7 +176,11 @@ public class PathwayContainer implements PpfeContainer {
 					} else {
 						ppfeRequest = new PpfeRequest();
 						ppfeRequest.setData(toProperties(ParameterBuffer.wrap(maxMsg, 0, bytesReadCount)));
-						ppfeRequest.setContext(ri);
+						Context ctx = new Context();
+						ctx.appName = app.getName();
+						ctx.startTime = System.currentTimeMillis();
+						ctx.receiveInfo = ri;
+						ppfeRequest.setContext(ctx);
 					}
 				}
 			} catch (ReceiveNoOpeners ex) {
@@ -171,7 +190,7 @@ public class PathwayContainer implements PpfeContainer {
 				}
 				LOGGER.info("Terminating normally (no more work)");
 				serverTerminating = true;
-				
+
 			} catch (Exception ex) {
 				try {
 					$receive.cancelRead();
@@ -183,7 +202,7 @@ public class PathwayContainer implements PpfeContainer {
 		}
 		return ppfeRequest;
 	}
-	
+
 	private MyProperties toProperties(ParameterBuffer buffer) {
 		MyProperties result = new MyProperties();
 		Set<String> keys = buffer.keySet();
@@ -196,9 +215,9 @@ public class PathwayContainer implements PpfeContainer {
 		}
 		return result;
 	}
-	
+
 	private ParameterBuffer toParameterBuffer(Properties properties) {
-		ParameterBuffer result = new ParameterBuffer((short)0);
+		ParameterBuffer result = new ParameterBuffer((short) 0);
 		for (String name : properties.stringPropertyNames()) {
 			try {
 				result.addParameter(name, properties.getProperty(name, ""), true);
@@ -211,12 +230,15 @@ public class PathwayContainer implements PpfeContainer {
 
 	@Override
 	public Outcome sendReply(Object requestContext, MyProperties responseParameters) {
+		Context ctx = (Context) requestContext;
+		long latency = System.currentTimeMillis() - ctx.startTime;
+		LOGGER.debug("Application: '%s', latency: %d", ctx.appName, latency);
 		Outcome outcome = new Outcome(ReturnCode.SUCCESS, "replied with %d bytes");
 		try {
 			ParameterBuffer buffer = toParameterBuffer(responseParameters);
 			byte[] response = buffer.toByteArray();
 			LOGGER.trace("about to write " + response.length + " chars to $Receive");
-			int bytesSent = $receive.reply(response, response.length, (ReceiveInfo)requestContext, GError.EOK);
+			int bytesSent = $receive.reply(response, response.length, ctx.receiveInfo, GError.EOK);
 			outcome.setReturnCode(ReturnCode.SUCCESS);
 			outcome.setMessage(String.format(outcome.getMessage(), bytesSent));
 		} catch (Exception ex) {

@@ -18,7 +18,9 @@ public class RelayApplication extends PpfeApplication {
 		while ((ppfeRequest = getContainer().getRequest()) != null) {
 			try {
 				requestContext = ppfeRequest.getContext();
+				long before = System.currentTimeMillis();
 				ppfeResponse = getContainer().sendRequest("Sql", ppfeRequest.getData());
+				logger.trace("JAVA-SQL latency: %dms", System.currentTimeMillis() - before);
 			} catch (Exception e) {
 				ppfeResponse.getOutcome().setReturnCode(ReturnCode.FAILURE);
 				ppfeResponse.getOutcome().setMessage(e.toString());

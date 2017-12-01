@@ -24,7 +24,7 @@ public class SqlInterpreter extends PpfeApplication {
 		ds = getContainer().getDataSource();
 		PpfeResponse ppfeResponse = new PpfeResponse();
 		PpfeRequest ppfeRequest;
-		logger.info("Getting PpfeRequests");
+		logger.trace("Getting PpfeRequests");
 		while ((ppfeRequest = getContainer().getRequest()) != null) {
 			try {
 				ppfeResponse = process(ppfeRequest);
@@ -44,18 +44,23 @@ public class SqlInterpreter extends PpfeApplication {
 	}
 
 	public PpfeResponse process(PpfeRequest ppfeRequest) throws Exception {
-		logger.debug("Request data: %s", ppfeRequest.getData().toString());
+		logger.trace("Request data: %s", ppfeRequest.getData().toString());
 		PpfeResponse ppfeResponse = new PpfeResponse();
 		MyProperties requestData = ppfeRequest.getData();
 		String sqlStatement = requestData.getProperty("SQL", "");
-		try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(sqlStatement)) {
+		Connection conn = ds.getConnection();
+		PreparedStatement ps = conn.prepareStatement(sqlStatement);
+		try {
 			int sqlParameterCount = requestData.getIntProperty("PARM-CNT", 0);
 			for (int i = 0; i < sqlParameterCount; i++) {
 				String key = "P" + String.valueOf(i);
 				ps.setString(i + 1, requestData.getProperty(key));
 			}
+			long before = System.currentTimeMillis();
 			ResultSet rs = ps.executeQuery();
 			ResultSetMetaData meta = rs.getMetaData();
+			long latency = System.currentTimeMillis() - before;
+			logger.debug("SQL/MX latency: %dms", latency);
 			SqlResult sqlResult = new SqlResult();
 			for (int i = 1; i <= meta.getColumnCount(); i++) {
 				sqlResult.addColumn(meta.getColumnName(i));
@@ -68,7 +73,10 @@ public class SqlInterpreter extends PpfeApplication {
 			}
 			ppfeResponse.getData().setProperty("SQL-RESULT", sqlResult.toString());
 			ppfeResponse.getData().setProperty("RETURN_CODE", "0");
-			logger.debug("Response data: %s", ppfeResponse.getData().toString());
+			logger.trace("Response data: %s", ppfeResponse.getData().toString());
+		} finally {
+			ps.close();
+			conn.close();
 		}
 		return ppfeResponse;
 	}
