@@ -3,15 +3,8 @@ package net.kwami.ppfe;
 public class Application {
 	private String name;
 	private String className;
-	private int maxMessageSize = 2048;
-
-	public int getMaxMessageSize() {
-		return maxMessageSize;
-	}
-
-	public void setMaxMessageSize(int maxMessageSize) {
-		this.maxMessageSize = maxMessageSize;
-	}
+	private int maxRequestSize = 2048;
+	private int maxResponseSize = 2048;
 
 	public String getName() {
 		return name;
@@ -27,5 +20,21 @@ public class Application {
 
 	public void setClassName(String className) {
 		this.className = className;
+	}
+
+	public int getMaxRequestSize() {
+		return maxRequestSize;
+	}
+
+	public void setMaxRequestSize(int maxRequestSize) {
+		this.maxRequestSize = maxRequestSize;
+	}
+
+	public int getMaxResponseSize() {
+		return maxResponseSize;
+	}
+
+	public void setMaxResponseSize(int maxResponseSize) {
+		this.maxResponseSize = maxResponseSize;
 	}
 }

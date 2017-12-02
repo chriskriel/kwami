@@ -8,6 +8,11 @@ public class PpfeRequest {
 
 	public PpfeRequest() {
 		super();
+		data = new MyProperties();
+	}
+	
+	public void clear() {
+		data.clear();
 	}
 
 	public Object getContext() {

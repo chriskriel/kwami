@@ -1,8 +1,7 @@
 package net.kwami.ppfe;
 
-import java.io.UnsupportedEncodingException;
-import java.util.Properties;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
@@ -13,12 +12,11 @@ import com.tandem.ext.guardian.Receive;
 import com.tandem.ext.guardian.ReceiveInfo;
 import com.tandem.ext.guardian.ReceiveNoOpeners;
 
+import net.kwami.pathsend.ParameterBuffer;
 import net.kwami.pathsend.PathwayClient;
 import net.kwami.utils.Configurator;
-import net.kwami.utils.HexDumper;
 import net.kwami.utils.MyLogger;
 import net.kwami.utils.MyProperties;
-import net.kwami.utils.ParameterBuffer;
 
 public class PathwayContainer implements PpfeContainer {
 	private static final MyLogger LOGGER = new MyLogger(PathwayContainer.class);
@@ -35,6 +33,9 @@ public class PathwayContainer implements PpfeContainer {
 	private Receive $receive = null;
 	private DataSource dataSource;
 	private Object readLock = new Object();
+	private ThreadLocal<List<PathwayClient>> pathwayClientsHolder = new ThreadLocal<>();
+	private ThreadLocal<ParameterBuffer> replyBufferHolder = new ThreadLocal<>();
+	private ThreadLocal<ParameterBuffer> inputBufferHolder = new ThreadLocal<>();
 
 	public PathwayContainer() throws Exception {
 		super();
@@ -109,9 +110,9 @@ public class PathwayContainer implements PpfeContainer {
 	}
 
 	@Override
-	public PpfeResponse sendRequest(String destinationName, MyProperties requestParameters) {
+	public PpfeContainer sendRequest(String destinationName, MyProperties requestParameters, PpfeResponse ppfeResponse) {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
-		PpfeResponse ppfeResponse = new PpfeResponse();
+		MyProperties responseParameters = ppfeResponse.getData();
 		Outcome outcome = ppfeResponse.getOutcome();
 		Destination destSelected = null;
 		for (Destination dest : config.getDestinations()) {
@@ -124,19 +125,13 @@ public class PathwayContainer implements PpfeContainer {
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(String.format("Destination '%s' was requested but there is no configuration for it",
 					destinationName));
-			return ppfeResponse;
+			return this;
 		}
-		ParameterBuffer requestBuffer = toParameterBuffer(requestParameters);
-		ParameterBuffer responseBuffer = null;
-		int timeoutCentiSecs = Integer.parseInt(String.valueOf(destSelected.getClientTimeoutMillis())) / 10;
+		PathwayClient pwClient = getPathwayClient(destSelected);
 		try {
 			LOGGER.trace("sending to: %s", destSelected.getUri());
-			PathwayClient pwClient = new PathwayClient(timeoutCentiSecs, destSelected.getLatencyThresholdMillis());
-			responseBuffer = pwClient.transceive(destSelected.getUri(), requestBuffer);
-			LOGGER.trace("sendRequest.response=%s",
-					new HexDumper().buildHexDump(responseBuffer.toByteArray()).toString());
-			MyProperties responseProperties = toProperties(responseBuffer);
-			ppfeResponse.setData(responseProperties);
+			pwClient.transceive(0, requestParameters, responseParameters);
+			ppfeResponse.setData(responseParameters);
 		} catch (Exception e) {
 			String err = e.toString();
 			if (err.contains("File system error 40"))
@@ -145,17 +140,36 @@ public class PathwayContainer implements PpfeContainer {
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(err);
 		}
-		return ppfeResponse;
+		return this;
+	}
+
+	private PathwayClient getPathwayClient(Destination destSelected) {
+		if (pathwayClientsHolder.get() == null)
+			pathwayClientsHolder.set(new ArrayList<PathwayClient>());
+		for (PathwayClient client : pathwayClientsHolder.get()) {
+			if (client.getServerPath().equalsIgnoreCase(destSelected.getName())) {
+				return client;
+			}
+		}
+		PathwayClient pwClient = null;
+		int timeoutCentiSecs = Integer.parseInt(String.valueOf(destSelected.getClientTimeoutMillis())) / 10;
+		pwClient = new PathwayClient(destSelected.getUri(), timeoutCentiSecs, destSelected.getLatencyThresholdMillis());
+		pathwayClientsHolder.get().add(pwClient);
+		return pwClient;
 	}
 
 	@Override
-	public PpfeRequest getRequest() {
+	public boolean getRequest(PpfeRequest ppfeRequest) {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		Application app = config.getApplications().get(0);
 		ReceiveInfo ri = null;
-		PpfeRequest ppfeRequest = null;
 		int bytesReadCount = 0;
-		byte[] maxMsg = new byte[app.getMaxMessageSize()];
+		ParameterBuffer buffer = inputBufferHolder.get();
+		if (buffer == null) {
+			buffer = new ParameterBuffer(0, app.getMaxRequestSize());
+			inputBufferHolder.set(buffer);
+		}
+		byte[] maxMsg = buffer.array();
 		short sysNum;
 
 		if (!serverTerminating) {
@@ -164,6 +178,7 @@ public class PathwayContainer implements PpfeContainer {
 					synchronized (readLock) {
 						bytesReadCount = $receive.read(maxMsg, maxMsg.length);
 						ri = $receive.getLastMessageInfo();
+						LOGGER.trace("receivedBytes:", maxMsg, bytesReadCount);
 					}
 					if (ri.isSystemMessage()) {
 						bytesReadCount = 0;
@@ -174,8 +189,9 @@ public class PathwayContainer implements PpfeContainer {
 						} else
 							continue;
 					} else {
-						ppfeRequest = new PpfeRequest();
-						ppfeRequest.setData(toProperties(ParameterBuffer.wrap(maxMsg, 0, bytesReadCount)));
+						ppfeRequest.clear();
+						buffer.position(bytesReadCount);
+						buffer.extractPropertiesInto(ppfeRequest.getData());
 						Context ctx = new Context();
 						ctx.appName = app.getName();
 						ctx.startTime = System.currentTimeMillis();
@@ -200,45 +216,26 @@ public class PathwayContainer implements PpfeContainer {
 				serverTerminating = true;
 			}
 		}
-		return ppfeRequest;
-	}
-
-	private MyProperties toProperties(ParameterBuffer buffer) {
-		MyProperties result = new MyProperties();
-		Set<String> keys = buffer.keySet();
-		for (String key : keys) {
-			try {
-				result.setProperty(key, buffer.getStringValue(key));
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			}
-		}
-		return result;
-	}
-
-	private ParameterBuffer toParameterBuffer(Properties properties) {
-		ParameterBuffer result = new ParameterBuffer((short) 0);
-		for (String name : properties.stringPropertyNames()) {
-			try {
-				result.addParameter(name, properties.getProperty(name, ""), true);
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			}
-		}
-		return result;
+		return !serverTerminating;
 	}
 
 	@Override
-	public Outcome sendReply(Object requestContext, MyProperties responseParameters) {
+	public PpfeContainer sendReply(Object requestContext, MyProperties responseParameters, Outcome outcome) {
+		ContainerConfig config = Configurator.get(ContainerConfig.class);
+		Application app = config.getApplications().get(0);
 		Context ctx = (Context) requestContext;
 		long latency = System.currentTimeMillis() - ctx.startTime;
 		LOGGER.debug("Application: '%s', latency: %d", ctx.appName, latency);
-		Outcome outcome = new Outcome(ReturnCode.SUCCESS, "replied with %d bytes");
+		outcome.setMessage("replied with %d bytes");
 		try {
-			ParameterBuffer buffer = toParameterBuffer(responseParameters);
-			byte[] response = buffer.toByteArray();
-			LOGGER.trace("about to write " + response.length + " chars to $Receive");
-			int bytesSent = $receive.reply(response, response.length, ctx.receiveInfo, GError.EOK);
+			ParameterBuffer buffer = replyBufferHolder.get();
+			if (buffer == null) {
+				buffer = new ParameterBuffer(0, app.getMaxResponseSize());
+				replyBufferHolder.set(buffer);
+			}
+			buffer.initialize(0, responseParameters);
+			LOGGER.trace("about to write " + buffer.position() + " chars to $Receive");
+			int bytesSent = $receive.reply(buffer.array(), buffer.position(), ctx.receiveInfo, GError.EOK);
 			outcome.setReturnCode(ReturnCode.SUCCESS);
 			outcome.setMessage(String.format(outcome.getMessage(), bytesSent));
 		} catch (Exception ex) {
@@ -246,7 +243,7 @@ public class PathwayContainer implements PpfeContainer {
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(ex.toString());
 		}
-		return outcome;
+		return this;
 	}
 
 	@Override

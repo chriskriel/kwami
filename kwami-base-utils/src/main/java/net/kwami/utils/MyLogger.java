@@ -93,6 +93,14 @@ public class MyLogger {
 			logger.log(FQCN, Level.DEBUG, String.format(format, args), t);
 	}
 
+	public final void trace(final String heading, final byte[] data, final int length) {
+		if (!logger.isTraceEnabled())
+			return;
+		HexDumper hexDumper = new HexDumper();
+		String message = String.format("%s:(length=%d)\n%s", heading, length, hexDumper.buildHexDump(data, length));
+		logger.log(FQCN, Level.TRACE, message, null);
+	}
+
 	public final void trace(final String message) {
 		if (logger.isTraceEnabled())
 			logger.log(FQCN, Level.TRACE, message, null);

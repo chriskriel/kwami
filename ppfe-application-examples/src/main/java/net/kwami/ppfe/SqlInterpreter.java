@@ -14,6 +14,9 @@ import net.kwami.utils.MyProperties;
 public class SqlInterpreter extends PpfeApplication {
 	private static final MyLogger logger = new MyLogger(SqlInterpreter.class);
 	private DataSource ds;
+	private PpfeResponse ppfeResponse = new PpfeResponse();
+	private PpfeRequest ppfeRequest = new PpfeRequest();
+	private Outcome outcome = new Outcome();
 
 	public SqlInterpreter() throws Exception {
 		super();
@@ -21,11 +24,9 @@ public class SqlInterpreter extends PpfeApplication {
 
 	@Override
 	public void run() {
-		ds = getContainer().getDataSource();
-		PpfeResponse ppfeResponse = new PpfeResponse();
-		PpfeRequest ppfeRequest;
-		logger.trace("Getting PpfeRequests");
-		while ((ppfeRequest = getContainer().getRequest()) != null) {
+		PpfeContainer container = getContainer();
+		ds = container.getDataSource();
+		while (container.getRequest(ppfeRequest)) {
 			try {
 				ppfeResponse = process(ppfeRequest);
 			} catch (Exception e) {
@@ -33,19 +34,20 @@ public class SqlInterpreter extends PpfeApplication {
 				ppfeResponse.getOutcome().setMessage(e.toString());
 				logger.error(e, e.toString());
 			}
-			Outcome outcome = getContainer().sendReply(ppfeRequest.getContext(), ppfeResponse.getData());
+			container.sendReply(ppfeRequest.getContext(), ppfeResponse.getData(), outcome);
 			String msg = "Outcome of sendReply(): %s";
 			if (outcome.getReturnCode() == ReturnCode.SUCCESS) {
 				logger.trace(msg, outcome.toString());
 			} else {
 				logger.error(msg, outcome.toString());
 			}
+			container.getRequest(ppfeRequest);
 		}
 	}
 
 	public PpfeResponse process(PpfeRequest ppfeRequest) throws Exception {
 		logger.trace("Request data: %s", ppfeRequest.getData().toString());
-		PpfeResponse ppfeResponse = new PpfeResponse();
+		ppfeResponse.clear();
 		MyProperties requestData = ppfeRequest.getData();
 		String sqlStatement = requestData.getProperty("SQL", "");
 		Connection conn = ds.getConnection();

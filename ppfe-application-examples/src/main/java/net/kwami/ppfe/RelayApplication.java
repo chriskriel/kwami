@@ -4,6 +4,9 @@ import net.kwami.utils.MyLogger;
 
 public class RelayApplication extends PpfeApplication {
 	private static MyLogger logger = new MyLogger(PpfeApplication.class);
+	private final PpfeRequest ppfeRequest = new PpfeRequest();
+	private final PpfeResponse ppfeResponse = new PpfeResponse();
+	private Outcome outcome = new Outcome();
 
 	public RelayApplication() throws Exception {
 		super();
@@ -11,29 +14,31 @@ public class RelayApplication extends PpfeApplication {
 
 	@Override
 	public void run() {
-		PpfeRequest ppfeRequest = null;
+		PpfeContainer container = getContainer();
 		Object requestContext = null;
-		PpfeResponse ppfeResponse = new PpfeResponse();
 		logger.trace("get PpfeRequests");
-		while ((ppfeRequest = getContainer().getRequest()) != null) {
+		while (container.getRequest(ppfeRequest)) {
+			if (ppfeRequest == null)
+				return;
+			ppfeResponse.clear();
 			try {
 				requestContext = ppfeRequest.getContext();
 				long before = System.currentTimeMillis();
-				ppfeResponse = getContainer().sendRequest("Sql", ppfeRequest.getData());
+				container.sendRequest("Sql", ppfeRequest.getData(), ppfeResponse);
 				logger.trace("JAVA-SQL latency: %dms", System.currentTimeMillis() - before);
 			} catch (Exception e) {
 				ppfeResponse.getOutcome().setReturnCode(ReturnCode.FAILURE);
 				ppfeResponse.getOutcome().setMessage(e.toString());
 				logger.error(e, e.toString());
 			}
-			ppfeRequest.setContext(requestContext);
-			Outcome outcome = getContainer().sendReply(ppfeRequest.getContext(), ppfeResponse.getData());
+			container.sendReply(requestContext, ppfeResponse.getData(), outcome);
 			String msg = "Outcome on sending reply: %s";
 			if (outcome.getReturnCode() == ReturnCode.SUCCESS) {
 				logger.trace(msg, outcome.toString());
 			} else {
 				logger.error(msg, outcome.toString());
 			}
+			ppfeRequest.clear();
 		}
 	}
 }

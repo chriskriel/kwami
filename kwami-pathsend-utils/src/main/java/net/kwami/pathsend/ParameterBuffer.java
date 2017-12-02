@@ -1,10 +1,12 @@
-package net.kwami.utils;
+package net.kwami.pathsend;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import net.kwami.utils.MyProperties;
 
 public final class ParameterBuffer {
 
@@ -13,8 +15,7 @@ public final class ParameterBuffer {
 	private static final int MSG_ID_OFFSET = 8;
 	private static final short HDR_LEN = 10;
 	private static final byte TERMINATOR = 0;
-	private String charSetName = "UTF-8";
-	private int size = Short.MAX_VALUE;
+	private int size = Short.MAX_VALUE / 16;
 	private ByteBuffer bb = null;
 	private Map<String, Integer> keys = null;
 
@@ -33,41 +34,57 @@ public final class ParameterBuffer {
 	private ParameterBuffer() {
 	}
 
-	public ParameterBuffer(short msgId) {
+	public ParameterBuffer(int msgId) {
 		bb = ByteBuffer.allocate(size);
 		initialize(msgId);
 	}
 
-	public ParameterBuffer(short msgId, int size) {
+	public ParameterBuffer(int msgId, int size) {
 		this.size = size;
 		bb = ByteBuffer.allocate(size);
 		initialize(msgId);
 	}
 
-	public ParameterBuffer initialize(short newMsgId) {
+	public ParameterBuffer initialize(int newMsgId, MyProperties parameters) {
+		initialize(newMsgId);
+		for (String name : parameters.stringPropertyNames()) {
+			addParameter(name, parameters.getProperty(name, ""), true);
+		}
+		return this;
+	}
+
+	public ParameterBuffer initialize(int newMsgId) {
+		short shortMsgId = Short.parseShort(String.valueOf(newMsgId));
 		keys = new HashMap<String, Integer>();
 		bb.clear();
 		bb.putInt(0);
 		bb.position(MSG_ID_OFFSET);
-		bb.putShort(newMsgId);
+		bb.putShort(shortMsgId);
 		return this;
 	}
 
-	public byte[] toByteArray() {
-		if (bb == null)
-			return null;
-		int dataLen = bb.position() - HDR_LEN;
-		bb.putShort(LEN1_OFFSET, (short) dataLen);
-		bb.putShort(LEN2_OFFSET, (short) dataLen);
-		byte[] payloadBytes = new byte[bb.position()];
-		bb.position(0);
-		bb.get(payloadBytes);
-		return payloadBytes;
+	public int position() {
+		return bb.position();
 	}
 
-	public short getMsgId() {
+	public void position(int pos) {
+		bb.position(pos);
+	}
+
+	public byte[] array() {
 		if (bb == null)
-			return (short) 0;
+			return null;
+		if (bb.position() > HDR_LEN) {
+			int dataLen = bb.position() - HDR_LEN;
+			bb.putShort(LEN1_OFFSET, (short) dataLen);
+			bb.putShort(LEN2_OFFSET, (short) dataLen);
+		}
+		return bb.array();
+	}
+
+	public int getMsgId() {
+		if (bb == null)
+			return 0;
 		return bb.getShort(8);
 	}
 
@@ -86,7 +103,7 @@ public final class ParameterBuffer {
 	}
 
 	public ParameterBuffer addParameter(String name, int value) throws UnsupportedEncodingException {
-		bb.put(name.getBytes(charSetName));
+		bb.put(name.getBytes());
 		bb.put(TERMINATOR);
 		bb.putShort((short) (Integer.SIZE / Byte.SIZE));
 		bb.putInt(value);
@@ -112,20 +129,19 @@ public final class ParameterBuffer {
 		return this;
 	}
 
-	public ParameterBuffer addParameter(String name, String value, boolean addNullTerminator)
-			throws UnsupportedEncodingException {
+	public ParameterBuffer addParameter(String name, String value, boolean addNullTerminator) {
 		if (value == null)
 			return this;
 		setParameterName(name);
 		bb.putShort((short) (value.length() + (addNullTerminator ? 1 : 0)));
 		if (value.length() > 0) {
-			bb.put(value.getBytes(charSetName));
+			bb.put(value.getBytes());
 		}
 		if (addNullTerminator)
 			bb.put(TERMINATOR);
 		return this;
 	}
-	
+
 	public Set<String> keySet() {
 		return keys.keySet();
 	}
@@ -170,23 +186,22 @@ public final class ParameterBuffer {
 		return valueBytes;
 	}
 
-	public String getStringValue(String name) throws UnsupportedEncodingException {
+	public String getStringValue(String name) {
 		byte[] valueBytes = getByteArrayValue(name);
 		if (valueBytes == null)
 			return "";
-		return (new String(valueBytes, charSetName)).trim();
+		return (new String(valueBytes)).trim();
 	}
 
-	public String getCharSetName() {
-		return charSetName;
+	public ParameterBuffer extractPropertiesInto(MyProperties parameters) {
+		for (String key : keySet()) {
+			parameters.setProperty(key, getStringValue(key));
+		}
+		return this;
 	}
 
-	public void setCharSetName(String charSetName) {
-		this.charSetName = charSetName;
-	}
-
-	private void setParameterName(String name) throws UnsupportedEncodingException {
-		bb.put(name.getBytes(charSetName));
+	private void setParameterName(String name) {
+		bb.put(name.getBytes());
 		bb.put(TERMINATOR);
 		keys.put(name, bb.position());
 	}

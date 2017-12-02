@@ -11,6 +11,12 @@ public class PpfeResponse {
 		outcome = new Outcome(ReturnCode.SUCCESS);
 		data = new MyProperties();	
 	}
+	
+	public void clear() {
+		data.clear();
+		outcome.setMessage("");
+		outcome.setReturnCode(ReturnCode.SUCCESS);
+	}
 
 	public MyProperties getData() {
 		return data;

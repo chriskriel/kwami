@@ -6,11 +6,11 @@ import net.kwami.utils.MyProperties;
 
 public interface PpfeContainer {
 
-	PpfeResponse sendRequest(String destination, MyProperties requestParameters);
+	PpfeContainer sendRequest(String destination, MyProperties requestParameters, PpfeResponse ppfeResponse);
 
-	PpfeRequest getRequest();
+	boolean getRequest(PpfeRequest ppfeRequest);
 
-	Outcome sendReply(Object requestContext, MyProperties responseParameters);
+	PpfeContainer sendReply(Object requestContext, MyProperties responseParameters, Outcome outcome);
 	
 	DataSource getDataSource();
 
