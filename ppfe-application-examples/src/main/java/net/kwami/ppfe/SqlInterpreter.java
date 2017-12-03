@@ -6,14 +6,11 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.List;
 
-import org.apache.tomcat.jdbc.pool.DataSource;
-
 import net.kwami.utils.MyLogger;
 import net.kwami.utils.MyProperties;
 
 public class SqlInterpreter extends PpfeApplication {
 	private static final MyLogger logger = new MyLogger(SqlInterpreter.class);
-	private DataSource ds;
 	private PpfeResponse ppfeResponse = new PpfeResponse();
 	private PpfeRequest ppfeRequest = new PpfeRequest();
 	private Outcome outcome = new Outcome();
@@ -25,7 +22,6 @@ public class SqlInterpreter extends PpfeApplication {
 	@Override
 	public void run() {
 		PpfeContainer container = getContainer();
-		ds = container.getDataSource();
 		while (container.getRequest(ppfeRequest)) {
 			try {
 				ppfeResponse = process(ppfeRequest);
@@ -41,16 +37,15 @@ public class SqlInterpreter extends PpfeApplication {
 			} else {
 				logger.error(msg, outcome.toString());
 			}
-			container.getRequest(ppfeRequest);
 		}
 	}
 
-	public PpfeResponse process(PpfeRequest ppfeRequest) throws Exception {
+	private PpfeResponse process(PpfeRequest ppfeRequest) throws Exception {
 		logger.trace("Request data: %s", ppfeRequest.getData().toString());
 		ppfeResponse.clear();
 		MyProperties requestData = ppfeRequest.getData();
 		String sqlStatement = requestData.getProperty("SQL", "");
-		Connection conn = ds.getConnection();
+		Connection conn = getContainer().getDatabaseConnection();
 		PreparedStatement ps = conn.prepareStatement(sqlStatement);
 		try {
 			int sqlParameterCount = requestData.getIntProperty("PARM-CNT", 0);

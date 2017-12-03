@@ -1,6 +1,6 @@
 package net.kwami.ppfe;
 
-import org.apache.tomcat.jdbc.pool.DataSource;
+import java.sql.Connection;
 
 import net.kwami.utils.MyProperties;
 
@@ -12,6 +12,6 @@ public interface PpfeContainer {
 
 	PpfeContainer sendReply(Object requestContext, MyProperties responseParameters, Outcome outcome);
 	
-	DataSource getDataSource();
+	Connection getDatabaseConnection();
 
 }

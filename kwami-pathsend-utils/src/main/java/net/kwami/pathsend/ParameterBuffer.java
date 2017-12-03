@@ -10,10 +10,10 @@ import net.kwami.utils.MyProperties;
 
 public final class ParameterBuffer {
 
+	public static final short HDR_LEN = 10;
 	private static final int LEN1_OFFSET = 4;
 	private static final int LEN2_OFFSET = 6;
 	private static final int MSG_ID_OFFSET = 8;
-	private static final short HDR_LEN = 10;
 	private static final byte TERMINATOR = 0;
 	private int size = Short.MAX_VALUE / 16;
 	private ByteBuffer bb = null;
@@ -26,8 +26,7 @@ public final class ParameterBuffer {
 	public static ParameterBuffer wrap(byte[] bytes, int offset, int length) {
 		ParameterBuffer obj = new ParameterBuffer();
 		obj.bb = ByteBuffer.wrap(bytes, offset, length);
-		obj.bb.position(length);
-		obj.keys = obj.keyMap();
+		obj.position(length);
 		return obj;
 	}
 
@@ -55,7 +54,9 @@ public final class ParameterBuffer {
 
 	public ParameterBuffer initialize(int newMsgId) {
 		short shortMsgId = Short.parseShort(String.valueOf(newMsgId));
-		keys = new HashMap<String, Integer>();
+		if (keys == null)
+			keys = new HashMap<String, Integer>();
+		keys.clear();
 		bb.clear();
 		bb.putInt(0);
 		bb.position(MSG_ID_OFFSET);
@@ -69,16 +70,18 @@ public final class ParameterBuffer {
 
 	public void position(int pos) {
 		bb.position(pos);
+		if (pos > HDR_LEN) {
+			int dataLen = bb.position() - HDR_LEN;
+			bb.putShort(LEN1_OFFSET, (short) dataLen);
+			bb.putShort(LEN2_OFFSET, (short) dataLen);
+		}
+		keyMap(this);
 	}
 
 	public byte[] array() {
 		if (bb == null)
 			return null;
-		if (bb.position() > HDR_LEN) {
-			int dataLen = bb.position() - HDR_LEN;
-			bb.putShort(LEN1_OFFSET, (short) dataLen);
-			bb.putShort(LEN2_OFFSET, (short) dataLen);
-		}
+		position(bb.position());
 		return bb.array();
 	}
 
@@ -206,22 +209,24 @@ public final class ParameterBuffer {
 		keys.put(name, bb.position());
 	}
 
-	private Map<String, Integer> keyMap() {
-		Map<String, Integer> keys = new HashMap<String, Integer>();
-		int length = bb.getShort(LEN1_OFFSET) + HDR_LEN;
+	private static void keyMap(ParameterBuffer me) {
+		if (me.keys == null)
+			me.keys = new HashMap<String, Integer>();
+		me.keys.clear();
+		int length = me.bb.getShort(LEN1_OFFSET) + HDR_LEN;
 		byte[] nameBytes = new byte[64];
 		int j = 0, i = HDR_LEN;
 		for (; i < length; i++) {
-			byte b = bb.get(i);
+			byte b = me.bb.get(i);
 			if (b != TERMINATOR) {
 				nameBytes[j++] = b;
 				continue;
 			}
-			keys.put((new String(nameBytes)).trim(), ++i);
+			me.keys.put((new String(nameBytes)).trim(), ++i);
 			nameBytes = new byte[64];
 			j = 0;
-			i += bb.getShort(i) + 1;
+			i += me.bb.getShort(i) + 1;
 		}
-		return keys;
+		return;
 	}
 }

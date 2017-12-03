@@ -1,16 +1,16 @@
 package net.kwami.ppfe;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.tomcat.jdbc.pool.DataSource;
-import org.apache.tomcat.jdbc.pool.PoolProperties;
 
 import com.tandem.ext.guardian.GError;
 import com.tandem.ext.guardian.GuardianException;
 import com.tandem.ext.guardian.Receive;
 import com.tandem.ext.guardian.ReceiveInfo;
 import com.tandem.ext.guardian.ReceiveNoOpeners;
+import com.tandem.sqlmx.SQLMXDataSource;
 
 import net.kwami.pathsend.ParameterBuffer;
 import net.kwami.pathsend.PathwayClient;
@@ -27,11 +27,23 @@ public class PathwayContainer implements PpfeContainer {
 		ReceiveInfo receiveInfo;
 	}
 
+	static class DataSourceConfig {
+		public String blobTableName;
+		public String clobTableName;
+		public String catalog;
+		public String schema;
+		public int initialPoolSize;
+		public int maxIdleTime;
+		public int maxPoolSize;
+		public int maxStatements;
+		public int minPoolSize;
+	}
+
 	@SuppressWarnings("rawtypes")
 	private Class appClass = null;;
 	private boolean serverTerminating = false;
 	private Receive $receive = null;
-	private DataSource dataSource;
+	private SQLMXDataSource dataSource;
 	private Object readLock = new Object();
 	private ThreadLocal<List<PathwayClient>> pathwayClientsHolder = new ThreadLocal<>();
 	private ThreadLocal<ParameterBuffer> replyBufferHolder = new ThreadLocal<>();
@@ -39,12 +51,17 @@ public class PathwayContainer implements PpfeContainer {
 
 	public PathwayContainer() throws Exception {
 		super();
-		MyProperties properties = Configurator.get(MyProperties.class, "/Properties.js");
-		String resourceName = properties.getProperty("datasourceConfig", "DevRms");
-		PoolProperties pp = Configurator.get(PoolProperties.class, "/" + resourceName);
-		DataSource ds = new DataSource();
-		ds.setPoolProperties(pp);
-		this.dataSource = ds;
+		DataSourceConfig cfg = Configurator.get(DataSourceConfig.class);
+		dataSource = new SQLMXDataSource();
+		dataSource.setBlobTableName(cfg.blobTableName);
+		dataSource.setCatalog(cfg.catalog);
+		dataSource.setSchema(cfg.schema);
+		dataSource.setClobTableName(cfg.clobTableName);
+		dataSource.setInitialPoolSize(cfg.initialPoolSize);
+		dataSource.setMaxIdleTime(cfg.maxIdleTime);
+		dataSource.setMaxPoolSize(cfg.maxPoolSize);
+		dataSource.setMaxStatements(cfg.maxStatements);
+		dataSource.setMinPoolSize(cfg.minPoolSize);
 	}
 
 	public static void main(String[] args) {
@@ -110,7 +127,8 @@ public class PathwayContainer implements PpfeContainer {
 	}
 
 	@Override
-	public PpfeContainer sendRequest(String destinationName, MyProperties requestParameters, PpfeResponse ppfeResponse) {
+	public PpfeContainer sendRequest(String destinationName, MyProperties requestParameters,
+			PpfeResponse ppfeResponse) {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		MyProperties responseParameters = ppfeResponse.getData();
 		Outcome outcome = ppfeResponse.getOutcome();
@@ -178,8 +196,8 @@ public class PathwayContainer implements PpfeContainer {
 					synchronized (readLock) {
 						bytesReadCount = $receive.read(maxMsg, maxMsg.length);
 						ri = $receive.getLastMessageInfo();
-						LOGGER.trace("receivedBytes:", maxMsg, bytesReadCount);
 					}
+					LOGGER.trace("receivedBytes:", maxMsg, bytesReadCount);
 					if (ri.isSystemMessage()) {
 						bytesReadCount = 0;
 						sysNum = ri.getSystemMessageNumber(maxMsg);
@@ -247,7 +265,12 @@ public class PathwayContainer implements PpfeContainer {
 	}
 
 	@Override
-	public DataSource getDataSource() {
-		return dataSource;
+	public Connection getDatabaseConnection() {
+		try {
+			return dataSource.getConnection();
+		} catch (SQLException e) {
+			LOGGER.error(e, "getting a connection");
+		}
+		return null;
 	}
 }

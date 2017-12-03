@@ -16,8 +16,8 @@ public class RelayApplication extends PpfeApplication {
 	public void run() {
 		PpfeContainer container = getContainer();
 		Object requestContext = null;
-		logger.trace("get PpfeRequests");
 		while (container.getRequest(ppfeRequest)) {
+			logger.trace("ppfeRequest=%s", ppfeRequest.toString());
 			if (ppfeRequest == null)
 				return;
 			ppfeResponse.clear();
