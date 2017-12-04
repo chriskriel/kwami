@@ -2,7 +2,10 @@ package net.kwami.ppfe;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Properties;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -26,8 +29,9 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	private static final String PPFE_PARM = "PPFE_JSON";
 	private static final long serialVersionUID = 1L;
 	private static final MyLogger LOGGER = new MyLogger(TomcatContainer.class);
-	private static ThreadLocal<HttpServletRequest> threadServletRequest = new ThreadLocal<>();
-	private static ThreadLocal<HttpServletResponse> threadServletResponse = new ThreadLocal<>();
+	private ThreadLocal<HttpServletRequest> threadServletRequest = new ThreadLocal<>();
+	private ThreadLocal<HttpServletResponse> threadServletResponse = new ThreadLocal<>();
+	private ThreadLocal<List<PpfeApplication>> threadApplications = new ThreadLocal<>();
 	private DataSource dataSource;
 
 	public TomcatContainer() {
@@ -36,7 +40,10 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 
 	@Override
 	public void init() throws ServletException {
-		prepareDataSource();
+		threadApplications.set(new ArrayList<PpfeApplication>());
+		PoolProperties pp = Configurator.get(PoolProperties.class, "/DataSourceConfig.js");
+		dataSource = new DataSource();
+		dataSource.setPoolProperties(pp);
 	}
 
 	@Override
@@ -53,7 +60,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 
 	@Override
 	public String getServletInfo() {
-		return "SQL Interpreter Container";
+		return "PPFE Container";
 	}
 
 	public PpfeApplication createApplication() throws Exception {
@@ -61,19 +68,25 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 		if (appName == null) 
 			throw new Exception(String.format("A %s= parameter is required with the HTTP request", PPFE_APP));
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
-		Application thisApp = null;
+		Application appConfig = null;
 		for (Application app : config.getApplications()) {
 			if (app.getName().equals(appName)) {
-				thisApp = app;
+				appConfig = app;
 				break;
 			}
 		}
-		if (thisApp == null)
+		if (appConfig == null)
 			throw new Exception(String.format("No Application called '%s' has been configured", appName));
+		for (PpfeApplication threadApp:threadApplications.get()) {
+			if (threadApp.getAppName().equals(appConfig.getName()))
+				return threadApp;
+		}
 		@SuppressWarnings("rawtypes")
-		Class appClass = Class.forName(thisApp.getClassName());
+		Class appClass = Class.forName(appConfig.getClassName());
 		PpfeApplication ppfeApp = (PpfeApplication)appClass.newInstance();
 		ppfeApp.setContainer(this);
+		ppfeApp.setAppName(appConfig.getName());
+		threadApplications.get().add(ppfeApp);
 		return ppfeApp;
 	}
 
@@ -104,22 +117,10 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 		}
 	}
 
-	private void prepareDataSource() {
-		Properties properties = Configurator.get(Properties.class);
-		String schemaName = properties.getProperty("schemaName", "Dev.Rms");
-		String resourceName = String.format("/%s.js", schemaName);
-		LOGGER.info("configuring schema from the file %s", resourceName);
-		PoolProperties pp = Configurator.get(PoolProperties.class, resourceName);
-		DataSource ds = new DataSource();
-		ds.setPoolProperties(pp);
-		this.dataSource = ds;
-	}
-
 	@Override
-	public PpfeResponse sendRequest(String destination, MyProperties requestParameters) {
+	public PpfeContainer sendRequest(String destination, MyProperties requestParameters, PpfeResponse ppfeResponse) {
 		HttpServletRequest request = threadServletRequest.get();
 		HttpServletResponse response = threadServletResponse.get();
-		PpfeResponse ppfeResponse = new PpfeResponse();
 		Outcome outcome = ppfeResponse.getOutcome();
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		Destination destSelected = null;
@@ -132,7 +133,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 		if (destSelected == null) {
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(String.format("The specified destination of '%s' is not configured", destination));
-			return ppfeResponse;
+			return this;
 		}
 		String responseStr = null;
 		try {
@@ -152,31 +153,30 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(e.toString());
 		}
-		return ppfeResponse;
+		return this;
 	}
 
 	@Override
-	public synchronized PpfeRequest getRequest() {
+	public boolean getRequest(PpfeRequest msg) {
 		HttpServletRequest request = threadServletRequest.get();
 		HttpServletResponse response = threadServletResponse.get();
-		PpfeRequest msg = new PpfeRequest();		
 		if (request.getAttribute(PPFE_END) != null)
-			return null;
+			return false;
 		request.setAttribute(PPFE_END, "end");
 		try {
 			msg = preparePpfeMessage(request, response);
 		} catch (Exception e) {
 			LOGGER.error(e, "unable to get a request");
-			return null;
+			return false;
 		}
-		return msg;
+		return true;
 	}
 
 	@Override
-	public Outcome sendReply(Object requestContext, MyProperties responseParameters) {
+	public PpfeContainer sendReply(Object requestContext, MyProperties responseParameters, Outcome outcome) {
 		HttpServletRequest request = threadServletRequest.get();
 		HttpServletResponse response = threadServletResponse.get();
-		Outcome outcome = new Outcome(ReturnCode.SUCCESS, "replied with '%s'");
+		outcome.setMessage("replied with '%s'");
 		try {
 			String body = responseParameters.toString();
 			LOGGER.debug("about to reply with '%s'", body);
@@ -192,12 +192,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(ex.toString());
 		}
-		return outcome;
-	}
-
-	@Override
-	public DataSource getDataSource() {
-		return dataSource;
+		return this;
 	}
 
 	private void writeHttpResponse(HttpServletResponse response, String outParms) throws IOException {
@@ -209,5 +204,15 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 		} finally {
 			out.close();
 		}
+	}
+
+	@Override
+	public Connection getDatabaseConnection() {
+		try {
+			return dataSource.getConnection();
+		} catch (SQLException e) {
+			LOGGER.error(e);
+		}
+		return null;
 	}
 }

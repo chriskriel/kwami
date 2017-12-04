@@ -21,13 +21,13 @@ import net.kwami.utils.MyProperties;
 public class PathwayContainer implements PpfeContainer {
 	private static final MyLogger LOGGER = new MyLogger(PathwayContainer.class);
 
-	static class Context {
+	private static class Context {
 		String appName;
 		long startTime;
 		ReceiveInfo receiveInfo;
 	}
 
-	static class DataSourceConfig {
+	private static class DataSourceConfig {
 		public String blobTableName;
 		public String clobTableName;
 		public String catalog;
@@ -45,9 +45,9 @@ public class PathwayContainer implements PpfeContainer {
 	private Receive $receive = null;
 	private SQLMXDataSource dataSource;
 	private Object readLock = new Object();
-	private ThreadLocal<List<PathwayClient>> pathwayClientsHolder = new ThreadLocal<>();
-	private ThreadLocal<ParameterBuffer> replyBufferHolder = new ThreadLocal<>();
-	private ThreadLocal<ParameterBuffer> inputBufferHolder = new ThreadLocal<>();
+	private ThreadLocal<List<PathwayClient>> threadPathwayClients = new ThreadLocal<>();
+	private ThreadLocal<ParameterBuffer> threadReplyBuffer = new ThreadLocal<>();
+	private ThreadLocal<ParameterBuffer> threadInputBuffer = new ThreadLocal<>();
 
 	public PathwayContainer() throws Exception {
 		super();
@@ -162,9 +162,9 @@ public class PathwayContainer implements PpfeContainer {
 	}
 
 	private PathwayClient getPathwayClient(Destination destSelected) {
-		if (pathwayClientsHolder.get() == null)
-			pathwayClientsHolder.set(new ArrayList<PathwayClient>());
-		for (PathwayClient client : pathwayClientsHolder.get()) {
+		if (threadPathwayClients.get() == null)
+			threadPathwayClients.set(new ArrayList<PathwayClient>());
+		for (PathwayClient client : threadPathwayClients.get()) {
 			if (client.getServerPath().equalsIgnoreCase(destSelected.getName())) {
 				return client;
 			}
@@ -172,7 +172,7 @@ public class PathwayContainer implements PpfeContainer {
 		PathwayClient pwClient = null;
 		int timeoutCentiSecs = Integer.parseInt(String.valueOf(destSelected.getClientTimeoutMillis())) / 10;
 		pwClient = new PathwayClient(destSelected.getUri(), timeoutCentiSecs, destSelected.getLatencyThresholdMillis());
-		pathwayClientsHolder.get().add(pwClient);
+		threadPathwayClients.get().add(pwClient);
 		return pwClient;
 	}
 
@@ -182,10 +182,10 @@ public class PathwayContainer implements PpfeContainer {
 		Application app = config.getApplications().get(0);
 		ReceiveInfo ri = null;
 		int bytesReadCount = 0;
-		ParameterBuffer buffer = inputBufferHolder.get();
+		ParameterBuffer buffer = threadInputBuffer.get();
 		if (buffer == null) {
 			buffer = new ParameterBuffer(0, app.getMaxRequestSize());
-			inputBufferHolder.set(buffer);
+			threadInputBuffer.set(buffer);
 		}
 		byte[] maxMsg = buffer.array();
 		short sysNum;
@@ -246,10 +246,10 @@ public class PathwayContainer implements PpfeContainer {
 		LOGGER.debug("Application: '%s', latency: %d", ctx.appName, latency);
 		outcome.setMessage("replied with %d bytes");
 		try {
-			ParameterBuffer buffer = replyBufferHolder.get();
+			ParameterBuffer buffer = threadReplyBuffer.get();
 			if (buffer == null) {
 				buffer = new ParameterBuffer(0, app.getMaxResponseSize());
-				replyBufferHolder.set(buffer);
+				threadReplyBuffer.set(buffer);
 			}
 			buffer.initialize(0, responseParameters);
 			LOGGER.trace("about to write " + buffer.position() + " chars to $Receive");

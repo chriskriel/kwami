@@ -128,6 +128,10 @@ public class MyLogger {
 		logger.log(FQCN, Level.ERROR, message, null);
 	}
 
+	public final void error(final Throwable t) {
+		error(t, t.toString());
+	}
+
 	public final void error(final Throwable t, final String message) {
 		logger.log(FQCN, Level.ERROR, message, t);
 	}

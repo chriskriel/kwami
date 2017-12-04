@@ -4,7 +4,7 @@
   <groupId>net.kwami</groupId>
   <artifactId>kwami-base-utils</artifactId>
   <name>kwami-base-utils</name>
-  <version>7</version>
+  <version>8</version>
   <url>http://maven.apache.org</url>
   <build>
     <plugins>
