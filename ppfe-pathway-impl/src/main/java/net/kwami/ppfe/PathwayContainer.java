@@ -118,9 +118,9 @@ public class PathwayContainer implements PpfeContainer {
 
 	private PpfeApplication createApplication() throws Exception {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
-		Application thisApp = config.getApplications().get(0);
+		Application appConfig = config.getApplications().get(0);
 		if (appClass == null)
-			appClass = Class.forName(thisApp.getClassName());
+			appClass = Class.forName(appConfig.getClassName());
 		PpfeApplication ppfeApp = (PpfeApplication) appClass.newInstance();
 		ppfeApp.setContainer(this);
 		return ppfeApp;
@@ -169,9 +169,12 @@ public class PathwayContainer implements PpfeContainer {
 				return client;
 			}
 		}
+		ContainerConfig config = Configurator.get(ContainerConfig.class);
+		Application appConfig = config.getApplications().get(0);		
 		PathwayClient pwClient = null;
 		int timeoutCentiSecs = Integer.parseInt(String.valueOf(destSelected.getClientTimeoutMillis())) / 10;
-		pwClient = new PathwayClient(destSelected.getUri(), timeoutCentiSecs, destSelected.getLatencyThresholdMillis());
+		pwClient = new PathwayClient(destSelected.getUri(), timeoutCentiSecs, destSelected.getLatencyThresholdMillis(),
+				appConfig.getMaxRequestSize(), appConfig.getMaxResponseSize());
 		threadPathwayClients.get().add(pwClient);
 		return pwClient;
 	}
