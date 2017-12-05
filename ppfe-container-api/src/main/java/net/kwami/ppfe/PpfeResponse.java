@@ -1,5 +1,7 @@
 package net.kwami.ppfe;
 
+import com.google.gson.GsonBuilder;
+
 import net.kwami.utils.MyProperties;
 
 public class PpfeResponse {
@@ -32,5 +34,10 @@ public class PpfeResponse {
 
 	public void setOutcome(Outcome outcome) {
 		this.outcome = outcome;
+	}
+
+	@Override
+	public String toString() {
+		return new GsonBuilder().disableHtmlEscaping().create().toJson(this);
 	}
 }

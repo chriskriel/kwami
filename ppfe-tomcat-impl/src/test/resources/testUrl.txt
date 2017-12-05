@@ -1,1 +1,1 @@
-http://ppfe.vodacomtz.corp:10080/vtl-acs-web/wasp?msisdn=255767954443&type=1&sessionid=1&&msg=*150*200*20%23
+wget -O x 'http://localhost:8080/ppfe/ppfe?app=router&json={"SQL":"select * from client_system_roles where role_name= ?","PARM-CNT":"1","P0":"restClient"}'

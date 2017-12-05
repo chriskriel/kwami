@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -25,10 +27,12 @@ import net.kwami.utils.MyProperties;
 
 public class TomcatContainer extends HttpServlet implements PpfeContainer {
 
-	private static final String INCLUDED = "INCLUDED";
-	private static final String EOF = "PPFE_END";
+	private static final String APP_URI = "app:";
+	private static final String OUTPUT_DEQUE = "outputDeque";
+	private static final String INPUT_DEQUE = "inputDeque";
+	private static final String INVOKED = "INVOKED";
 	private static final String APP_KEY = "app";
-	private static final String PARM_NAME = "json";
+	private static final String INPUT_PARM = "json";
 	private static final long serialVersionUID = 1L;
 	private static final MyLogger LOGGER = new MyLogger(TomcatContainer.class);
 	private ThreadLocal<HttpServletRequest> threadServletRequest = new ThreadLocal<>();
@@ -64,10 +68,10 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 		return "PPFE Container";
 	}
 
-	public PpfeApplication createApplication() throws Exception {
+	public PpfeApplication createApplication(String appName) throws Exception {
+		LOGGER.trace(Thread.currentThread().getName());
 		if (threadApplications.get() == null)
 			threadApplications.set(new ArrayList<PpfeApplication>());
-		String appName = threadServletRequest.get().getParameter(APP_KEY);
 		if (appName == null)
 			throw new Exception(String.format("A %s= parameter is required with the HTTP request", APP_KEY));
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
@@ -93,31 +97,25 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 		return ppfeApp;
 	}
 
-	private void preparePpfeMessage(HttpServletRequest request, HttpServletResponse response,
-			PpfeRequest ppfeRequest) throws Exception {
-		Gson gson = new GsonBuilder().create();
-		Object obj = request.getAttribute(PARM_NAME);
-		ppfeRequest.setContext(INCLUDED);
-		if (obj == null) {
-			ppfeRequest.setContext("");
-			obj = request.getParameter(PARM_NAME);
-		}
-		String jsonData = obj.toString().trim();
-		MyProperties requestData = gson.fromJson(jsonData, MyProperties.class);
-		ppfeRequest.setData(requestData);
-		return;
-	}
-
 	private void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		LOGGER.trace(Thread.currentThread().getName());
 		threadServletRequest.set(request);
 		threadServletResponse.set(response);
+		Deque<String> inputDeque = new ArrayDeque<String>();
+		request.setAttribute(INPUT_DEQUE, inputDeque);
+		request.setAttribute(OUTPUT_DEQUE, new ArrayDeque<String>());
 		try {
 			Enumeration<?> parameters = request.getParameterNames();
 			while (parameters.hasMoreElements()) {
 				String name = parameters.nextElement().toString();
 				LOGGER.trace("parm=%s,value=%s", name, request.getParameter(name).toString());
+				if (name.equals(INPUT_PARM))
+					inputDeque.push(request.getParameter(name).toString());
 			}
-			createApplication().run();
+			if (inputDeque.isEmpty())
+				throw new Exception("expected parameter " + INPUT_PARM + "={...} was not found");
+			String appName = request.getParameter(APP_KEY);
+			createApplication(appName.trim()).run();
 		} catch (Exception e) {
 			LOGGER.error(e, e.toString());
 			throw new ServletException(e);
@@ -129,8 +127,8 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 
 	@Override
 	public PpfeContainer sendRequest(String destination, MyProperties requestParameters, PpfeResponse ppfeResponse) {
+		LOGGER.trace(Thread.currentThread().getName());
 		HttpServletRequest request = threadServletRequest.get();
-		HttpServletResponse response = threadServletResponse.get();
 		Outcome outcome = ppfeResponse.getOutcome();
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		Destination destSelected = null;
@@ -151,15 +149,24 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 				HttpClient httpClient = new HttpClient(destSelected.getRemote().getScheme(),
 						destSelected.getRemote().getHostName(), destSelected.getRemote().getPort());
 				responseStr = httpClient.post(destSelected.getUri(), requestParameters.toString());
-			} else {
-				threadServletRequest.get().getRequestDispatcher(destSelected.getUri()).include(request, response);
-				responseStr = request.getAttribute(PARM_NAME).toString();
-			}
+			} else if (destSelected.getUri().startsWith(APP_URI)) {
+				String appName = destSelected.getUri().substring(4);
+				@SuppressWarnings("unchecked")
+				Deque<String> inputDeque = (Deque<String>) request.getAttribute(INPUT_DEQUE);
+				inputDeque.push(requestParameters.toString());
+				request.setAttribute(INVOKED, "true");
+				createApplication(appName).run();
+				@SuppressWarnings("unchecked")
+				Deque<String> outputDeque = (Deque<String>) request.getAttribute(OUTPUT_DEQUE);
+				responseStr = outputDeque.pop();
+			} else
+				throw new Exception(String.format("invalid URI of '%s' for destination name '%s'",
+						destSelected.getUri(), destSelected.getName()));
 			Gson gson = new GsonBuilder().create();
 			MyProperties props = gson.fromJson(responseStr, MyProperties.class);
 			ppfeResponse.setData(props);
 		} catch (Exception e) {
-			LOGGER.error(e, "unable to sendRequest()");
+			LOGGER.error(e, "unable to send a request to the destination named '%s'", destSelected.getName());
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(e.toString());
 		}
@@ -167,38 +174,44 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	}
 
 	@Override
-	public boolean getRequest(PpfeRequest msg) {
+	public boolean getRequest(PpfeRequest ppfeRequest) {
+		LOGGER.trace(Thread.currentThread().getName());
 		HttpServletRequest request = threadServletRequest.get();
-		HttpServletResponse response = threadServletResponse.get();
-		if (request.getAttribute(EOF) != null)
+		@SuppressWarnings("unchecked")
+		Deque<String> inputDeque = (Deque<String>) request.getAttribute(INPUT_DEQUE);
+		if (inputDeque.isEmpty())
 			return false;
-		request.setAttribute(EOF, "end");
-		try {
-			preparePpfeMessage(request, response, msg);
-		} catch (Exception e) {
-			LOGGER.error(e, "unable to get a request");
-			return false;
+		String jsonData = inputDeque.pop();
+		Gson gson = new GsonBuilder().create();
+		MyProperties requestData = gson.fromJson(jsonData, MyProperties.class);
+		ppfeRequest.setData(requestData);
+		if (request.getAttribute(INVOKED) != null) {
+			ppfeRequest.setContext(INVOKED);
+			request.removeAttribute(INVOKED);
 		}
 		return true;
 	}
 
 	@Override
 	public PpfeContainer sendReply(Object requestContext, MyProperties responseParameters, Outcome outcome) {
+		LOGGER.trace(Thread.currentThread().getName());
 		HttpServletRequest request = threadServletRequest.get();
 		HttpServletResponse response = threadServletResponse.get();
 		outcome.setMessage("replied with '%s'");
 		try {
-			String body = responseParameters.toString();
-			LOGGER.debug("about to reply with '%s'", body);
-			if (requestContext.toString().equals(INCLUDED)) {
-				request.setAttribute(PARM_NAME, body);
+			String json = responseParameters.toString();
+			LOGGER.debug("about to reply with '%s'", json);
+			if (requestContext.toString().equals(INVOKED)) {
+				@SuppressWarnings("unchecked")
+				Deque<String> outputDeque = (Deque<String>) request.getAttribute(OUTPUT_DEQUE);
+				outputDeque.push(json);
 			} else {
-				writeHttpResponse(response, body);
+				writeHttpResponse(response, json);
 			}
 			outcome.setReturnCode(ReturnCode.SUCCESS);
-			outcome.setMessage(String.format(outcome.getMessage(), body));
+			outcome.setMessage(String.format(outcome.getMessage(), json));
 		} catch (Exception ex) {
-			LOGGER.error(ex, "unable to get a sendReply()");
+			LOGGER.error(ex, "unable to do a sendReply()");
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(ex.toString());
 		}
@@ -206,6 +219,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	}
 
 	private void writeHttpResponse(HttpServletResponse response, String outParms) throws IOException {
+		LOGGER.trace(Thread.currentThread().getName());
 		PrintWriter out = response.getWriter();
 		try {
 			response.setContentType("text/html;charset=UTF-8");
@@ -218,6 +232,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 
 	@Override
 	public Connection getDatabaseConnection() {
+		LOGGER.trace(Thread.currentThread().getName());
 		try {
 			return dataSource.getConnection();
 		} catch (SQLException e) {

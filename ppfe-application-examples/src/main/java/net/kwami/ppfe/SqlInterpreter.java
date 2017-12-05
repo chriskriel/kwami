@@ -23,6 +23,7 @@ public class SqlInterpreter extends PpfeApplication {
 	public void run() {
 		PpfeContainer container = getContainer();
 		while (container.getRequest(ppfeRequest)) {
+			logger.trace("SqlInterpreter: ppfeRequest=%s", ppfeRequest.toString());
 			try {
 				ppfeResponse = process(ppfeRequest);
 			} catch (Exception e) {
