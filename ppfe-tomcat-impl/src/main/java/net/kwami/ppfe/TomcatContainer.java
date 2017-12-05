@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -24,9 +25,10 @@ import net.kwami.utils.MyProperties;
 
 public class TomcatContainer extends HttpServlet implements PpfeContainer {
 
-	private static final String PPFE_END = "PPFE_END";
-	private static final String PPFE_APP = "ppfeApp";
-	private static final String PPFE_PARM = "PPFE_JSON";
+	private static final String INCLUDED = "INCLUDED";
+	private static final String EOF = "PPFE_END";
+	private static final String APP_KEY = "app";
+	private static final String PARM_NAME = "json";
 	private static final long serialVersionUID = 1L;
 	private static final MyLogger LOGGER = new MyLogger(TomcatContainer.class);
 	private ThreadLocal<HttpServletRequest> threadServletRequest = new ThreadLocal<>();
@@ -40,7 +42,6 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 
 	@Override
 	public void init() throws ServletException {
-		threadApplications.set(new ArrayList<PpfeApplication>());
 		PoolProperties pp = Configurator.get(PoolProperties.class, "/DataSourceConfig.js");
 		dataSource = new DataSource();
 		dataSource.setPoolProperties(pp);
@@ -64,9 +65,11 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	}
 
 	public PpfeApplication createApplication() throws Exception {
-		String appName = threadServletRequest.get().getParameter(PPFE_APP);
-		if (appName == null) 
-			throw new Exception(String.format("A %s= parameter is required with the HTTP request", PPFE_APP));
+		if (threadApplications.get() == null)
+			threadApplications.set(new ArrayList<PpfeApplication>());
+		String appName = threadServletRequest.get().getParameter(APP_KEY);
+		if (appName == null)
+			throw new Exception(String.format("A %s= parameter is required with the HTTP request", APP_KEY));
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		Application appConfig = null;
 		for (Application app : config.getApplications()) {
@@ -77,36 +80,43 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 		}
 		if (appConfig == null)
 			throw new Exception(String.format("No Application called '%s' has been configured", appName));
-		for (PpfeApplication threadApp:threadApplications.get()) {
+		for (PpfeApplication threadApp : threadApplications.get()) {
 			if (threadApp.getAppName().equals(appConfig.getName()))
 				return threadApp;
 		}
 		@SuppressWarnings("rawtypes")
 		Class appClass = Class.forName(appConfig.getClassName());
-		PpfeApplication ppfeApp = (PpfeApplication)appClass.newInstance();
+		PpfeApplication ppfeApp = (PpfeApplication) appClass.newInstance();
 		ppfeApp.setContainer(this);
 		ppfeApp.setAppName(appConfig.getName());
 		threadApplications.get().add(ppfeApp);
 		return ppfeApp;
 	}
 
-	private PpfeRequest preparePpfeMessage(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		PpfeRequest ppfeRequest = new PpfeRequest();
+	private void preparePpfeMessage(HttpServletRequest request, HttpServletResponse response,
+			PpfeRequest ppfeRequest) throws Exception {
 		Gson gson = new GsonBuilder().create();
-		String jsonData = request.getAttribute(PPFE_PARM).toString().trim();
-		MyProperties requestData;
-		if (jsonData == null) {
-			jsonData = request.getParameter(PPFE_PARM).toString().trim();
+		Object obj = request.getAttribute(PARM_NAME);
+		ppfeRequest.setContext(INCLUDED);
+		if (obj == null) {
+			ppfeRequest.setContext("");
+			obj = request.getParameter(PARM_NAME);
 		}
-		requestData = gson.fromJson(jsonData, MyProperties.class);
+		String jsonData = obj.toString().trim();
+		MyProperties requestData = gson.fromJson(jsonData, MyProperties.class);
 		ppfeRequest.setData(requestData);
-		return ppfeRequest;
+		return;
 	}
 
 	private void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		threadServletRequest.set(request);
 		threadServletResponse.set(response);
 		try {
+			Enumeration<?> parameters = request.getParameterNames();
+			while (parameters.hasMoreElements()) {
+				String name = parameters.nextElement().toString();
+				LOGGER.trace("parm=%s,value=%s", name, request.getParameter(name).toString());
+			}
 			createApplication().run();
 		} catch (Exception e) {
 			LOGGER.error(e, e.toString());
@@ -143,7 +153,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 				responseStr = httpClient.post(destSelected.getUri(), requestParameters.toString());
 			} else {
 				threadServletRequest.get().getRequestDispatcher(destSelected.getUri()).include(request, response);
-				responseStr = request.getAttribute(PPFE_PARM).toString();
+				responseStr = request.getAttribute(PARM_NAME).toString();
 			}
 			Gson gson = new GsonBuilder().create();
 			MyProperties props = gson.fromJson(responseStr, MyProperties.class);
@@ -160,11 +170,11 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	public boolean getRequest(PpfeRequest msg) {
 		HttpServletRequest request = threadServletRequest.get();
 		HttpServletResponse response = threadServletResponse.get();
-		if (request.getAttribute(PPFE_END) != null)
+		if (request.getAttribute(EOF) != null)
 			return false;
-		request.setAttribute(PPFE_END, "end");
+		request.setAttribute(EOF, "end");
 		try {
-			msg = preparePpfeMessage(request, response);
+			preparePpfeMessage(request, response, msg);
 		} catch (Exception e) {
 			LOGGER.error(e, "unable to get a request");
 			return false;
@@ -180,8 +190,8 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 		try {
 			String body = responseParameters.toString();
 			LOGGER.debug("about to reply with '%s'", body);
-			if (request.getAttribute(PPFE_PARM) != null) {
-				request.setAttribute(PPFE_PARM, body);
+			if (requestContext.toString().equals(INCLUDED)) {
+				request.setAttribute(PARM_NAME, body);
 			} else {
 				writeHttpResponse(response, body);
 			}
