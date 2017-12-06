@@ -1,18 +1,12 @@
 package net.kwami.ppfe;
 
+import java.util.List;
+import java.util.Vector;
+
 public class Application {
-	private String name;
 	private String className;
 	private int maxRequestSize = 2048;
 	private int maxResponseSize = 2048;
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
 
 	public String getClassName() {
 		return className;

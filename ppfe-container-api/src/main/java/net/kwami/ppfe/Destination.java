@@ -36,7 +36,6 @@ public class Destination {
 
 	}
 
-	private String name;
 	private String applicationName;
 	private String uri;
 	private int clientTimeoutMillis = 15000;
@@ -45,14 +44,6 @@ public class Destination {
 
 	public Destination() {
 		super();
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	public String getApplicationName() {

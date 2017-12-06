@@ -7,21 +7,23 @@ public class Tester {
 
 	public static void main(String[] args) {
 		ContainerConfig config = new ContainerConfig();
+		config.addContainer("basic", "net.kwami.ppfe.BasicContainer");;
+		config.addContainer("pathsendRouter", "net.kwami.ppfe.PathsendContainer");
 		Application app = new Application();
-		app.setName("router");
 		app.setClassName("net.kwami.ppfe.RelayApplication");
-		config.addApplication(app);
+		app.setMaxRequestSize(512);
+		app.setMaxResponseSize(2048);
+		config.addApplication("router", app);
 		app = new Application();
-		app.setName("sqlInterpreter");
 		app.setClassName("net.kwami.ppfe.SqlInterpreter");
-		config.addApplication(app);
+		app.setMaxRequestSize(512);
+		app.setMaxResponseSize(2048);
+		config.addApplication("sqlInterpreter", app);
 		Destination dest = new Destination();
-		dest.setName("localRouter");
 		dest.setApplicationName("router");
 		dest.setUri("/localRouter");
-		config.addDestination(dest);
+		config.addDestination("localRouter", dest);
 		dest = new Destination();
-		dest.setName("remoteSql");
 		dest.setApplicationName("sqlInterpreter");
 		Destination.Remote remoteDest = new Destination.Remote();
 		remoteDest.setScheme("http");
@@ -29,7 +31,7 @@ public class Tester {
 		remoteDest.setPort(18080);
 		dest.setUri("/ppfe");
 		dest.setRemote(remoteDest);
-		config.addDestination(dest);
+		config.addDestination("remoteSql", dest);
 		String json = config.toString();
 		System.out.println(json);
 		Gson gson = new GsonBuilder().create();
