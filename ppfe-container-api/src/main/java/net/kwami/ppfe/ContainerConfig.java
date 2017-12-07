@@ -6,7 +6,6 @@ import java.util.Map;
 import com.google.gson.GsonBuilder;
 
 public class ContainerConfig {
-	private Map<String, String> containers = new HashMap<>();
 	private Map<String, Application> applications = new HashMap<>();
 	private Map<String, Destination> destinations = new HashMap<>();
 
@@ -45,21 +44,5 @@ public class ContainerConfig {
 
 	public Destination getDestination(String name) {
 		return destinations.get(name);
-	}
-
-	public Map<String, String> getContainers() {
-		return containers;
-	}
-
-	public void setContainers(Map<String, String> containers) {
-		this.containers = containers;
-	}
-
-	public void addContainer(String name, String className) {
-		containers.put(name, className);
-	}
-
-	public String getContainer(String name) {
-		return containers.get(name);
 	}
 }

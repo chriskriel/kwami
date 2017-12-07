@@ -12,7 +12,6 @@ public class Tester {
 	
 	private static void pathway() {
 		ContainerConfig config = new ContainerConfig();
-		config.addContainer("basicPathway", "net.kwami.ppfe.PathwayContainer");
 		Application app = new Application();
 		app.setClassName("net.kwami.ppfe.RelayApplication");
 		config.addApplication("router", app);
@@ -47,8 +46,6 @@ public class Tester {
 	
 	private static void tomcat() {
 		ContainerConfig config = new ContainerConfig();
-		config.addContainer("basicServlet", "net.kwami.ppfe.BasicContainer");
-		config.addContainer("pathsendRouter", "net.kwami.ppfe.PathsendContainer");
 		Application app = new Application();
 		app.setClassName("net.kwami.ppfe.RelayApplication");
 		config.addApplication("router", app);

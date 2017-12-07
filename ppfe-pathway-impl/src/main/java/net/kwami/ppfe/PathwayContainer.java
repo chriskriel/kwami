@@ -40,14 +40,15 @@ public class PathwayContainer implements PpfeContainer {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private Class appClass = null;;
+	private Class appClass = null;
+	private String applicationName;
 	private boolean serverTerminating = false;
 	private Receive $receive = null;
 	private SQLMXDataSource dataSource;
 	private Object readLock = new Object();
-	private ThreadLocal<List<PathwayClient>> threadPathwayClients = new ThreadLocal<>();
-	private ThreadLocal<ParameterBuffer> threadReplyBuffer = new ThreadLocal<>();
-	private ThreadLocal<ParameterBuffer> threadInputBuffer = new ThreadLocal<>();
+	private final ThreadLocal<List<PathwayClient>> threadPathwayClients = new ThreadLocal<>();
+	private final ThreadLocal<ParameterBuffer> threadReplyBuffer = new ThreadLocal<>();
+	private final ThreadLocal<ParameterBuffer> threadInputBuffer = new ThreadLocal<>();
 
 	public PathwayContainer() throws Exception {
 		super();
@@ -78,6 +79,7 @@ public class PathwayContainer implements PpfeContainer {
 
 	private void start() {
 		MyProperties properties = Configurator.get(MyProperties.class, "/Properties.js");
+		applicationName = properties.getProperty("applicationName", "app");
 		int receiveDepth = properties.getIntProperty("receiveDepth", 10);
 		try {
 			$receive = Receive.getInstance();
@@ -118,7 +120,7 @@ public class PathwayContainer implements PpfeContainer {
 
 	private PpfeApplication createApplication() throws Exception {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
-		Application appConfig = config.getApplications().get(0);
+		Application appConfig = config.getApplications().get(applicationName);
 		if (appClass == null)
 			appClass = Class.forName(appConfig.getClassName());
 		PpfeApplication ppfeApp = (PpfeApplication) appClass.newInstance();
@@ -132,13 +134,7 @@ public class PathwayContainer implements PpfeContainer {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		MyProperties responseParameters = ppfeResponse.getData();
 		Outcome outcome = ppfeResponse.getOutcome();
-		Destination destSelected = null;
-		for (Destination dest : config.getDestinations()) {
-			if (dest.getName().equals(destinationName)) {
-				destSelected = dest;
-				break;
-			}
-		}
+		Destination destSelected = config.getDestinations().get(destinationName);
 		if (destSelected == null) {
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(String.format("Destination '%s' was requested but there is no configuration for it",
@@ -165,12 +161,12 @@ public class PathwayContainer implements PpfeContainer {
 		if (threadPathwayClients.get() == null)
 			threadPathwayClients.set(new ArrayList<PathwayClient>());
 		for (PathwayClient client : threadPathwayClients.get()) {
-			if (client.getServerPath().equalsIgnoreCase(destSelected.getName())) {
+			if (client.getServerPath().equalsIgnoreCase(destSelected.getUri())) {
 				return client;
 			}
 		}
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
-		Application appConfig = config.getApplications().get(0);		
+		Application appConfig = config.getApplications().get(destSelected.getApplicationName());		
 		PathwayClient pwClient = null;
 		int timeoutCentiSecs = Integer.parseInt(String.valueOf(destSelected.getClientTimeoutMillis())) / 10;
 		pwClient = new PathwayClient(destSelected.getUri(), timeoutCentiSecs, destSelected.getLatencyThresholdMillis(),
@@ -182,7 +178,7 @@ public class PathwayContainer implements PpfeContainer {
 	@Override
 	public boolean getRequest(PpfeRequest ppfeRequest) {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
-		Application app = config.getApplications().get(0);
+		Application app = config.getApplications().get(applicationName);
 		ReceiveInfo ri = null;
 		int bytesReadCount = 0;
 		ParameterBuffer buffer = threadInputBuffer.get();
@@ -214,7 +210,7 @@ public class PathwayContainer implements PpfeContainer {
 						buffer.position(bytesReadCount);
 						buffer.extractPropertiesInto(ppfeRequest.getData());
 						Context ctx = new Context();
-						ctx.appName = app.getName();
+						ctx.appName = applicationName;
 						ctx.startTime = System.currentTimeMillis();
 						ctx.receiveInfo = ri;
 						ppfeRequest.setContext(ctx);
@@ -243,7 +239,7 @@ public class PathwayContainer implements PpfeContainer {
 	@Override
 	public PpfeContainer sendReply(Object requestContext, MyProperties responseParameters, Outcome outcome) {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
-		Application app = config.getApplications().get(0);
+		Application app = config.getApplications().get(applicationName);
 		Context ctx = (Context) requestContext;
 		long latency = System.currentTimeMillis() - ctx.startTime;
 		LOGGER.debug("Application: '%s', latency: %d", ctx.appName, latency);

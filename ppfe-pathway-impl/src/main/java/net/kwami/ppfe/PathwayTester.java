@@ -37,13 +37,7 @@ public class PathwayTester extends Thread {
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		PpfeResponse response = new PpfeResponse();
 		Outcome outcome = response.getOutcome();
-		Destination destSelected = null;
-		for (Destination dest : config.getDestinations()) {
-			if (dest.getName().equals(destinationName)) {
-				destSelected = dest;
-				break;
-			}
-		}
+		Destination destSelected = config.getDestinations().get(destinationName);
 		if (destSelected == null) {
 			outcome.setReturnCode(ReturnCode.FAILURE);
 			outcome.setMessage(String.format("Destination '%s' was requested but there is no configuration for it",
