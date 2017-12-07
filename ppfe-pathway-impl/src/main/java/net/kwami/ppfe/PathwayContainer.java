@@ -141,9 +141,9 @@ public class PathwayContainer implements PpfeContainer {
 					destinationName));
 			return this;
 		}
-		PathwayClient pwClient = getPathwayClient(destSelected);
 		try {
 			LOGGER.trace("sending to: %s", destSelected.getUri());
+			PathwayClient pwClient = getPathwayClient(destSelected);
 			pwClient.transceive(0, requestParameters, responseParameters);
 			ppfeResponse.setData(responseParameters);
 		} catch (Exception e) {
@@ -157,7 +157,7 @@ public class PathwayContainer implements PpfeContainer {
 		return this;
 	}
 
-	private PathwayClient getPathwayClient(Destination destSelected) {
+	private PathwayClient getPathwayClient(Destination destSelected) throws Exception {
 		if (threadPathwayClients.get() == null)
 			threadPathwayClients.set(new ArrayList<PathwayClient>());
 		for (PathwayClient client : threadPathwayClients.get()) {
@@ -166,7 +166,9 @@ public class PathwayContainer implements PpfeContainer {
 			}
 		}
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
-		Application appConfig = config.getApplications().get(destSelected.getApplicationName());		
+		Application appConfig = config.getApplications().get(destSelected.getApplicationName());
+		if (appConfig == null)
+			throw new Exception(String.format("destination app '%s' has not been configured", destSelected.getApplicationName()));
 		PathwayClient pwClient = null;
 		int timeoutCentiSecs = Integer.parseInt(String.valueOf(destSelected.getClientTimeoutMillis())) / 10;
 		pwClient = new PathwayClient(destSelected.getUri(), timeoutCentiSecs, destSelected.getLatencyThresholdMillis(),

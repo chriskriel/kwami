@@ -41,7 +41,7 @@ public class Tester {
 		System.out.println(json);
 		Gson gson = new GsonBuilder().create();
 		config = gson.fromJson(json, ContainerConfig.class);
-		System.out.println(json);	
+		System.out.println(config.toString());	
 	}
 	
 	private static void tomcat() {
@@ -69,6 +69,6 @@ public class Tester {
 		System.out.println(json);
 		Gson gson = new GsonBuilder().create();
 		config = gson.fromJson(json, ContainerConfig.class);
-		System.out.println(json);	
+		System.out.println(config.toString());	
 	}
 }
