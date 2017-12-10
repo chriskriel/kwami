@@ -47,13 +47,13 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		processRequest(request, response);
+		processHttpRequest(request, response);
 	}
 
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		processRequest(request, response);
+		processHttpRequest(request, response);
 	}
 
 	@Override
@@ -62,37 +62,36 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	}
 
 	private PpfeApplication createApplication(String appName) throws Exception {
+		LOGGER.trace("Container: ");
 		ThreadData threadData = threadLocal.get();
-		LOGGER.trace("Container");
 		if (appName == null)
 			throw new Exception(String.format("A %s= parameter is required with the HTTP request", APP_KEY));
+		PpfeApplication ppfeApp = threadData.getApplications().get(appName);
+		if (ppfeApp != null)
+			return ppfeApp;
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		Application appConfig = config.getApplications().get(appName);
 		if (appConfig == null)
 			throw new Exception(String.format("No Application called '%s' has been configured", appName));
-		for (PpfeApplication threadApp : threadData.getApplications()) {
-			if (threadApp.getAppName().equals(appName))
-				return threadApp;
-		}
 		@SuppressWarnings("rawtypes")
 		Class appClass = Class.forName(appConfig.getClassName());
-		PpfeApplication ppfeApp = (PpfeApplication) appClass.newInstance();
+		ppfeApp = (PpfeApplication) appClass.newInstance();
 		ppfeApp.setContainer(this);
 		ppfeApp.setAppName(appName);
 		threadData.getAppNameStack().push(appName + ": ");
-		threadData.getApplications().add(ppfeApp);
+		threadData.addApplication(appName, ppfeApp);
 		return ppfeApp;
 	}
 
-	private void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+	private void processHttpRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		LOGGER.trace(Thread.currentThread().getName());
 		ThreadData threadData = threadLocal.get();
 		if (threadData == null) {
 			threadData = new ThreadData();
 			threadLocal.set(threadData);
 		}
-		threadData.setRequest(request);
-		threadData.setResponse(response);
+		threadData.setHttpRequest(request);
+		threadData.setHttpResponse(response);
 		Deque<String> inputStack = threadData.getInputStack();
 		try {
 			Enumeration<?> parameters = request.getParameterNames();
@@ -111,8 +110,8 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 			LOGGER.error(e);
 			throw new ServletException(e);
 		} finally {
-			threadData.setRequest(null);
-			threadData.setResponse(null);
+			threadData.setHttpRequest(null);
+			threadData.setHttpResponse(null);
 			threadData.getInputStack().clear();
 			threadData.getOutputStack().clear();
 		}
@@ -122,7 +121,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	public PpfeContainer sendRequest(String destination, MyProperties requestParameters, PpfeResponse ppfeResponse) {
 		ThreadData threadData = threadLocal.get();
 		LOGGER.trace(threadData.getAppNameStack().peek());
-		HttpServletRequest request = threadData.getRequest();
+		HttpServletRequest request = threadData.getHttpRequest();
 		Outcome outcome = ppfeResponse.getOutcome();
 		ContainerConfig config = Configurator.get(ContainerConfig.class);
 		Destination destSelected = config.getDestinations().get(destination);
@@ -162,7 +161,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	public boolean getRequest(PpfeRequest ppfeRequest) {
 		ThreadData threadData = threadLocal.get();
 		LOGGER.trace(threadData.getAppNameStack().peek());
-		HttpServletRequest request = threadData.getRequest();
+		HttpServletRequest request = threadData.getHttpRequest();
 		Deque<String> inputStack = threadData.getInputStack();
 		if (inputStack.isEmpty())
 			return false;
@@ -182,7 +181,7 @@ public class TomcatContainer extends HttpServlet implements PpfeContainer {
 	public PpfeContainer sendReply(Object requestContext, MyProperties responseParameters, Outcome outcome) {
 		ThreadData threadData = threadLocal.get();
 		LOGGER.trace(threadData.getAppNameStack().peek());
-		HttpServletResponse response = threadData.getResponse();
+		HttpServletResponse response = threadData.getHttpResponse();
 		outcome.setMessage("replied with '%s'");
 		try {
 			String json = responseParameters.toString();

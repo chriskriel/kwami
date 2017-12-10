@@ -7,8 +7,6 @@ public class Tester {
 
 	public static void main(String[] args) {
 		ContainerConfig config = new ContainerConfig();
-		config.addContainer("basic", "net.kwami.ppfe.BasicContainer");;
-		config.addContainer("pathsendRouter", "net.kwami.ppfe.PathsendContainer");
 		Application app = new Application();
 		app.setClassName("net.kwami.ppfe.RelayApplication");
 		app.setMaxRequestSize(512);
