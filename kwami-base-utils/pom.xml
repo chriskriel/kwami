@@ -10,6 +10,12 @@
 	<name>kwami-base-utils</name>
 	<url>http://maven.apache.org</url>
 
+	<parent>
+		<groupId>net.kwami</groupId>
+		<artifactId>kwami-parent</artifactId>
+		<version>1</version>
+	</parent>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>

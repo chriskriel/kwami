@@ -1,1 +1,0 @@
-wget -O x 'http://localhost:8080/ppfe/ppfe?app=router&json={"SQL":"select * from client_system_roles where role_name= ?","PARM-CNT":"1","P0":"restClient"}'
