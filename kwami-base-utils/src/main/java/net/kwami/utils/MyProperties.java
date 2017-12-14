@@ -26,18 +26,18 @@ public class MyProperties extends Properties {
 			an object of the same class as the default value passed in
 	*/
 	@SuppressWarnings("unchecked")
-	public <T> T getJsonProperty(String property, T defaultValue) {
+	public final <T> T getJsonProperty(String property, T defaultValue) {
 		String s = getProperty(property);
 		if (s == null)
 			return defaultValue;
 		return (T)new GsonBuilder().create().fromJson(s, defaultValue.getClass());
 	}
 
-	public void setByteProperty(String property, byte value) {
+	public final void setByteProperty(String property, byte value) {
 		setProperty(property, String.valueOf(value));
 	}
 
-	public byte getByteProperty(String property, byte defaultValue) {
+	public final byte getByteProperty(String property, byte defaultValue) {
 		String s = getProperty(property);
 		if (s == null)
 			return defaultValue;
@@ -49,11 +49,11 @@ public class MyProperties extends Properties {
 		return defaultValue;
 	}
 
-	public void setShortProperty(String property, short value) {
+	public final void setShortProperty(String property, short value) {
 		setProperty(property, String.valueOf(value));
 	}
 
-	public short getShortProperty(String property, short defaultValue) {
+	public final short getShortProperty(String property, short defaultValue) {
 		String s = getProperty(property);
 		if (s == null)
 			return defaultValue;
@@ -65,11 +65,11 @@ public class MyProperties extends Properties {
 		return defaultValue;
 	}
 
-	public void setIntProperty(String property, int value) {
+	public final void setIntProperty(String property, int value) {
 		setProperty(property, String.valueOf(value));
 	}
 
-	public int getIntProperty(String property, int defaultValue) {
+	public final int getIntProperty(String property, int defaultValue) {
 		String s = getProperty(property);
 		if (s == null)
 			return defaultValue;
@@ -81,11 +81,11 @@ public class MyProperties extends Properties {
 		return defaultValue;
 	}
 
-	public void setLongProperty(String property, long value) {
+	public final void setLongProperty(String property, long value) {
 		setProperty(property, String.valueOf(value));
 	}
 
-	public long getLongProperty(String property, long defaultValue) {
+	public final long getLongProperty(String property, long defaultValue) {
 		String s = getProperty(property);
 		if (s == null)
 			return defaultValue;
@@ -97,16 +97,18 @@ public class MyProperties extends Properties {
 		return defaultValue;
 	}
 	
-	public String getProperty(String key) {
+	public final String getProperty(String key) {
 		return this.getProperty(key, null);
 	}
 	
-	public String getProperty(String key, String defaultValue) {
+	public final String getProperty(String key, String defaultValue) {
 		String original;
 		if (defaultValue == null)
 			original = super.getProperty(key);
 		else
-			original = super.getProperty(key, defaultValue);			
+			original = super.getProperty(key, defaultValue);
+		if (original == null)
+			return null;
 		if (!original.contains("${"))
 			return original;
 		String newValue = replaceVarWithSystemProperty(original);
@@ -114,7 +116,7 @@ public class MyProperties extends Properties {
 		return newValue;
 	}
 
-	private String replaceVarWithSystemProperty(String original) {
+	private final String replaceVarWithSystemProperty(String original) {
 		StringBuilder bldr = new StringBuilder(original);
 		int start = bldr.indexOf("${");
 		int end = bldr.indexOf("}", start + 2);
@@ -129,7 +131,7 @@ public class MyProperties extends Properties {
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return new GsonBuilder().create().toJson(this);
 	}
 

@@ -37,7 +37,7 @@ public final class PathwayClient {
 		tsmpServer.setTimeout(timeoutCentiSecs);
 	}
 
-	public void transceive(int messageId, MyProperties requestParameters, MyProperties responseParameters)
+	public final void transceive(int messageId, MyProperties requestParameters, MyProperties responseParameters)
 			throws Exception {
 		logger.trace("msgId=%d,requestParameters=%s", messageId, requestParameters.toString());
 		requestParameterBuffer.initialize(messageId, requestParameters);
@@ -62,20 +62,20 @@ public final class PathwayClient {
 		respBuf.extractPropertiesInto(responseParameters);
 	}
 
-	public long getLatencyThresholdMillis() {
+	public final long getLatencyThresholdMillis() {
 		return latencyThresholdMillis;
 	}
 
-	public int getTimeoutCentiSecs() {
+	public final int getTimeoutCentiSecs() {
 		return timeoutCentiSecs;
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return new GsonBuilder().setPrettyPrinting().create().toJson(this);
 	}
 
-	public String getServerPath() {
+	public final String getServerPath() {
 		return serverPath;
 	}
 }

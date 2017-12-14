@@ -19,11 +19,11 @@ public final class ParameterBuffer {
 	private ByteBuffer bb = null;
 	private Map<String, Integer> keys = null;
 
-	public static ParameterBuffer wrap(byte[] bytes) {
+	public final static ParameterBuffer wrap(byte[] bytes) {
 		return wrap(bytes, 0, bytes.length);
 	}
 
-	public static ParameterBuffer wrap(byte[] bytes, int offset, int length) {
+	public final static ParameterBuffer wrap(byte[] bytes, int offset, int length) {
 		ParameterBuffer obj = new ParameterBuffer();
 		obj.bb = ByteBuffer.wrap(bytes, offset, length);
 		obj.position(length);
@@ -44,7 +44,7 @@ public final class ParameterBuffer {
 		initialize(msgId);
 	}
 
-	public ParameterBuffer initialize(int newMsgId, MyProperties parameters) {
+	public final ParameterBuffer initialize(int newMsgId, MyProperties parameters) {
 		initialize(newMsgId);
 		for (String name : parameters.stringPropertyNames()) {
 			addParameter(name, parameters.getProperty(name, ""), true);
@@ -52,7 +52,7 @@ public final class ParameterBuffer {
 		return this;
 	}
 
-	public ParameterBuffer initialize(int newMsgId) {
+	public final ParameterBuffer initialize(int newMsgId) {
 		short shortMsgId = Short.parseShort(String.valueOf(newMsgId));
 		if (keys == null)
 			keys = new HashMap<String, Integer>();
@@ -64,11 +64,11 @@ public final class ParameterBuffer {
 		return this;
 	}
 
-	public int position() {
+	public final int position() {
 		return bb.position();
 	}
 
-	public void position(int pos) {
+	public final void position(int pos) {
 		bb.position(pos);
 		if (pos > HDR_LEN) {
 			int dataLen = bb.position() - HDR_LEN;
@@ -78,34 +78,34 @@ public final class ParameterBuffer {
 		keyMap(this);
 	}
 
-	public byte[] array() {
+	public final byte[] array() {
 		if (bb == null)
 			return null;
 		position(bb.position());
 		return bb.array();
 	}
 
-	public int getMsgId() {
+	public final int getMsgId() {
 		if (bb == null)
 			return 0;
 		return bb.getShort(8);
 	}
 
-	public ParameterBuffer addParameter(String name, byte value) throws UnsupportedEncodingException {
+	public final ParameterBuffer addParameter(String name, byte value) throws UnsupportedEncodingException {
 		setParameterName(name);
 		bb.putShort((short) (Byte.SIZE / Byte.SIZE));
 		bb.put(value);
 		return this;
 	}
 
-	public ParameterBuffer addParameter(String name, short value) throws UnsupportedEncodingException {
+	public final ParameterBuffer addParameter(String name, short value) throws UnsupportedEncodingException {
 		setParameterName(name);
 		bb.putShort((short) (Short.SIZE / Byte.SIZE));
 		bb.putShort(value);
 		return this;
 	}
 
-	public ParameterBuffer addParameter(String name, int value) throws UnsupportedEncodingException {
+	public final ParameterBuffer addParameter(String name, int value) throws UnsupportedEncodingException {
 		bb.put(name.getBytes());
 		bb.put(TERMINATOR);
 		bb.putShort((short) (Integer.SIZE / Byte.SIZE));
@@ -113,18 +113,18 @@ public final class ParameterBuffer {
 		return this;
 	}
 
-	public ParameterBuffer addParameter(String name, long value) throws UnsupportedEncodingException {
+	public final ParameterBuffer addParameter(String name, long value) throws UnsupportedEncodingException {
 		setParameterName(name);
 		bb.putShort((short) (Long.SIZE / Byte.SIZE));
 		bb.putLong(value);
 		return this;
 	}
 
-	public ParameterBuffer addParameter(String name, byte[] value) throws UnsupportedEncodingException {
+	public final ParameterBuffer addParameter(String name, byte[] value) throws UnsupportedEncodingException {
 		return addParameter(name, value, 0, (short) value.length);
 	}
 
-	public ParameterBuffer addParameter(String name, byte[] value, int offset, short length)
+	public final ParameterBuffer addParameter(String name, byte[] value, int offset, short length)
 			throws UnsupportedEncodingException {
 		setParameterName(name);
 		bb.putShort(length);
@@ -132,7 +132,7 @@ public final class ParameterBuffer {
 		return this;
 	}
 
-	public ParameterBuffer addParameter(String name, String value, boolean addNullTerminator) {
+	public final ParameterBuffer addParameter(String name, String value, boolean addNullTerminator) {
 		if (value == null)
 			return this;
 		setParameterName(name);
@@ -145,35 +145,35 @@ public final class ParameterBuffer {
 		return this;
 	}
 
-	public Set<String> keySet() {
+	public final Set<String> keySet() {
 		return keys.keySet();
 	}
 
-	public byte getByteValue(String name) {
+	public final byte getByteValue(String name) {
 		if (keys.get(name) == null)
 			return 0;
 		return bb.get(keys.get(name) + 2);
 	}
 
-	public short getShortValue(String name) {
+	public final short getShortValue(String name) {
 		if (keys.get(name) == null)
 			return 0;
 		return bb.getShort(keys.get(name) + 2);
 	}
 
-	public int getIntValue(String name) {
+	public final int getIntValue(String name) {
 		if (keys.get(name) == null)
 			return 0;
 		return bb.getInt(keys.get(name) + 2);
 	}
 
-	public long getLongValue(String name) {
+	public final long getLongValue(String name) {
 		if (keys.get(name) == null)
 			return 0;
 		return bb.getLong(keys.get(name) + 2);
 	}
 
-	public byte[] getByteArrayValue(String name) {
+	public final byte[] getByteArrayValue(String name) {
 		if (keys.get(name) == null)
 			return null;
 		byte[] valueBytes = null;
@@ -189,27 +189,27 @@ public final class ParameterBuffer {
 		return valueBytes;
 	}
 
-	public String getStringValue(String name) {
+	public final String getStringValue(String name) {
 		byte[] valueBytes = getByteArrayValue(name);
 		if (valueBytes == null)
 			return "";
 		return (new String(valueBytes)).trim();
 	}
 
-	public ParameterBuffer extractPropertiesInto(MyProperties parameters) {
+	public final ParameterBuffer extractPropertiesInto(MyProperties parameters) {
 		for (String key : keySet()) {
 			parameters.setProperty(key, getStringValue(key));
 		}
 		return this;
 	}
 
-	private void setParameterName(String name) {
+	private final void setParameterName(String name) {
 		bb.put(name.getBytes());
 		bb.put(TERMINATOR);
 		keys.put(name, bb.position());
 	}
 
-	private static void keyMap(ParameterBuffer me) {
+	private final static void keyMap(ParameterBuffer me) {
 		if (me.keys == null)
 			me.keys = new HashMap<String, Integer>();
 		me.keys.clear();
