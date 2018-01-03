@@ -33,6 +33,19 @@ public class MyProperties extends Properties {
 		return (T)new GsonBuilder().create().fromJson(s, defaultValue.getClass());
 	}
 
+	public final void setBooleanProperty(String property, boolean value) {
+		setProperty(property, String.valueOf(value));
+	}
+
+	public final boolean getBooleanProperty(String property, boolean defaultValue) {
+		String s = getProperty(property);
+		if (s == null)
+			return defaultValue;
+		s = s.trim();
+		boolean b = s.equalsIgnoreCase("true") || s.equals("1");
+		return b;
+	}
+
 	public final void setByteProperty(String property, byte value) {
 		setProperty(property, String.valueOf(value));
 	}
