@@ -4,7 +4,7 @@
 
 	<groupId>net.kwami</groupId>
 	<artifactId>kwami-base-utils</artifactId>
-	<version>12</version>
+	<version>13</version>
 	<packaging>jar</packaging>
 
 	<name>kwami-base-utils</name>
@@ -31,6 +31,12 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.8.1</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.11</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
