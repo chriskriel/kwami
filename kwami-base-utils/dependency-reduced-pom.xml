@@ -13,6 +13,7 @@
   <version>13</version>
   <url>http://maven.apache.org</url>
   <build>
+    <defaultGoal>clean deploy</defaultGoal>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>

@@ -11,7 +11,7 @@ public class MyProperties extends Properties {
 
 	private static final String ERR_MSG = "returning defaultValue %d because property '%s', with value '%s', cannot be parsed as %s";
 	private static final long serialVersionUID = 1L;
-	private static final MyLogger logger = new MyLogger(MyProperties.class);
+	private static final MyLogger LOGGER = new MyLogger(MyProperties.class);
 	
 
 	/*
@@ -57,7 +57,7 @@ public class MyProperties extends Properties {
 		try {
 			return Byte.parseByte(s);
 		} catch (NumberFormatException e) {
-			logger.error(ERR_MSG, defaultValue, property, s, "a byte");
+			LOGGER.error(ERR_MSG, defaultValue, property, s, "a byte");
 		}
 		return defaultValue;
 	}
@@ -73,7 +73,7 @@ public class MyProperties extends Properties {
 		try {
 			return Short.parseShort(s);
 		} catch (NumberFormatException e) {
-			logger.error(ERR_MSG, defaultValue, property, s, "a short");
+			LOGGER.error(ERR_MSG, defaultValue, property, s, "a short");
 		}
 		return defaultValue;
 	}
@@ -89,7 +89,7 @@ public class MyProperties extends Properties {
 		try {
 			return Integer.parseInt(s);
 		} catch (NumberFormatException e) {
-			logger.error(ERR_MSG, defaultValue, property, s, "an int");
+			LOGGER.error(ERR_MSG, defaultValue, property, s, "an int");
 		}
 		return defaultValue;
 	}
@@ -105,15 +105,17 @@ public class MyProperties extends Properties {
 		try {
 			return Long.parseLong(s);
 		} catch (NumberFormatException e) {
-			logger.error(ERR_MSG, defaultValue, property, s, "a long");
+			LOGGER.error(ERR_MSG, defaultValue, property, s, "a long");
 		}
 		return defaultValue;
 	}
 	
+        @Override
 	public final String getProperty(String key) {
 		return this.getProperty(key, null);
 	}
 	
+        @Override
 	public final String getProperty(String key, String defaultValue) {
 		String original;
 		if (defaultValue == null)
@@ -125,11 +127,11 @@ public class MyProperties extends Properties {
 		if (!original.contains("${"))
 			return original;
 		String newValue = replaceVarWithSystemProperty(original);
-		logger.debug("key=%s,original='%s',new='%s'", key, original, newValue);
+		LOGGER.debug("key=%s,original='%s',new='%s'", key, original, newValue);
 		return newValue;
 	}
 
-	private final String replaceVarWithSystemProperty(String original) {
+	private String replaceVarWithSystemProperty(String original) {
 		StringBuilder bldr = new StringBuilder(original);
 		int start = bldr.indexOf("${");
 		int end = bldr.indexOf("}", start + 2);

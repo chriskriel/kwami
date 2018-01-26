@@ -33,12 +33,11 @@ public abstract class PropertySetter {
 				}
 			} catch (Exception e) {
 				LOGGER.error("ignoring setter '%s'", setterName.toString());
-				continue;
 			}
 		}
 	}
 	
-	private static final Method findMethod(Object obj, String methodName) throws Exception {
+	private static Method findMethod(Object obj, String methodName) throws Exception {
 		Method[] methods = obj.getClass().getMethods();
 		for (Method m : methods) {
 			if (methodName.equals(m.getName()))

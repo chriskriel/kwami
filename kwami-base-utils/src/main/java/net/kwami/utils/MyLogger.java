@@ -39,7 +39,7 @@ public class MyLogger {
 		logger.log(FQCN, Level.INFO, String.format(format, args), null);
 	}
 
-	private final boolean handledSwappedArgs(final Level level, final String format, final Object... args) {
+	private boolean handledSwappedArgs(final Level level, final String format, final Object... args) {
 		if (!(args[args.length - 1] instanceof Throwable))
 			return false;
 		if (args.length == 1) {

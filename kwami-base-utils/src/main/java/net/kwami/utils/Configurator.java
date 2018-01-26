@@ -35,12 +35,12 @@ class CachedObject {
  */
 public abstract class Configurator {
 
-	private static final MyLogger logger = new MyLogger(Configurator.class);
-	private static final Map<String, CachedObject> cache = new ConcurrentHashMap<String, CachedObject>();
-	private static final long refreshInterval;
+	private static final MyLogger LOGGER = new MyLogger(Configurator.class);
+	private static final Map<String, CachedObject> CACHE = new ConcurrentHashMap<String, CachedObject>();
+	private static final long REFRESH_MS;
 
 	static {
-		refreshInterval = Long.parseLong(System.getProperty("config.caching.mins", "2")) * 60000;
+		REFRESH_MS = Long.parseLong(System.getProperty("config.caching.mins", "2")) * 60000;
 	}
 
 	/*
@@ -118,20 +118,20 @@ public abstract class Configurator {
 			if (useCache && (t = getCachedObject(resourceName, url)) != null)
 				return t;
 			try (InputStream is = classT.getResourceAsStream(resourceName)) {
-				logger.debug("resource=%s", resourceName);
+				LOGGER.debug("resource=%s", resourceName);
 				InputStreamReader rdr = new InputStreamReader(is);
 				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 				t = gson.fromJson(rdr, classT);
 			} catch (Exception e) {
-				logger.error(e, "error processing %s", resourceName);
+				LOGGER.error(e, "error processing %s", resourceName);
 				throw new RuntimeException(e);
 			}
 			if (t != null) {
 				if (useCache) {
-					cache.put(resourceName, new CachedObject(refreshInterval, t));
+					CACHE.put(resourceName, new CachedObject(REFRESH_MS, t));
 				}
 			} else {
-				logger.error("could not create %s from %s", classT.getSimpleName(), resourceName);
+				LOGGER.error("could not create %s from %s", classT.getSimpleName(), resourceName);
 			}
 			return t;
 		}
@@ -143,7 +143,7 @@ public abstract class Configurator {
 
 	@SuppressWarnings("unchecked")
 	private final static <T> T getCachedObject(String simpleName, URL url) {
-		CachedObject cachedEntity = cache.get(simpleName);
+		CachedObject cachedEntity = CACHE.get(simpleName);
 		if (cachedEntity == null) {
 			return null;
 		}
@@ -151,8 +151,8 @@ public abstract class Configurator {
 			return (T) cachedEntity.object;
 		}
 		File f = new File(url.getFile());
-		if (f.lastModified() < cachedEntity.expireTime - refreshInterval) {
-			cache.put(simpleName, new CachedObject(refreshInterval, cachedEntity.object));
+		if (f.lastModified() < cachedEntity.expireTime - REFRESH_MS) {
+			CACHE.put(simpleName, new CachedObject(REFRESH_MS, cachedEntity.object));
 			return (T) cachedEntity.object;
 		}
 		return null;
