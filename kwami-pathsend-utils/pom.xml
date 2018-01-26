@@ -1,43 +1,46 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>net.kwami</groupId>
-	<artifactId>kwami-pathsend-utils</artifactId>
-	<version>4</version>
-	<packaging>jar</packaging>
+    <groupId>net.kwami</groupId>
+    <artifactId>kwami-pathsend-utils</artifactId>
+    <version>4</version>
+    <packaging>jar</packaging>
 
-	<name>kwami-pathsend-utils</name>
-	<url>http://maven.apache.org</url>
+    <name>kwami-pathsend-utils</name>
+    <url>http://maven.apache.org</url>
 
-	<parent>
-		<groupId>net.kwami</groupId>
-		<artifactId>kwami-parent</artifactId>
-		<version>1</version>
-	</parent>
+    <parent>
+        <groupId>net.kwami</groupId>
+        <artifactId>kwami-parent</artifactId>
+        <version>1</version>
+    </parent>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.hp.tandem</groupId>
-			<artifactId>tdmext</artifactId>
-			<version>H10</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>net.kwami</groupId>
-			<artifactId>kwami-base-utils</artifactId>
-			<version>12</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.11</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>com.hp.tandem</groupId>
+            <artifactId>tdmext</artifactId>
+            <version>H10</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.kwami</groupId>
+            <artifactId>kwami-base-utils</artifactId>
+            <version>12</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <defaultGoal>clean deploy</defaultGoal>
+    </build>
 </project>
