@@ -31,3 +31,5 @@ ignore/
 .vscode/
 classpath.txt
 javac-services*
+nbactions.xml
+
