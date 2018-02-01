@@ -38,9 +38,11 @@ public abstract class Configurator {
 	private static final MyLogger LOGGER = new MyLogger(Configurator.class);
 	private static final Map<String, CachedObject> CACHE = new ConcurrentHashMap<String, CachedObject>();
 	private static final long REFRESH_MS;
+        private static final String CONFIG_FILE_TYPE;
 
 	static {
 		REFRESH_MS = Long.parseLong(System.getProperty("config.caching.mins", "2")) * 60000;
+                CONFIG_FILE_TYPE = System.getProperty("config.default.file.type", "js");
 	}
 
 	/*
@@ -88,7 +90,7 @@ public abstract class Configurator {
 	 * @return an object of the specified class is returned
 	 */
 	public final static <T> T get(Class<T> classT, boolean useCache) {
-		String resourceName = String.format("/%s.js", classT.getSimpleName());
+		String resourceName = String.format("/%s.%s", classT.getSimpleName(), CONFIG_FILE_TYPE);
 		return get(classT, resourceName, useCache);
 	}
 
@@ -142,7 +144,7 @@ public abstract class Configurator {
 	}
 
 	@SuppressWarnings("unchecked")
-	private final static <T> T getCachedObject(String simpleName, URL url) {
+	private static <T> T getCachedObject(String simpleName, URL url) {
 		CachedObject cachedEntity = CACHE.get(simpleName);
 		if (cachedEntity == null) {
 			return null;
