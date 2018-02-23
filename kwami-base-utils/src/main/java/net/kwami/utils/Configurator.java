@@ -38,11 +38,11 @@ public abstract class Configurator {
 	private static final MyLogger LOGGER = new MyLogger(Configurator.class);
 	private static final Map<String, CachedObject> CACHE = new ConcurrentHashMap<String, CachedObject>();
 	private static final long REFRESH_MS;
-        private static final String CONFIG_FILE_TYPE;
+	private static final String CONFIG_FILE_TYPE;
 
 	static {
 		REFRESH_MS = Long.parseLong(System.getProperty("config.caching.mins", "2")) * 60000;
-                CONFIG_FILE_TYPE = System.getProperty("config.default.file.type", "js");
+		CONFIG_FILE_TYPE = System.getProperty("config.default.file.type", "js");
 	}
 
 	/*
@@ -77,15 +77,15 @@ public abstract class Configurator {
 	}
 
 	/*
-	 * Create an object of the specified class from a JSON file. If caching is required 
-	 * and the object has already been cached, return it from the cache.
+	 * Create an object of the specified class from a JSON file. If caching is
+	 * required and the object has already been cached, return it from the cache.
 	 * 
 	 * @param classT the Class of the object to be created. The simple name of this
 	 * class with a suffix of .js is used as the filename of the JSON file. The file
 	 * must be available on the classpath.
 	 * 
-	 * @param useCache If false a new object is created and not cached. The
-	 * default is true.
+	 * @param useCache If false a new object is created and not cached. The default
+	 * is true.
 	 * 
 	 * @return an object of the specified class is returned
 	 */
@@ -94,10 +94,9 @@ public abstract class Configurator {
 		return get(classT, resourceName, useCache);
 	}
 
-
 	/*
-	 * Create an object of the specified class from a JSON file. If caching is required 
-	 * and the object has already been cached, return it from the cache.
+	 * Create an object of the specified class from a JSON file. If caching is
+	 * required and the object has already been cached, return it from the cache.
 	 * 
 	 * @param classT the Class of the object to be created. The simple name of this
 	 * class with a suffix of .js is used as the filename of the JSON file. The file
@@ -106,8 +105,8 @@ public abstract class Configurator {
 	 * @param resourceName The name of the JSON file from which the object will get
 	 * its values. The file must be available on the classpath.
 	 * 
-	 * @param useCache If false a new object is created and not cached. The
-	 * default is true.
+	 * @param useCache If false a new object is created and not cached. The default
+	 * is true.
 	 * 
 	 * @return an object of the specified class is returned
 	 */

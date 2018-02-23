@@ -33,6 +33,20 @@ public class MyProperties extends Properties {
 		return (T)new GsonBuilder().create().fromJson(s, defaultValue.getClass());
 	}
 
+	/*
+		Allows the use of JSON strings as properties. This method will serialize
+		the object as a JSON string using the type of the value.
+		@param property
+			the name of the property that has a JSON string as a value
+		@param value
+			the object to serialize
+		@return
+			an object of the same class as the default value passed in
+	*/
+	public final <T> void setJsonProperty(String property, T value) {
+		super.setProperty(property, new GsonBuilder().create().toJson(value));
+	}
+
 	public final void setBooleanProperty(String property, boolean value) {
 		setProperty(property, String.valueOf(value));
 	}
