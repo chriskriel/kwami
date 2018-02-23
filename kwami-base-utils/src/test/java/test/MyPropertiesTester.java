@@ -2,6 +2,8 @@ package test;
 
 import static org.junit.Assert.*;
 
+import java.util.Properties;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,6 +21,19 @@ public class MyPropertiesTester {
 
 	@After
 	public void tearDown() throws Exception {
+	}
+
+	@Test
+	public void testJson() {
+		MyProperties testProps = new MyProperties();
+		Properties props = new Properties();
+		props.setProperty("x1", "yyyy");
+		props.setProperty("x2", "zzzz");
+		testProps.setJsonProperty("json", props);
+		Properties props2 = testProps.getJsonProperty("json", props);
+		assertEquals(props.getProperty("x1"), props2.getProperty("x1"));
+		assertEquals(props.getProperty("x2"), props2.getProperty("x2"));
+		assertEquals(2, props2.keySet().size());
 	}
 
 	@Test
