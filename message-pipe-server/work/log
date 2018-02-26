@@ -1,0 +1,15 @@
+main 2018-02-15 13:57:23,672 DEBUG Configurator.get resource=/x-to-y.json
+main 2018-02-15 13:58:35,590 DEBUG Configurator.get resource=/x-to-y.json
+main 2018-02-15 15:00:12,948 DEBUG Configurator.get resource=/x-to-y.json
+main 2018-02-15 15:00:13,091 INFO  FileBus.<init> Preparing new control file: x-to-y
+main 2018-02-15 15:00:13,092 INFO  FileBus.<init> fileSize=4096
+main 2018-02-15 15:00:25,213 DEBUG Configurator.get resource=/x-to-y.json
+main 2018-02-15 15:16:07,151 DEBUG Configurator.get resource=/x-to-y.json
+main 2018-02-15 15:19:01,036 DEBUG Configurator.get resource=/x-to-y.json
+main 2018-02-15 15:19:29,831 DEBUG Configurator.get resource=/x-to-y.json
+main 2018-02-15 15:20:35,548 DEBUG Configurator.get resource=/x-to-y.json
+main 2018-02-15 15:20:35,671 INFO  FileBus.<init> Preparing new control file: x-to-y
+main 2018-02-15 15:20:35,671 INFO  FileBus.<init> fileSize=4096
+main 2018-02-15 15:42:53,737 DEBUG Configurator.get resource=/x-to-y.json
+main 2018-02-15 15:45:30,751 DEBUG Configurator.get resource=/x-to-y.json
+main 2018-02-15 16:14:46,142 DEBUG Configurator.get resource=/x-to-y.json
