@@ -104,8 +104,8 @@ public class Server {
 		commandBuffer.put(response.toString().getBytes());
 		commandBuffer.flip();
 		socketChannel.write(commandBuffer);
-		String fifoNameRequests = String.format("fifo/requests.%d", String.valueOf(remoteEndpoint.getRemotePort()));
-		String fifoNameResponses = String.format("fifo/responses.%d", String.valueOf(remoteEndpoint.getRemotePort()));
+		String fifoNameRequests = String.format("fifo/requests.%d", remoteEndpoint.getRemotePort());
+		String fifoNameResponses = String.format("fifo/responses.%d", remoteEndpoint.getRemotePort());
 		Runtime.getRuntime().exec("mkfifo " + fifoNameRequests);
 		Runtime.getRuntime().exec("mkfifo " + fifoNameResponses);
 		MessagePipe msgPipe = new FifoPipe(remoteEndpoint, fifoNameRequests, fifoNameResponses);

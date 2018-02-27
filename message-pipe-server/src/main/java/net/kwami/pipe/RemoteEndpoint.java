@@ -12,13 +12,13 @@ public class RemoteEndpoint implements Comparable<RemoteEndpoint> {
 	private final int localPort;
 	private boolean forThisMachine = false;
 
-	public RemoteEndpoint(int localPort, InetSocketAddress remoteAddress) {
+	public RemoteEndpoint(int localPort, InetSocketAddress remoteSocketAddress) {
 		super();
-		this.remoteHost = remoteAddress.getAddress().getHostAddress();
-		this.remotePort = remoteAddress.getPort();
+		this.remoteHost = remoteSocketAddress.getAddress().getHostAddress();
+		this.remotePort = remoteSocketAddress.getPort();
 		this.localPort = localPort;
 		try {
-			String ppfeLocalAddress = InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS).getHostAddress();
+			String ppfeLocalAddress = InetAddress.getByName(MACHINE_ADDRESS).getHostAddress();
 			if (ppfeLocalAddress.equals(remoteHost))
 				forThisMachine = true;
 		} catch (UnknownHostException e1) {
