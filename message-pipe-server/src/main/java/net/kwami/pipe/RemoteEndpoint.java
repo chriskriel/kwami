@@ -1,4 +1,4 @@
-package net.kwami.pipe.server;
+package net.kwami.pipe;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

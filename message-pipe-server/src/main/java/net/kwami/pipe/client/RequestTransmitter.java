@@ -1,16 +1,18 @@
-package net.kwami.pipe.server;
+package net.kwami.pipe.client;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import net.kwami.pipe.Message;
+import net.kwami.pipe.server.ManagedThread;
 import net.kwami.utils.MyLogger;
 
 public class RequestTransmitter extends ManagedThread {
 	private static final MyLogger logger = new MyLogger(RequestTransmitter.class);
-	private Client context;
+	private PipeClient context;
 	private final ByteBuffer workBuffer;
 
-	public RequestTransmitter(Client context) {
+	public RequestTransmitter(PipeClient context) {
 		super();
 		this.context = context;
 		workBuffer = ByteBuffer.allocate(Short.MAX_VALUE);
@@ -26,8 +28,8 @@ public class RequestTransmitter extends ManagedThread {
 					} catch (InterruptedException e) {
 					}
 				try {
-					MessageKey msgKey = context.getTransmitQueue().take();
-					Message msg = context.getActiveMessageList().get(msgKey.getMsgId());
+					long msgId = context.getTransmitQueue().take();
+					Message msg = context.getOutstandingRequests().get(msgId);
 					while (msg.getStatus() != Message.Status.WAIT)
 						Thread.sleep(2);
 					context.getMessagePipe().write(workBuffer, msg);

@@ -1,4 +1,4 @@
-package net.kwami.pipe.server;
+package net.kwami.pipe;
 
 public class Message {
 	public static enum Status {

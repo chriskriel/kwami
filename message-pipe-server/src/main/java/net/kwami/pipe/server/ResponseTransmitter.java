@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import net.kwami.pipe.Message;
 import net.kwami.utils.MyLogger;
 
 public class ResponseTransmitter extends ManagedThread {
@@ -30,11 +31,11 @@ public class ResponseTransmitter extends ManagedThread {
 					}
 				try {
 					int completedRequests = 0;
-					for (Entry<MessageKey, Future<String>> entry : server.getFuturesTable().entrySet()) {
+					for (Entry<MessageOrigin, Future<String>> entry : server.getExecutingRequests().entrySet()) {
 						Future<String> future = entry.getValue();
 						if (future.isDone()) {
 							completedRequests++;
-							MessageKey key = entry.getKey();
+							MessageOrigin key = entry.getKey();
 							Message response = new Message(key.getMsgId(), null);
 							try {
 								response.setData(future.get());
@@ -42,9 +43,8 @@ public class ResponseTransmitter extends ManagedThread {
 								String error = e.getCause() != null ? e.getCause().toString() : e.toString();
 								response.setData("ERROR: " + error);
 							}
-							server.getFuturesTable().remove(key);
-							MessagePipe pipe = server.getPipesToClients().get(key.getRemoteEndpoint());
-							pipe.write(workBuffer, response);
+							server.getExecutingRequests().remove(key);
+							key.getOrigin().write(workBuffer, response);
 						}
 					}
 					if (completedRequests == 0) {

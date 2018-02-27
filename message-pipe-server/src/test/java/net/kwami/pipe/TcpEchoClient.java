@@ -1,12 +1,12 @@
-package net.kwami.pipe.server;
+package net.kwami.pipe;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
-import net.kwami.pipe.server.Message;
-import net.kwami.pipe.server.MessagePipe;
-import net.kwami.pipe.server.TcpPipe;
+import net.kwami.pipe.Message;
+import net.kwami.pipe.MessagePipe;
+import net.kwami.pipe.TcpPipe;
 
 public class TcpEchoClient {
 

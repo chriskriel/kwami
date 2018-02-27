@@ -1,4 +1,4 @@
-package net.kwami.pipe.server;
+package net.kwami.pipe;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

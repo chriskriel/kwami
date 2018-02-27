@@ -3,6 +3,8 @@ package net.kwami.pipe.server;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 
+import net.kwami.pipe.Message;
+import net.kwami.pipe.MessagePipe;
 import net.kwami.utils.Configurator;
 
 public class RequestSubmitter extends ManagedThread {
@@ -33,8 +35,8 @@ public class RequestSubmitter extends ManagedThread {
 				StringCallable container = callableClass.newInstance();
 				container.setParameter(request.getData());
 				Future<String> future = server.getThreadPoolExecutor().submit(container);
-				MessageKey msgKey = new MessageKey(request.getId(), messagePipe.getRemoteEndpoint());
-				server.getFuturesTable().put(msgKey, future);
+				MessageOrigin msgKey = new MessageOrigin(request.getId(), messagePipe);
+				server.getExecutingRequests().put(msgKey, future);
 			} catch (Exception e) {
 				break;
 			}

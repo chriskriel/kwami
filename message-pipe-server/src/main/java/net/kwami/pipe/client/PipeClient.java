@@ -1,4 +1,4 @@
-package net.kwami.pipe.server;
+package net.kwami.pipe.client;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -9,23 +9,29 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
+import net.kwami.pipe.FifoPipe;
+import net.kwami.pipe.Message;
+import net.kwami.pipe.MessagePipe;
+import net.kwami.pipe.RemoteEndpoint;
+import net.kwami.pipe.TcpPipe;
+import net.kwami.pipe.Message.Status;
+import net.kwami.pipe.server.Command;
 import net.kwami.pipe.server.Command.Cmd;
-import net.kwami.pipe.server.Message.Status;
 import net.kwami.utils.MyProperties;
 
-public class Client {
-	public static final ConcurrentMap<RemoteEndpoint, Client> register = new ConcurrentHashMap<>();
-	private final RemoteEndpoint remoteEndpoint;
-	private final BlockingQueue<MessageKey> transmitQueue;
-	private final ConcurrentMap<Long, Message> activeMessageList = new ConcurrentHashMap<>();
+public class PipeClient {
+	public static final ConcurrentMap<RemoteEndpoint, PipeClient> register = new ConcurrentHashMap<>();
+	public static final AtomicLong nextMsgId = new AtomicLong();
+	private final BlockingQueue<Long> transmitQueue;
+	private final ConcurrentMap<Long, Message> outstandingRequests = new ConcurrentHashMap<>();
 	private MessagePipe messagePipe;
 	private ResponseReader responseReader;
 	private RequestTransmitter requestTransmitter;
 
-	public Client(RemoteEndpoint remoteEndpoint, int maxTransmitQueueSize) throws Exception {
+	public PipeClient(RemoteEndpoint remoteEndpoint, int maxTransmitQueueSize) throws Exception {
 		super();
-		this.remoteEndpoint = remoteEndpoint;
 		transmitQueue = new ArrayBlockingQueue<>(maxTransmitQueueSize);
 		createMessagePipe(remoteEndpoint);
 		createClientThreads();
@@ -33,24 +39,24 @@ public class Client {
 	}
 
 	public String sendRequest(String data, long timeoutMs) throws Exception {
-		MessageKey msgKey = new MessageKey(remoteEndpoint);
-		Message msg = new Message(msgKey.getMsgId(), data);
-		activeMessageList.put(msgKey.getMsgId(), msg);
+		long msgId = nextMsgId.incrementAndGet();
+		Message msg = new Message(msgId, data);
+		outstandingRequests.put(msgId, msg);
 		try {
 			long queueWaitMs = timeoutMs / 2;
-			boolean successFul = transmitQueue.offer(msgKey, queueWaitMs, TimeUnit.MILLISECONDS);
+			boolean successFul = transmitQueue.offer(msgId, queueWaitMs, TimeUnit.MILLISECONDS);
 			if (!successFul)
 				throw new Exception(String.format("%s: failed to add message to transmit queue after %dms",
-						remoteEndpoint.toString(), queueWaitMs));
+						messagePipe.getRemoteEndpoint().toString(), queueWaitMs));
 			msg.setStatus(Status.WAIT);
 			synchronized (msg) {
 				msg.wait(timeoutMs);
 			}
 			if (msg.getStatus() == Status.WAIT)
-				throw new Exception(String.format("%s: request '%s' has timed out", remoteEndpoint.toString(), data));
+				throw new Exception(String.format("%s: request '%s' has timed out", messagePipe.getRemoteEndpoint().toString(), data));
 			return msg.getData();
 		} finally {
-			activeMessageList.remove(msgKey.getMsgId());
+			outstandingRequests.remove(msgId);
 		}
 	}
 
@@ -58,10 +64,10 @@ public class Client {
 		requestTransmitter = new RequestTransmitter(this);
 		responseReader = new ResponseReader(this);
 		requestTransmitter.setDaemon(true);
-		requestTransmitter.setName(String.format("RequestTransmitter: %s", remoteEndpoint.toString()));
+		requestTransmitter.setName(String.format("RequestTransmitter: %s", messagePipe.getRemoteEndpoint().toString()));
 		requestTransmitter.start();
 		responseReader.setDaemon(true);
-		responseReader.setName(String.format("ResponseReader: %s", remoteEndpoint.toString()));
+		responseReader.setName(String.format("ResponseReader: %s", messagePipe.getRemoteEndpoint().toString()));
 		responseReader.start();
 	}
 
@@ -120,11 +126,7 @@ public class Client {
 		this.requestTransmitter = requestTransmitter;
 	}
 
-	public RemoteEndpoint getRemoteEndpoint() {
-		return remoteEndpoint;
-	}
-
-	public BlockingQueue<MessageKey> getTransmitQueue() {
+	public BlockingQueue<Long> getTransmitQueue() {
 		return transmitQueue;
 	}
 
@@ -132,8 +134,8 @@ public class Client {
 		return messagePipe;
 	}
 
-	public ConcurrentMap<Long, Message> getActiveMessageList() {
-		return activeMessageList;
+	public ConcurrentMap<Long, Message> getOutstandingRequests() {
+		return outstandingRequests;
 	}
 
 }

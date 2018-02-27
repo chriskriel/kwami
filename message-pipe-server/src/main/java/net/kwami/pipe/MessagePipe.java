@@ -1,4 +1,4 @@
-package net.kwami.pipe.server;
+package net.kwami.pipe;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,7 +10,7 @@ public abstract class MessagePipe implements AutoCloseable {
 	public static final String TCP_READY = "TCP-READY";
 	private RemoteEndpoint remoteEndpoint;
 
-	protected abstract void write(final ByteBuffer workBuffer, final Message message) throws IOException;
+	public abstract void write(final ByteBuffer workBuffer, final Message message) throws IOException;
 
 	protected abstract void readFully(final ByteBuffer workBuffer) throws IOException;
 

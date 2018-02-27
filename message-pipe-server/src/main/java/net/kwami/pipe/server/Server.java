@@ -14,6 +14,10 @@ import java.util.concurrent.TimeUnit;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import net.kwami.pipe.FifoPipe;
+import net.kwami.pipe.MessagePipe;
+import net.kwami.pipe.RemoteEndpoint;
+import net.kwami.pipe.TcpPipe;
 import net.kwami.utils.Configurator;
 import net.kwami.utils.MyLogger;
 
@@ -21,17 +25,17 @@ public class Server {
 
 	private static final MyLogger logger = new MyLogger(Server.class);
 	private final ConcurrentMap<RemoteEndpoint, MessagePipe> pipesToClients = new ConcurrentHashMap<>();
-	private final ConcurrentMap<MessageKey, Future<String>> futuresTable = new ConcurrentHashMap<>();
+	private final ConcurrentMap<MessageOrigin, Future<String>> executingRequests = new ConcurrentHashMap<>();
 	private final MyThreadPoolExecutor threadPoolExecutor;
 	private final Gson gson = new GsonBuilder().create();
-	private final ByteBuffer byteBuffer;
+	private final ByteBuffer commandBuffer;
 	private final int serverPort;
 	private final Object responseTransmitterLock = new Object();
 
 	public Server() throws Exception {
 		super();
 		ServerConfig config = Configurator.get(ServerConfig.class);
-		byteBuffer = ByteBuffer.allocate(config.getCommandBufferSize());
+		commandBuffer = ByteBuffer.allocate(config.getCommandBufferSize());
 		this.serverPort = config.getPort();
 		threadPoolExecutor = new MyThreadPoolExecutor(this, config.getCorePoolSize(), config.getMaxPoolSize(),
 				config.getKeepAliveTime(), TimeUnit.DAYS,
@@ -54,8 +58,8 @@ public class Server {
 					.bind(new InetSocketAddress(InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS), serverPort));
 			while (true) {
 				SocketChannel socketChannel = serverChannel.accept();
-				socketChannel.read(byteBuffer);
-				String requestStr = new String(byteBuffer.array(), 0, byteBuffer.position());
+				socketChannel.read(commandBuffer);
+				String requestStr = new String(commandBuffer.array(), 0, commandBuffer.position());
 				Command request = gson.fromJson(requestStr, Command.class);
 				if (request.getCommand() == Command.Cmd.CONNECT) {
 					InetSocketAddress remoteSocketAddress = (InetSocketAddress) socketChannel.getRemoteAddress();
@@ -82,9 +86,9 @@ public class Server {
 	private ManagedThread startTcpRequestReader(SocketChannel socketChannel, RemoteEndpoint remoteEndpoint) throws Exception {
 		Command response = new Command(Command.Cmd.RESPONSE);
 		response.addParameter("protocol", "TCP");
-		byteBuffer.put(response.toString().getBytes());
-		byteBuffer.flip();
-		socketChannel.write(byteBuffer);
+		commandBuffer.put(response.toString().getBytes());
+		commandBuffer.flip();
+		socketChannel.write(commandBuffer);
 		MessagePipe msgPipe = new TcpPipe(remoteEndpoint, socketChannel);
 		pipesToClients.put(remoteEndpoint, msgPipe);
 		RequestSubmitter requestSubmitter = new RequestSubmitter(this, msgPipe);
@@ -97,9 +101,9 @@ public class Server {
 	private ManagedThread startFifoRequestReader(SocketChannel socketChannel, RemoteEndpoint remoteEndpoint) throws Exception {
 		Command response = new Command(Command.Cmd.RESPONSE);
 		response.addParameter("protocol", "FIFO");
-		byteBuffer.put(response.toString().getBytes());
-		byteBuffer.flip();
-		socketChannel.write(byteBuffer);
+		commandBuffer.put(response.toString().getBytes());
+		commandBuffer.flip();
+		socketChannel.write(commandBuffer);
 		String fifoNameRequests = String.format("fifo/requests.%d", String.valueOf(remoteEndpoint.getRemotePort()));
 		String fifoNameResponses = String.format("fifo/responses.%d", String.valueOf(remoteEndpoint.getRemotePort()));
 		Runtime.getRuntime().exec("mkfifo " + fifoNameRequests);
@@ -121,8 +125,8 @@ public class Server {
 		return pipesToClients;
 	}
 
-	public ConcurrentMap<MessageKey, Future<String>> getFuturesTable() {
-		return futuresTable;
+	public ConcurrentMap<MessageOrigin, Future<String>> getExecutingRequests() {
+		return executingRequests;
 	}
 
 	public MyThreadPoolExecutor getThreadPoolExecutor() {

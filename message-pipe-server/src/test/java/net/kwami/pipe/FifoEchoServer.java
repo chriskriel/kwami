@@ -1,10 +1,10 @@
-package net.kwami.pipe.server;
+package net.kwami.pipe;
 
 import java.nio.ByteBuffer;
 
-import net.kwami.pipe.server.FifoPipe;
-import net.kwami.pipe.server.Message;
-import net.kwami.pipe.server.MessagePipe;
+import net.kwami.pipe.FifoPipe;
+import net.kwami.pipe.Message;
+import net.kwami.pipe.MessagePipe;
 
 public class FifoEchoServer {
 
