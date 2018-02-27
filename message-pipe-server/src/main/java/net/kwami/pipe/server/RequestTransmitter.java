@@ -7,10 +7,10 @@ import net.kwami.utils.MyLogger;
 
 public class RequestTransmitter extends ManagedThread {
 	private static final MyLogger logger = new MyLogger(RequestTransmitter.class);
-	private PipeClient context;
+	private Client context;
 	private final ByteBuffer workBuffer;
 
-	public RequestTransmitter(PipeClient context) {
+	public RequestTransmitter(Client context) {
 		super();
 		this.context = context;
 		workBuffer = ByteBuffer.allocate(Short.MAX_VALUE);

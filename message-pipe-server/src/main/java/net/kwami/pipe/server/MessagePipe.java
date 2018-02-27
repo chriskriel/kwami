@@ -8,7 +8,7 @@ public abstract class MessagePipe implements AutoCloseable {
 	public static final String READING_DISABLED = "READING-DISABLED";
 	public static final String WRITING_DISABLED = "WRITING-DISABLED";
 	public static final String TCP_READY = "TCP-READY";
-	private PipeKey pipeKey;
+	private RemoteEndpoint remoteEndpoint;
 
 	protected abstract void write(final ByteBuffer workBuffer, final Message message) throws IOException;
 
@@ -48,11 +48,11 @@ public abstract class MessagePipe implements AutoCloseable {
 		return new Message(id, data);
 	}
 
-	public PipeKey getPipeKey() {
-		return pipeKey;
+	public RemoteEndpoint getRemoteEndpoint() {
+		return remoteEndpoint;
 	}
 
-	public void setPipeKey(PipeKey pipeKey) {
-		this.pipeKey = pipeKey;
+	public void setRemoteEndpoint(RemoteEndpoint pipeKey) {
+		this.remoteEndpoint = pipeKey;
 	}
 }

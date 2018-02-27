@@ -13,3 +13,46 @@ main 2018-02-15 15:20:35,671 INFO  FileBus.<init> fileSize=4096
 main 2018-02-15 15:42:53,737 DEBUG Configurator.get resource=/x-to-y.json
 main 2018-02-15 15:45:30,751 DEBUG Configurator.get resource=/x-to-y.json
 main 2018-02-15 16:14:46,142 DEBUG Configurator.get resource=/x-to-y.json
+main 2018-02-27 11:20:37,769 DEBUG Configurator.get resource=/ServerConfig.json
+main 2018-02-27 11:20:37,818 ERROR Server.run SERIOUS PROBLEM: System is not functional
+java.lang.IllegalMonitorStateException
+	at java.lang.Object.wait(Native Method)
+	at net.kwami.pipe.server.ResponseTransmitter.run(ResponseTransmitter.java:52)
+	at net.kwami.pipe.server.Server.run(Server.java:48)
+	at net.kwami.pipe.server.Server.main(Server.java:43)
+main 2018-02-27 11:21:40,449 DEBUG Configurator.get resource=/ServerConfig.json
+main 2018-02-27 11:21:40,470 ERROR Server.run SERIOUS PROBLEM: System is not functional
+java.lang.IllegalMonitorStateException
+	at java.lang.Object.wait(Native Method)
+	at net.kwami.pipe.server.ResponseTransmitter.run(ResponseTransmitter.java:52)
+	at net.kwami.pipe.server.Server.run(Server.java:52)
+	at net.kwami.pipe.server.Server.main(Server.java:44)
+main 2018-02-27 11:23:18,719 DEBUG Configurator.get resource=/ServerConfig.json
+main 2018-02-27 11:26:37,619 DEBUG Configurator.get resource=/ServerConfig.json
+main 2018-02-27 11:26:38,853 ERROR Server.run SERIOUS PROBLEM: System is not functional
+java.net.UnknownHostException: MachineAddress: unknown error
+	at java.net.Inet6AddressImpl.lookupAllHostAddr(Native Method)
+	at java.net.InetAddress$2.lookupAllHostAddr(InetAddress.java:907)
+	at java.net.InetAddress.getAddressesFromNameService(InetAddress.java:1302)
+	at java.net.InetAddress.getAllByName0(InetAddress.java:1255)
+	at java.net.InetAddress.getAllByName(InetAddress.java:1171)
+	at java.net.InetAddress.getAllByName(InetAddress.java:1105)
+	at java.net.InetAddress.getByName(InetAddress.java:1055)
+	at net.kwami.pipe.server.Server.run(Server.java:54)
+	at net.kwami.pipe.server.Server.main(Server.java:44)
+main 2018-02-27 11:33:52,434 DEBUG Configurator.get resource=/ServerConfig.json
+main 2018-02-27 11:33:54,243 ERROR Server.run SERIOUS PROBLEM: System is not functional
+java.net.UnknownHostException: MachineAddress: unknown error
+	at java.net.Inet6AddressImpl.lookupAllHostAddr(Native Method)
+	at java.net.InetAddress$2.lookupAllHostAddr(InetAddress.java:907)
+	at java.net.InetAddress.getAddressesFromNameService(InetAddress.java:1302)
+	at java.net.InetAddress.getAllByName0(InetAddress.java:1255)
+	at java.net.InetAddress.getAllByName(InetAddress.java:1171)
+	at java.net.InetAddress.getAllByName(InetAddress.java:1105)
+	at java.net.InetAddress.getByName(InetAddress.java:1055)
+	at net.kwami.pipe.server.Server.run(Server.java:54)
+	at net.kwami.pipe.server.Server.main(Server.java:44)
+main 2018-02-27 11:39:31,907 DEBUG Configurator.get resource=/ServerConfig.json
+main 2018-02-27 11:51:56,331 DEBUG Configurator.get resource=/ServerConfig.json
+main 2018-02-27 11:52:29,512 DEBUG Configurator.get resource=/ServerConfig.json
+main 2018-02-27 11:54:52,527 DEBUG Configurator.get resource=/ServerConfig.json

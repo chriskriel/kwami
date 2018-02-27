@@ -12,6 +12,6 @@ public interface Router {
 	 * @throws Exception
 	 *             When the destination is not known.
 	 */
-	public PipeKey selectDestination(String appName) throws Exception;
+	public RemoteEndpoint selectDestination(String appName) throws Exception;
 
 }

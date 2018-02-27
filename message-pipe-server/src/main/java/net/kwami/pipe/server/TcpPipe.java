@@ -10,13 +10,15 @@ public class TcpPipe extends MessagePipe {
 	/**
 	 * This constructor will keep a local reference to the SocketChannel.
 	 * 
+	 * @param remoteEndpoint
+	 *            The IP address and port of the remote end-point.
 	 * @param socketChannel
 	 *            The SocketChannel that must be used for communications.
 	 */
-	public TcpPipe(final PipeKey pipeKey, final SocketChannel socketChannel) {
+	public TcpPipe(final RemoteEndpoint remoteEndpoint, final SocketChannel socketChannel) {
 		super();
 		this.socketChannel = socketChannel;
-		setPipeKey(pipeKey);
+		setRemoteEndpoint(remoteEndpoint);
 	}
 
 	@Override

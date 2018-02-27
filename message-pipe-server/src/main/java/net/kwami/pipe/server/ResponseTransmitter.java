@@ -17,7 +17,6 @@ public class ResponseTransmitter extends ManagedThread {
 		super();
 		this.server = server;
 		workBuffer = ByteBuffer.allocate(Short.MAX_VALUE);
-		this.server.setResponseTransmitterLock(new Object());
 	}
 
 	@Override
@@ -44,12 +43,15 @@ public class ResponseTransmitter extends ManagedThread {
 								response.setData("ERROR: " + error);
 							}
 							server.getFuturesTable().remove(key);
-							MessagePipe pipe = server.getPipesToClients().get(key.getPipeKey());
+							MessagePipe pipe = server.getPipesToClients().get(key.getRemoteEndpoint());
 							pipe.write(workBuffer, response);
 						}
 					}
-					if (completedRequests == 0)
-						server.getResponseTransmitterLock().wait(1000);
+					if (completedRequests == 0) {
+						synchronized (server.getResponseTransmitterLock()) {
+							server.getResponseTransmitterLock().wait(1000);
+						}
+					}
 				} catch (InterruptedException e) {
 					logger.error(e);
 					continue;

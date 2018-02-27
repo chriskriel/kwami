@@ -28,5 +28,6 @@ public class AppTest {
 
 	@Test
 	public void generateConfig() {
+		System.out.println(new ServerConfig().toString());
 	}
 }

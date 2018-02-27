@@ -7,10 +7,10 @@ import net.kwami.utils.MyLogger;
 
 public class ResponseReader extends ManagedThread {
 	private static final MyLogger logger = new MyLogger(ResponseReader.class);
-	private PipeClient context;
+	private Client context;
 	private final ByteBuffer workBuffer;
 
-	public ResponseReader(PipeClient context) {
+	public ResponseReader(Client context) {
 		super();
 		this.context = context;
 		workBuffer = ByteBuffer.allocate(Short.MAX_VALUE);

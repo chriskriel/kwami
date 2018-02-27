@@ -14,26 +14,26 @@ import net.kwami.pipe.server.Command.Cmd;
 import net.kwami.pipe.server.Message.Status;
 import net.kwami.utils.MyProperties;
 
-public class PipeClient {
-	public static final ConcurrentMap<PipeKey, PipeClient> register = new ConcurrentHashMap<>();
-	private final PipeKey pipeKey;
+public class Client {
+	public static final ConcurrentMap<RemoteEndpoint, Client> register = new ConcurrentHashMap<>();
+	private final RemoteEndpoint remoteEndpoint;
 	private final BlockingQueue<MessageKey> transmitQueue;
 	private final ConcurrentMap<Long, Message> activeMessageList = new ConcurrentHashMap<>();
 	private MessagePipe messagePipe;
 	private ResponseReader responseReader;
 	private RequestTransmitter requestTransmitter;
 
-	public PipeClient(PipeKey pipeKey, int maxTransmitQueueSize) throws Exception {
+	public Client(RemoteEndpoint remoteEndpoint, int maxTransmitQueueSize) throws Exception {
 		super();
-		this.pipeKey = pipeKey;
+		this.remoteEndpoint = remoteEndpoint;
 		transmitQueue = new ArrayBlockingQueue<>(maxTransmitQueueSize);
-		createMessagePipe(pipeKey);
+		createMessagePipe(remoteEndpoint);
 		createClientThreads();
-		register.put(pipeKey, this);
+		register.put(remoteEndpoint, this);
 	}
 
 	public String sendRequest(String data, long timeoutMs) throws Exception {
-		MessageKey msgKey = new MessageKey(pipeKey);
+		MessageKey msgKey = new MessageKey(remoteEndpoint);
 		Message msg = new Message(msgKey.getMsgId(), data);
 		activeMessageList.put(msgKey.getMsgId(), msg);
 		try {
@@ -41,11 +41,13 @@ public class PipeClient {
 			boolean successFul = transmitQueue.offer(msgKey, queueWaitMs, TimeUnit.MILLISECONDS);
 			if (!successFul)
 				throw new Exception(String.format("%s: failed to add message to transmit queue after %dms",
-						pipeKey.toString(), queueWaitMs));
+						remoteEndpoint.toString(), queueWaitMs));
 			msg.setStatus(Status.WAIT);
-			msg.wait(timeoutMs);
+			synchronized (msg) {
+				msg.wait(timeoutMs);
+			}
 			if (msg.getStatus() == Status.WAIT)
-				throw new Exception(String.format("%s: request '%s' has timed out", pipeKey.toString(), data));
+				throw new Exception(String.format("%s: request '%s' has timed out", remoteEndpoint.toString(), data));
 			return msg.getData();
 		} finally {
 			activeMessageList.remove(msgKey.getMsgId());
@@ -56,16 +58,17 @@ public class PipeClient {
 		requestTransmitter = new RequestTransmitter(this);
 		responseReader = new ResponseReader(this);
 		requestTransmitter.setDaemon(true);
-		requestTransmitter.setName(String.format("RequestTransmitter: %s", pipeKey.toString()));
+		requestTransmitter.setName(String.format("RequestTransmitter: %s", remoteEndpoint.toString()));
 		requestTransmitter.start();
 		responseReader.setDaemon(true);
-		responseReader.setName(String.format("ResponseReader: %s", pipeKey.toString()));
+		responseReader.setName(String.format("ResponseReader: %s", remoteEndpoint.toString()));
 		responseReader.start();
 	}
 
-	private void createMessagePipe(PipeKey pipeKey) throws Exception {
+	private void createMessagePipe(RemoteEndpoint remoteEndpoint) throws Exception {
 		SocketChannel socketChannel = SocketChannel.open();
-		SocketAddress socketAddress = new InetSocketAddress(pipeKey.getHost(), pipeKey.getPort());
+		SocketAddress socketAddress = new InetSocketAddress(remoteEndpoint.getRemoteHost(),
+				remoteEndpoint.getRemotePort());
 		socketChannel.connect(socketAddress);
 		Command cmd = new Command(Cmd.CONNECT);
 		ByteBuffer bb = ByteBuffer.allocate(128);
@@ -81,23 +84,23 @@ public class PipeClient {
 			protocol = parameters.getProperty("protocol");
 		}
 		if (protocol == null)
-			throw new Exception(String.format("Could not determine protocol for Pipe %s", pipeKey.toString()));
+			throw new Exception(String.format("Could not determine protocol for Pipe %s", remoteEndpoint.toString()));
 		if (protocol.equals("TCP"))
-			messagePipe = new TcpPipe(pipeKey, socketChannel);
+			messagePipe = new TcpPipe(remoteEndpoint, socketChannel);
 		else if (protocol.equals("FIFO")) {
 			socketChannel.close();
 			String readPath = parameters.getProperty(FifoPipe.READ_PATH_KEY);
 			if (readPath == null)
-				throw new Exception(
-						String.format("for pipe %s the %s cannot be null", pipeKey.toString(), FifoPipe.READ_PATH_KEY));
+				throw new Exception(String.format("for pipe %s the %s cannot be null", remoteEndpoint.toString(),
+						FifoPipe.READ_PATH_KEY));
 			String writePath = parameters.getProperty(FifoPipe.READ_PATH_KEY);
 			if (writePath == null)
-				throw new Exception(String.format("for pipe %s the %s cannot be null", pipeKey.toString(),
+				throw new Exception(String.format("for pipe %s the %s cannot be null", remoteEndpoint.toString(),
 						FifoPipe.WRITE_PATH_KEY));
-			messagePipe = new FifoPipe(pipeKey, readPath, writePath);
+			messagePipe = new FifoPipe(remoteEndpoint, readPath, writePath);
 		} else
 			throw new Exception(String.format("Unknown protocol of '%s' returned from %s:%d", protocol,
-					pipeKey.getHost(), pipeKey.getPort()));
+					remoteEndpoint.getRemoteHost(), remoteEndpoint.getRemotePort()));
 		return;
 	}
 
@@ -117,8 +120,8 @@ public class PipeClient {
 		this.requestTransmitter = requestTransmitter;
 	}
 
-	public PipeKey getPipeKey() {
-		return pipeKey;
+	public RemoteEndpoint getRemoteEndpoint() {
+		return remoteEndpoint;
 	}
 
 	public BlockingQueue<MessageKey> getTransmitQueue() {

@@ -16,6 +16,8 @@ public class FifoPipe extends MessagePipe {
 	/**
 	 * Opens a FIFO (named-pipes) connector for reading and/or writing
 	 * 
+	 * @param remoteEndpoint
+	 *            The IP address and port of the remote end-point.
 	 * @param readPath
 	 *            The path to a defined FIFO on the Linux file-system. If null then
 	 *            reading from a FIFO will be disabled in this instance of the
@@ -28,9 +30,10 @@ public class FifoPipe extends MessagePipe {
 	 *             Re-thrown from Java NIO. Also on END-OF-STREAM and when disabled
 	 *             reading or writing.
 	 */
-	public FifoPipe(final PipeKey pipeKey, final String readPath, final String writePath) throws IOException {
+	public FifoPipe(final RemoteEndpoint remoteEndpoint, final String readPath, final String writePath)
+			throws IOException {
 		super();
-		setPipeKey(pipeKey);
+		setRemoteEndpoint(remoteEndpoint);
 		if (readPath == null) {
 			readChannel = null;
 		} else {
@@ -80,7 +83,6 @@ public class FifoPipe extends MessagePipe {
 				throw new IOException(MessagePipe.END_OF_STREAM);
 		}
 	}
-
 
 	/**
 	 * Sends a Message to the remote end-point

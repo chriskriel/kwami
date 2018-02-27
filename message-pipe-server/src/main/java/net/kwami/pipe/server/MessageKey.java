@@ -5,26 +5,26 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MessageKey implements Comparable<MessageKey> {
 	private static final AtomicLong nextMsgId = new AtomicLong();
 	private final long msgId;
-	private final PipeKey pipeKey;
+	private final RemoteEndpoint remoteEndpoint;
 
-	public MessageKey(PipeKey pipeKey) {
+	public MessageKey(RemoteEndpoint remoteEndpoint) {
 		super();
 		this.msgId = nextMsgId.incrementAndGet();
-		this.pipeKey = pipeKey;
+		this.remoteEndpoint = remoteEndpoint;
 	}
 
-	public MessageKey(long msgId, PipeKey pipeKey) {
+	public MessageKey(long msgId, RemoteEndpoint remoteEndpoint) {
 		super();
 		this.msgId = msgId;
-		this.pipeKey = pipeKey;
+		this.remoteEndpoint = remoteEndpoint;
 	}
 
 	public long getMsgId() {
 		return msgId;
 	}
 
-	public PipeKey getPipeKey() {
-		return pipeKey;
+	public RemoteEndpoint getRemoteEndpoint() {
+		return remoteEndpoint;
 	}
 
 	@Override
@@ -34,7 +34,7 @@ public class MessageKey implements Comparable<MessageKey> {
 		if (!(obj instanceof MessageKey))
 			return false;
 		MessageKey other = (MessageKey) obj;
-		if (!pipeKey.equals(other.pipeKey))
+		if (!remoteEndpoint.equals(other.remoteEndpoint))
 			return false;
 		if (msgId == other.msgId)
 			return true;
@@ -43,7 +43,7 @@ public class MessageKey implements Comparable<MessageKey> {
 
 	@Override
 	public int compareTo(MessageKey o) {
-		int i = pipeKey.compareTo(o.pipeKey);
+		int i = remoteEndpoint.compareTo(o.remoteEndpoint);
 		if (i != 0)
 			return i;
 		long l = msgId - o.msgId;
