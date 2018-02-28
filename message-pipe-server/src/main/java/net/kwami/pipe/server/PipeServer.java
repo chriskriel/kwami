@@ -22,9 +22,9 @@ import net.kwami.pipe.TcpPipe;
 import net.kwami.utils.Configurator;
 import net.kwami.utils.MyLogger;
 
-public class Server {
+public class PipeServer {
 
-	private static final MyLogger logger = new MyLogger(Server.class);
+	private static final MyLogger logger = new MyLogger(PipeServer.class);
 	private final ConcurrentMap<RemoteEndpoint, MessagePipe> pipesToClients = new ConcurrentHashMap<>();
 	private final ConcurrentMap<MessageOrigin, Future<String>> executingRequests = new ConcurrentHashMap<>();
 	private final MyThreadPoolExecutor threadPoolExecutor;
@@ -33,7 +33,7 @@ public class Server {
 	private final int serverPort;
 	private final Object responseTransmitterLock = new Object();
 
-	public Server() throws Exception {
+	public PipeServer() throws Exception {
 		super();
 		ServerConfig config = Configurator.get(ServerConfig.class);
 		commandBuffer = ByteBuffer.allocate(config.getCommandBufferSize());
@@ -46,17 +46,19 @@ public class Server {
 	public static void main(String[] args) {
 		System.setProperty("config.default.file.type", "json");
 		try {
-			new Server().run();
+			new PipeServer().call();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void run() {
+	public void call() {
 		try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
 			startResponseTransmitter();
 			serverChannel.socket()
 					.bind(new InetSocketAddress(InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS), serverPort));
+			Thread.currentThread()
+					.setName("PipeServerThread" + serverChannel.socket().getLocalSocketAddress().toString());
 			while (true) {
 				SocketChannel socketChannel = serverChannel.accept();
 				socketChannel.read(commandBuffer);
@@ -77,15 +79,16 @@ public class Server {
 			logger.error(e, "SERIOUS PROBLEM: System is not functional");
 		}
 	}
-	
+
 	private void startResponseTransmitter() {
 		ResponseTransmitter rt = new ResponseTransmitter(this);
 		rt.setDaemon(true);
-		rt.setName("ResponseTransmitter");
+		rt.setName("ResponseTransmitterThread");
 		rt.start();
 	}
 
-	private ManagedThread startTcpRequestReader(SocketChannel socketChannel, RemoteEndpoint remoteEndpoint) throws Exception {
+	private ManagedThread startTcpRequestReader(SocketChannel socketChannel, RemoteEndpoint remoteEndpoint)
+			throws Exception {
 		Command response = new Command(Command.Cmd.RESPONSE);
 		response.addParameter("protocol", "TCP");
 		commandBuffer.put(response.toString().getBytes());
@@ -95,21 +98,23 @@ public class Server {
 		pipesToClients.put(remoteEndpoint, msgPipe);
 		RequestSubmitter requestSubmitter = new RequestSubmitter(this, msgPipe);
 		requestSubmitter.setDaemon(true);
-		requestSubmitter.setName(String.format("TcpRequestReaderThread: %s", remoteEndpoint.toString()));
+		requestSubmitter.setName(String.format("TcpRequestReaderThread on %s", remoteEndpoint.toString()));
 		requestSubmitter.start();
 		return requestSubmitter;
 	}
 
-	private ManagedThread startFifoRequestReader(SocketChannel socketChannel, RemoteEndpoint remoteEndpoint) throws Exception {
+	private ManagedThread startFifoRequestReader(SocketChannel socketChannel, RemoteEndpoint remoteEndpoint)
+			throws Exception {
 		String fifoNameRequests = String.format("fifo/requests.%d", remoteEndpoint.getRemotePort());
 		String fifoNameResponses = String.format("fifo/responses.%d", remoteEndpoint.getRemotePort());
 		Runtime.getRuntime().exec("mkfifo " + fifoNameRequests);
 		Runtime.getRuntime().exec("mkfifo " + fifoNameResponses);
+		Thread.sleep(2000);
 		MessagePipe msgPipe = new FifoPipe(remoteEndpoint, fifoNameRequests, fifoNameResponses);
 		pipesToClients.put(remoteEndpoint, msgPipe);
 		RequestSubmitter requestSubmitter = new RequestSubmitter(this, msgPipe);
 		requestSubmitter.setDaemon(true);
-		requestSubmitter.setName(String.format("FifoRequestReaderThread: %s", remoteEndpoint.toString()));
+		requestSubmitter.setName(String.format("FifoRequestReaderThread on: %s", remoteEndpoint.toString()));
 		requestSubmitter.start();
 		Command response = new Command(Command.Cmd.RESPONSE);
 		response.addParameter("protocol", "FIFO");

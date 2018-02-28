@@ -26,6 +26,7 @@ public class PipeClient implements AutoCloseable {
 	public static final AtomicLong nextMsgId = new AtomicLong();
 	private final BlockingQueue<Long> transmitQueue;
 	private final ConcurrentMap<Long, Message> outstandingRequests = new ConcurrentHashMap<>();
+	private final ByteBuffer bb = ByteBuffer.allocate(1024);
 	private MessagePipe messagePipe;
 	private ResponseReader responseReader;
 	private RequestTransmitter requestTransmitter;
@@ -41,10 +42,9 @@ public class PipeClient implements AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		if (messagePipe != null) {
-			ByteBuffer bb = ByteBuffer.allocate(128);
 			Message msg = new Message(nextMsgId.incrementAndGet(), MessagePipe.END_OF_STREAM);
 			messagePipe.write(bb, msg);
-			Thread.sleep(1000);
+			Thread.sleep(2000);
 			messagePipe.close();
 		}
 		if (requestTransmitter != null)
@@ -93,7 +93,6 @@ public class PipeClient implements AutoCloseable {
 				remoteEndpoint.getRemotePort());
 		socketChannel.connect(socketAddress);
 		Command cmd = new Command(Cmd.CONNECT);
-		ByteBuffer bb = ByteBuffer.allocate(128);
 		bb.put(cmd.getBytes());
 		bb.flip();
 		socketChannel.write(bb);

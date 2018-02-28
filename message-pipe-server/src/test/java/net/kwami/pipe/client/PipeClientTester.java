@@ -8,6 +8,7 @@ import net.kwami.pipe.RemoteEndpoint;
 public class PipeClientTester {
 
 	public static void main(String[] args) {
+		Thread.currentThread().setName("PipeClientTesterThread");
 		try {
 			String remoteHost = InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS).getHostAddress();
 			InetSocketAddress remoteSocketAddress = new InetSocketAddress(remoteHost, 58080);

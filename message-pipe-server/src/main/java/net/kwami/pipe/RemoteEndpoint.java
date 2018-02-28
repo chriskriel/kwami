@@ -27,7 +27,7 @@ public class RemoteEndpoint implements Comparable<RemoteEndpoint> {
 
 	@Override
 	public String toString() {
-		return String.format("PIPE:%s:%d", remoteHost, remotePort);
+		return String.format("PIPE/%s:%d", remoteHost, remotePort);
 	}
 
 	@Override

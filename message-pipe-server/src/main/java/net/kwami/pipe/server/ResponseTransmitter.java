@@ -14,9 +14,9 @@ import net.kwami.utils.MyLogger;
 public class ResponseTransmitter extends ManagedThread {
 	private static final MyLogger logger = new MyLogger(ResponseTransmitter.class);
 	private final ByteBuffer workBuffer;
-	private final Server server;
+	private final PipeServer server;
 
-	public ResponseTransmitter(Server server) {
+	public ResponseTransmitter(PipeServer server) {
 		super();
 		this.server = server;
 		workBuffer = ByteBuffer.allocate(Short.MAX_VALUE);

@@ -3,6 +3,7 @@ package net.kwami.pipe;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -14,8 +15,8 @@ public class FifoPipe extends MessagePipe {
 	public static final String SERVER_WRITE_PATH_KEY = "writePath";
 	private final String readFifoName;
 	private final String writeFifoName;
-	private final FileChannel readChannel;
-	private final FileChannel writeChannel;
+	private FileChannel readChannel;
+	private FileChannel writeChannel;
 
 	/**
 	 * Opens a FIFO (named-pipes) connector for reading and/or writing
@@ -38,19 +39,26 @@ public class FifoPipe extends MessagePipe {
 			throws IOException {
 		super();
 		readFifoName = Paths.get(readPath).toAbsolutePath().toString();
-		writeFifoName = Paths.get(writePath).toAbsolutePath().toString();;
+		writeFifoName = Paths.get(writePath).toAbsolutePath().toString();
 		setRemoteEndpoint(remoteEndpoint);
-		if (readPath == null) {
-			readChannel = null;
-		} else {
-			Path readFifo = Paths.get(readPath);
-			readChannel = FileChannel.open(readFifo, StandardOpenOption.READ, StandardOpenOption.WRITE);
-		}
-		if (writePath == null) {
-			writeChannel = null;
-		} else {
-			Path writeFifo = Paths.get(writePath);
-			writeChannel = FileChannel.open(writeFifo, StandardOpenOption.READ, StandardOpenOption.WRITE);
+		if (readPath != null)
+			openFileChannel(readChannel, readPath);
+		if (writePath != null)
+			openFileChannel(writeChannel, writePath);
+	}
+
+	private void openFileChannel(FileChannel fileChannel, String fifoFileName) throws IOException {
+		Path fifo = Paths.get(fifoFileName);
+		while (true) {
+			try {
+				fileChannel = FileChannel.open(fifo, StandardOpenOption.READ, StandardOpenOption.WRITE);
+				break;
+			} catch (NoSuchFileException e) {
+				try {
+					Thread.sleep(20);
+				} catch (InterruptedException e1) {
+				}
+			}
 		}
 	}
 
@@ -60,7 +68,8 @@ public class FifoPipe extends MessagePipe {
 			readChannel.close();
 		if (writeChannel != null)
 			writeChannel.close();
-		String fmt = "/bin/bash -c \"rm %s\"";
+		Thread.sleep(3000);
+		String fmt = "rm %s";
 		RuntimeExec.issue(String.format(fmt, readFifoName));
 		RuntimeExec.issue(String.format(fmt, writeFifoName));
 	}
