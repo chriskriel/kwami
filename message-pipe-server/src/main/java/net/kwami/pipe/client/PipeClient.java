@@ -21,7 +21,7 @@ import net.kwami.pipe.server.Command;
 import net.kwami.pipe.server.Command.Cmd;
 import net.kwami.utils.MyProperties;
 
-public class PipeClient {
+public class PipeClient implements AutoCloseable {
 	public static final ConcurrentMap<RemoteEndpoint, PipeClient> register = new ConcurrentHashMap<>();
 	public static final AtomicLong nextMsgId = new AtomicLong();
 	private final BlockingQueue<Long> transmitQueue;
@@ -36,6 +36,21 @@ public class PipeClient {
 		createMessagePipe(remoteEndpoint);
 		createClientThreads();
 		register.put(remoteEndpoint, this);
+	}
+
+	@Override
+	public void close() throws Exception {
+		if (messagePipe != null) {
+			ByteBuffer bb = ByteBuffer.allocate(128);
+			Message msg = new Message(nextMsgId.incrementAndGet(), MessagePipe.END_OF_STREAM);
+			messagePipe.write(bb, msg);
+			Thread.sleep(1000);
+			messagePipe.close();
+		}
+		if (requestTransmitter != null)
+			requestTransmitter.terminate();
+		if (responseReader != null)
+			responseReader.terminate();
 	}
 
 	public String sendRequest(String data, long timeoutMs) throws Exception {
@@ -53,7 +68,8 @@ public class PipeClient {
 				msg.wait(timeoutMs);
 			}
 			if (msg.getStatus() == Status.WAIT)
-				throw new Exception(String.format("%s: request '%s' has timed out", messagePipe.getRemoteEndpoint().toString(), data));
+				throw new Exception(String.format("%s: request '%s' has timed out",
+						messagePipe.getRemoteEndpoint().toString(), data));
 			return msg.getData();
 		} finally {
 			outstandingRequests.remove(msgId);
@@ -83,7 +99,7 @@ public class PipeClient {
 		socketChannel.write(bb);
 		bb.clear();
 		socketChannel.read(bb);
-		cmd = Command.fromBytes(bb.array());
+		cmd = Command.fromBytes(bb.array(), bb.position());
 		String protocol = null;
 		MyProperties parameters = cmd.getParameters();
 		if (parameters != null) {
@@ -95,14 +111,14 @@ public class PipeClient {
 			messagePipe = new TcpPipe(remoteEndpoint, socketChannel);
 		else if (protocol.equals("FIFO")) {
 			socketChannel.close();
-			String readPath = parameters.getProperty(FifoPipe.READ_PATH_KEY);
+			String readPath = parameters.getProperty(FifoPipe.SERVER_WRITE_PATH_KEY);
 			if (readPath == null)
 				throw new Exception(String.format("for pipe %s the %s cannot be null", remoteEndpoint.toString(),
-						FifoPipe.READ_PATH_KEY));
-			String writePath = parameters.getProperty(FifoPipe.READ_PATH_KEY);
+						FifoPipe.SERVER_WRITE_PATH_KEY));
+			String writePath = parameters.getProperty(FifoPipe.SERVER_READ_PATH_KEY);
 			if (writePath == null)
 				throw new Exception(String.format("for pipe %s the %s cannot be null", remoteEndpoint.toString(),
-						FifoPipe.WRITE_PATH_KEY));
+						FifoPipe.SERVER_READ_PATH_KEY));
 			messagePipe = new FifoPipe(remoteEndpoint, readPath, writePath);
 		} else
 			throw new Exception(String.format("Unknown protocol of '%s' returned from %s:%d", protocol,

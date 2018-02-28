@@ -14,6 +14,8 @@ public abstract class ManagedThread extends Thread {
 	}
 
 	public void unblock() {
-		this.notify();
+		synchronized (this) {
+			this.notify();
+		}
 	}
 }

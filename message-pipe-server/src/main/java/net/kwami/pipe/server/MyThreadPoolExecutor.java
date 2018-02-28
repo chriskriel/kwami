@@ -16,7 +16,9 @@ public class MyThreadPoolExecutor extends ThreadPoolExecutor {
 	@Override
 	protected void afterExecute(Runnable r, Throwable t) {
 		super.afterExecute(r, t);
-		server.getResponseTransmitterLock().notifyAll();
+		synchronized (server.getResponseTransmitterLock()) {
+			server.getResponseTransmitterLock().notifyAll();
+		}
 	}
 
 }

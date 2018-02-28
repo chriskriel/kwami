@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.file.Paths;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -60,6 +61,7 @@ public class Server {
 				SocketChannel socketChannel = serverChannel.accept();
 				socketChannel.read(commandBuffer);
 				String requestStr = new String(commandBuffer.array(), 0, commandBuffer.position());
+				commandBuffer.clear();
 				Command request = gson.fromJson(requestStr, Command.class);
 				if (request.getCommand() == Command.Cmd.CONNECT) {
 					InetSocketAddress remoteSocketAddress = (InetSocketAddress) socketChannel.getRemoteAddress();
@@ -93,17 +95,12 @@ public class Server {
 		pipesToClients.put(remoteEndpoint, msgPipe);
 		RequestSubmitter requestSubmitter = new RequestSubmitter(this, msgPipe);
 		requestSubmitter.setDaemon(true);
-		requestSubmitter.setName(String.format("TcpRequestReader: %s", remoteEndpoint.toString()));
+		requestSubmitter.setName(String.format("TcpRequestReaderThread: %s", remoteEndpoint.toString()));
 		requestSubmitter.start();
 		return requestSubmitter;
 	}
 
 	private ManagedThread startFifoRequestReader(SocketChannel socketChannel, RemoteEndpoint remoteEndpoint) throws Exception {
-		Command response = new Command(Command.Cmd.RESPONSE);
-		response.addParameter("protocol", "FIFO");
-		commandBuffer.put(response.toString().getBytes());
-		commandBuffer.flip();
-		socketChannel.write(commandBuffer);
 		String fifoNameRequests = String.format("fifo/requests.%d", remoteEndpoint.getRemotePort());
 		String fifoNameResponses = String.format("fifo/responses.%d", remoteEndpoint.getRemotePort());
 		Runtime.getRuntime().exec("mkfifo " + fifoNameRequests);
@@ -112,8 +109,17 @@ public class Server {
 		pipesToClients.put(remoteEndpoint, msgPipe);
 		RequestSubmitter requestSubmitter = new RequestSubmitter(this, msgPipe);
 		requestSubmitter.setDaemon(true);
-		requestSubmitter.setName(String.format("FifoRequestReader: %s", remoteEndpoint.toString()));
+		requestSubmitter.setName(String.format("FifoRequestReaderThread: %s", remoteEndpoint.toString()));
 		requestSubmitter.start();
+		Command response = new Command(Command.Cmd.RESPONSE);
+		response.addParameter("protocol", "FIFO");
+		String s = Paths.get(fifoNameRequests).toAbsolutePath().toString();
+		response.addParameter(FifoPipe.SERVER_READ_PATH_KEY, s);
+		s = Paths.get(fifoNameResponses).toAbsolutePath().toString();
+		response.addParameter(FifoPipe.SERVER_WRITE_PATH_KEY, s);
+		commandBuffer.put(response.toString().getBytes());
+		commandBuffer.flip();
+		socketChannel.write(commandBuffer);
 		return requestSubmitter;
 	}
 

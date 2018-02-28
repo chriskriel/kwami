@@ -4,7 +4,7 @@
   "corePoolSize": 10,
   "maxPoolSize": 10,
   "submitQueueSize": 10,
-  "commandBufferSize": 256,
+  "commandBufferSize": 1024,
   "keepAliveTimeUnit": "DAYS",
   "callableImplementation": "net.kwami.pipe.server.DummyCallable"
 }

@@ -2,8 +2,10 @@ package net.kwami.pipe.client;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
 
 import net.kwami.pipe.Message;
+import net.kwami.pipe.MessagePipe;
 import net.kwami.pipe.server.ManagedThread;
 import net.kwami.utils.MyLogger;
 
@@ -24,22 +26,36 @@ public class ResponseReader extends ManagedThread {
 			while (mustRun) {
 				if (mustBlock)
 					try {
-						this.wait();
+						synchronized (this) {
+							this.wait();
+						}
 					} catch (InterruptedException e) {
 					}
 				try {
 					Message response = context.getMessagePipe().read(workBuffer);
-					Message original = context.getOutstandingRequests().get(response.getId());
-					original.setData(response.getData());
-					original.setStatus(Message.Status.DONE);
-					original.notify();
+					Message originalRequest = context.getOutstandingRequests().get(response.getId());
+					originalRequest.setData(response.getData());
+					originalRequest.setStatus(Message.Status.DONE);
+					synchronized (originalRequest) {
+						originalRequest.notify();
+					}
 				} catch (IOException e) {
+					if (e instanceof AsynchronousCloseException) {
+						logger.info("%s was closed by another thread, terminating",
+								context.getMessagePipe().getRemoteEndpoint().toString());
+						break;
+					}
+					if (e.toString().contains(MessagePipe.END_OF_STREAM)) {
+						logger.info("%s was closed by the server, terminating",
+								context.getMessagePipe().getRemoteEndpoint().toString());
+						break;
+					}
 					logger.error(e);
 					break;
 				}
 			}
 		} finally {
-			context.setResponseReader(null);			
+			context.setResponseReader(null);
 		}
 	}
 

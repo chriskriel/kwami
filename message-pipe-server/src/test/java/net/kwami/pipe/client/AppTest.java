@@ -1,18 +1,8 @@
 package net.kwami.pipe.client;
 
-import static org.junit.Assert.assertEquals;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import net.kwami.pipe.RemoteEndpoint;
-import net.kwami.pipe.server.Command;
 
 public class AppTest {
 
@@ -37,10 +27,5 @@ public class AppTest {
 
 	@Test
 	public void testEcho() throws Exception {
-		String remoteHost = InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS).getHostAddress();
-		InetSocketAddress remoteSocketAddress = new InetSocketAddress(remoteHost, 58080);
-		RemoteEndpoint endpoint = new RemoteEndpoint(48080, remoteSocketAddress);
-		PipeClient client = new PipeClient(endpoint, 10);
-		client.sendRequest("one message", 10);
 	}
 }

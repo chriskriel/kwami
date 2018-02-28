@@ -5,20 +5,20 @@ import net.kwami.pipe.RemoteEndpoint;
 
 public class MessageOrigin implements Comparable<MessageOrigin> {
 	private final long msgId;
-	private final MessagePipe origin;
+	private final MessagePipe messagePipe;
 
 	public MessageOrigin(long msgId, MessagePipe origin) {
 		super();
 		this.msgId = msgId;
-		this.origin = origin;
+		this.messagePipe = origin;
 	}
 
 	public long getMsgId() {
 		return msgId;
 	}
 
-	public MessagePipe getOrigin() {
-		return origin;
+	public MessagePipe getMessagePipe() {
+		return messagePipe;
 	}
 
 	@Override
@@ -28,7 +28,7 @@ public class MessageOrigin implements Comparable<MessageOrigin> {
 		if (!(obj instanceof MessageOrigin))
 			return false;
 		MessageOrigin other = (MessageOrigin) obj;
-		if (!origin.equals(other.origin))
+		if (!messagePipe.equals(other.messagePipe))
 			return false;
 		if (msgId == other.msgId)
 			return true;
@@ -37,8 +37,8 @@ public class MessageOrigin implements Comparable<MessageOrigin> {
 
 	@Override
 	public int compareTo(MessageOrigin o) {
-		RemoteEndpoint thisEndpoint = origin.getRemoteEndpoint();
-		RemoteEndpoint otherEndpoint = o.getOrigin().getRemoteEndpoint();
+		RemoteEndpoint thisEndpoint = messagePipe.getRemoteEndpoint();
+		RemoteEndpoint otherEndpoint = o.getMessagePipe().getRemoteEndpoint();
 		int i = thisEndpoint.compareTo(otherEndpoint);
 		if (i != 0)
 			return i;

@@ -1,13 +1,8 @@
-main 2018-02-27 15:50:13,300 DEBUG Configurator.get resource=/ServerConfig.json
-main 2018-02-27 15:50:21,661 ERROR Server.run SERIOUS PROBLEM: System is not functional
-java.util.IllegalFormatConversionException: d != java.lang.String
-	at java.util.Formatter$FormatSpecifier.failConversion(Formatter.java:4302)
-	at java.util.Formatter$FormatSpecifier.printInteger(Formatter.java:2793)
-	at java.util.Formatter$FormatSpecifier.print(Formatter.java:2747)
-	at java.util.Formatter.format(Formatter.java:2520)
-	at java.util.Formatter.format(Formatter.java:2455)
-	at java.lang.String.format(String.java:2927)
-	at net.kwami.pipe.server.Server.startFifoRequestReader(Server.java:107)
-	at net.kwami.pipe.server.Server.run(Server.java:68)
-	at net.kwami.pipe.server.Server.main(Server.java:48)
-main 2018-02-27 15:55:33,177 DEBUG Configurator.get resource=/ServerConfig.json
+main 2018-02-28 17:08:43,522 DEBUG Configurator.get resource=/ServerConfig.json
+ResponseReader: PIPE:10.0.2.15:58080 2018-02-28 17:08:53,341 INFO  ResponseReader.run PIPE:10.0.2.15:58080 was closed by another thread, terminating
+main 2018-02-28 17:08:53,348 INFO  RuntimeExec.issue Command execution successful = true:
+/bin/bash -c "rm /home/chris/git/kwami/general/message-pipe-server/fifo/responses.35100"
+Successfully executed with no output
+main 2018-02-28 17:08:53,356 INFO  RuntimeExec.issue Command execution successful = true:
+/bin/bash -c "rm /home/chris/git/kwami/general/message-pipe-server/fifo/requests.35100"
+Successfully executed with no output

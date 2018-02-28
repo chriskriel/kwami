@@ -10,7 +10,7 @@ public class DummyCallable implements StringCallable {
 
 	@Override
 	public String call() throws Exception {
-		return parameter + ", was seen by container";
+		return parameter + " was seen by container";
 	}
 
 

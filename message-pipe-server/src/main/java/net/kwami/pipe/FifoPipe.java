@@ -7,9 +7,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
+import net.kwami.utils.RuntimeExec;
+
 public class FifoPipe extends MessagePipe {
-	public static final String READ_PATH_KEY = "readPath";
-	public static final String WRITE_PATH_KEY = "writePath";
+	public static final String SERVER_READ_PATH_KEY = "readPath";
+	public static final String SERVER_WRITE_PATH_KEY = "writePath";
+	private final String readFifoName;
+	private final String writeFifoName;
 	private final FileChannel readChannel;
 	private final FileChannel writeChannel;
 
@@ -33,6 +37,8 @@ public class FifoPipe extends MessagePipe {
 	public FifoPipe(final RemoteEndpoint remoteEndpoint, final String readPath, final String writePath)
 			throws IOException {
 		super();
+		readFifoName = Paths.get(readPath).toAbsolutePath().toString();
+		writeFifoName = Paths.get(writePath).toAbsolutePath().toString();;
 		setRemoteEndpoint(remoteEndpoint);
 		if (readPath == null) {
 			readChannel = null;
@@ -50,11 +56,13 @@ public class FifoPipe extends MessagePipe {
 
 	@Override
 	public void close() throws Exception {
-		System.out.println("closing IO");
 		if (readChannel != null)
 			readChannel.close();
 		if (writeChannel != null)
 			writeChannel.close();
+		String fmt = "/bin/bash -c \"rm %s\"";
+		RuntimeExec.issue(String.format(fmt, readFifoName));
+		RuntimeExec.issue(String.format(fmt, writeFifoName));
 	}
 
 	/**

@@ -9,8 +9,8 @@ public class Command {
 		CONNECT, SHUTDOWN, RESTART, QUERY, RESPONSE
 	}
 
-	public static final Command fromBytes(byte[] bytes) {
-		String json = new String(bytes, 0, bytes.length);
+	public static final Command fromBytes(byte[] bytes, int length) {
+		String json = new String(bytes, 0, length);
 		return new GsonBuilder().create().fromJson(json, Command.class);
 	}
 

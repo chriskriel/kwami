@@ -2,11 +2,13 @@ package net.kwami.pipe.server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import net.kwami.pipe.Message;
+import net.kwami.pipe.MessagePipe;
 import net.kwami.utils.MyLogger;
 
 public class ResponseTransmitter extends ManagedThread {
@@ -26,25 +28,29 @@ public class ResponseTransmitter extends ManagedThread {
 			while (mustRun) {
 				if (mustBlock)
 					try {
-						this.wait();
+						synchronized (this) {
+							this.wait();
+						}
 					} catch (InterruptedException e) {
 					}
+				MessagePipe messagePipe = null;
 				try {
 					int completedRequests = 0;
 					for (Entry<MessageOrigin, Future<String>> entry : server.getExecutingRequests().entrySet()) {
 						Future<String> future = entry.getValue();
 						if (future.isDone()) {
 							completedRequests++;
-							MessageOrigin key = entry.getKey();
-							Message response = new Message(key.getMsgId(), null);
+							MessageOrigin messageOrigin = entry.getKey();
+							messagePipe = messageOrigin.getMessagePipe();
+							Message response = new Message(messageOrigin.getMsgId(), null);
 							try {
 								response.setData(future.get());
 							} catch (ExecutionException e) {
 								String error = e.getCause() != null ? e.getCause().toString() : e.toString();
 								response.setData("ERROR: " + error);
 							}
-							server.getExecutingRequests().remove(key);
-							key.getOrigin().write(workBuffer, response);
+							server.getExecutingRequests().remove(messageOrigin);
+							messagePipe.write(workBuffer, response);
 						}
 					}
 					if (completedRequests == 0) {
@@ -56,12 +62,22 @@ public class ResponseTransmitter extends ManagedThread {
 					logger.error(e);
 					continue;
 				} catch (IOException e) {
+					if (e instanceof ClosedChannelException || e.toString().contains(MessagePipe.END_OF_STREAM)) {
+						logger.info("%s was closed, terminating", messagePipe.getRemoteEndpoint().toString());
+						try {
+							messagePipe.close();
+						} catch (Exception e1) {
+							logger.error(e1);
+						}
+						continue;
+					}
 					logger.error(e);
 					break;
 				}
 			}
 		} finally {
 		}
+
 	}
 
 }

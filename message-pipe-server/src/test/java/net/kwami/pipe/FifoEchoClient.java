@@ -11,7 +11,9 @@ public class FifoEchoClient {
 	public static void main(String[] args) throws Exception {
 		Message msg = new Message(10000, "");
 		ByteBuffer buffer = ByteBuffer.allocate(1024);
-		try (MessagePipe pipe = new FifoPipe(null, "fifo/EchoClient.responses", "fifo/EchoClient.requests")) {
+		try (MessagePipe pipe = new FifoPipe(null, 
+				"/home/chris/git/kwami/general/message-pipe-server/fifo/EchoClient.responses", 
+				"/home/chris/git/kwami/general/message-pipe-server/fifo/EchoClient.requests")) {
 			for (int i = 0; i < 10; i++) {
 				msg.setData("message no: " + String.valueOf(i));
 				pipe.write(buffer, msg);

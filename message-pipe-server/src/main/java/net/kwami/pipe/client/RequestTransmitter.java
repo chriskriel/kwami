@@ -2,8 +2,10 @@ package net.kwami.pipe.client;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
 
 import net.kwami.pipe.Message;
+import net.kwami.pipe.MessagePipe;
 import net.kwami.pipe.server.ManagedThread;
 import net.kwami.utils.MyLogger;
 
@@ -37,8 +39,16 @@ public class RequestTransmitter extends ManagedThread {
 					logger.error(e);
 					continue;
 				} catch (IOException e) {
-					logger.error(e);
-					break;
+					if (e instanceof AsynchronousCloseException) {
+						logger.info("%s was closed by another thread, terminating",
+								context.getMessagePipe().getRemoteEndpoint().toString());
+						break;
+					}
+					if (e.toString().contains(MessagePipe.END_OF_STREAM)) {
+						logger.info("%s was closed by the server, terminating",
+								context.getMessagePipe().getRemoteEndpoint().toString());
+						break;
+					}
 				}
 			}
 		} finally {
