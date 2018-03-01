@@ -37,7 +37,6 @@ public class RequestTransmitter extends ManagedThread {
 						Thread.sleep(2);
 					context.getMessagePipe().write(workBuffer, msg);
 				} catch (InterruptedException e) {
-					logger.error(e);
 					continue;
 				} catch (IOException e) {
 					if (e instanceof AsynchronousCloseException) {

@@ -33,5 +33,6 @@ classpath.txt
 javac-services*
 nbactions.xml
 work
+fifo
 *.pid
 

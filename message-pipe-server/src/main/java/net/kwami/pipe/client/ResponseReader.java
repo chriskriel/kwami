@@ -2,7 +2,7 @@ package net.kwami.pipe.client;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.ClosedChannelException;
 
 import net.kwami.pipe.Message;
 import net.kwami.pipe.MessagePipe;
@@ -49,7 +49,7 @@ public class ResponseReader extends ManagedThread {
 						originalRequest.notify();
 					}
 				} catch (IOException e) {
-					if (e instanceof AsynchronousCloseException) {
+					if (e instanceof ClosedChannelException) {
 						logger.info("%s was closed by another thread, terminating",
 								context.getMessagePipe().getRemoteEndpoint().toString());
 						break;
