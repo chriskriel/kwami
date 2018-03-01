@@ -3,18 +3,13 @@ package net.kwami.pipe;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-import net.kwami.utils.RuntimeExec;
-
 public class FifoPipe extends MessagePipe {
 	public static final String SERVER_READ_PATH_KEY = "readPath";
 	public static final String SERVER_WRITE_PATH_KEY = "writePath";
-	private final String readFifoName;
-	private final String writeFifoName;
 	private FileChannel readChannel;
 	private FileChannel writeChannel;
 
@@ -38,27 +33,14 @@ public class FifoPipe extends MessagePipe {
 	public FifoPipe(final RemoteEndpoint remoteEndpoint, final String readPath, final String writePath)
 			throws IOException {
 		super();
-		readFifoName = Paths.get(readPath).toAbsolutePath().toString();
-		writeFifoName = Paths.get(writePath).toAbsolutePath().toString();
 		setRemoteEndpoint(remoteEndpoint);
-		if (readPath != null)
-			openFileChannel(readChannel, readPath);
-		if (writePath != null)
-			openFileChannel(writeChannel, writePath);
-	}
-
-	private void openFileChannel(FileChannel fileChannel, String fifoFileName) throws IOException {
-		Path fifo = Paths.get(fifoFileName);
-		while (true) {
-			try {
-				fileChannel = FileChannel.open(fifo, StandardOpenOption.READ, StandardOpenOption.WRITE);
-				break;
-			} catch (NoSuchFileException e) {
-				try {
-					Thread.sleep(20);
-				} catch (InterruptedException e1) {
-				}
-			}
+		if (readPath != null) {
+			Path fifo = Paths.get(readPath);
+			readChannel = FileChannel.open(fifo, StandardOpenOption.READ, StandardOpenOption.WRITE);
+		}
+		if (writePath != null) {
+			Path fifo = Paths.get(writePath);
+			writeChannel = FileChannel.open(fifo, StandardOpenOption.READ, StandardOpenOption.WRITE);
 		}
 	}
 
@@ -68,10 +50,6 @@ public class FifoPipe extends MessagePipe {
 			readChannel.close();
 		if (writeChannel != null)
 			writeChannel.close();
-		Thread.sleep(3000);
-		String fmt = "rm %s";
-		RuntimeExec.issue(String.format(fmt, readFifoName));
-		RuntimeExec.issue(String.format(fmt, writeFifoName));
 	}
 
 	/**

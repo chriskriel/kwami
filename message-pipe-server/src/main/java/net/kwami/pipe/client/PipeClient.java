@@ -23,13 +23,14 @@ import net.kwami.utils.MyProperties;
 
 public class PipeClient implements AutoCloseable {
 	public static final ConcurrentMap<RemoteEndpoint, PipeClient> register = new ConcurrentHashMap<>();
-	public static final AtomicLong nextMsgId = new AtomicLong();
+	public final AtomicLong nextMsgId = new AtomicLong();
 	private final BlockingQueue<Long> transmitQueue;
 	private final ConcurrentMap<Long, Message> outstandingRequests = new ConcurrentHashMap<>();
-	private final ByteBuffer bb = ByteBuffer.allocate(1024);
+	private final ByteBuffer commandBuffer = ByteBuffer.allocate(1024);
 	private MessagePipe messagePipe;
 	private ResponseReader responseReader;
 	private RequestTransmitter requestTransmitter;
+	private boolean isClosed = false;
 
 	public PipeClient(RemoteEndpoint remoteEndpoint, int maxTransmitQueueSize) throws Exception {
 		super();
@@ -41,10 +42,14 @@ public class PipeClient implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		if (messagePipe != null) {
-			Message msg = new Message(nextMsgId.incrementAndGet(), MessagePipe.END_OF_STREAM);
-			messagePipe.write(bb, msg);
-			Thread.sleep(2000);
+		isClosed = true;
+		// When auto-closing the responseReader is active and we have a MessagePipe,
+		// so notify the server to reclaim the pipe. The other scenario is when the
+		// server sent a command to close the pipe, then the ResponseReader will
+		// no longer be running.
+		if (messagePipe != null && responseReader != null) {
+			Message msg = new Message(0, MessagePipe.END_OF_STREAM);
+			messagePipe.write(commandBuffer, msg);
 			messagePipe.close();
 		}
 		if (requestTransmitter != null)
@@ -54,6 +59,8 @@ public class PipeClient implements AutoCloseable {
 	}
 
 	public String sendRequest(String data, long timeoutMs) throws Exception {
+		if (isClosed)
+			throw new Exception("PipeClient has been closed");
 		long msgId = nextMsgId.incrementAndGet();
 		Message msg = new Message(msgId, data);
 		outstandingRequests.put(msgId, msg);
@@ -93,12 +100,12 @@ public class PipeClient implements AutoCloseable {
 				remoteEndpoint.getRemotePort());
 		socketChannel.connect(socketAddress);
 		Command cmd = new Command(Cmd.CONNECT);
-		bb.put(cmd.getBytes());
-		bb.flip();
-		socketChannel.write(bb);
-		bb.clear();
-		socketChannel.read(bb);
-		cmd = Command.fromBytes(bb.array(), bb.position());
+		commandBuffer.put(cmd.getBytes());
+		commandBuffer.flip();
+		socketChannel.write(commandBuffer);
+		commandBuffer.clear();
+		socketChannel.read(commandBuffer);
+		cmd = Command.fromBytes(commandBuffer.array(), commandBuffer.position());
 		String protocol = null;
 		MyProperties parameters = cmd.getParameters();
 		if (parameters != null) {
@@ -147,6 +154,10 @@ public class PipeClient implements AutoCloseable {
 
 	public MessagePipe getMessagePipe() {
 		return messagePipe;
+	}
+
+	public void setMessagePipe(MessagePipe messagePipe) {
+		this.messagePipe = messagePipe;
 	}
 
 	public ConcurrentMap<Long, Message> getOutstandingRequests() {

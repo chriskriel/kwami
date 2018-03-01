@@ -24,6 +24,7 @@ public class ResponseTransmitter extends ManagedThread {
 
 	@Override
 	public void run() {
+		logger.info("Starting");
 		try {
 			while (mustRun) {
 				if (mustBlock)
@@ -76,6 +77,7 @@ public class ResponseTransmitter extends ManagedThread {
 				}
 			}
 		} finally {
+			logger.info("Stopping");
 		}
 
 	}

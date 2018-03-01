@@ -1,19 +1,19 @@
 package net.kwami.pipe.server;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import net.kwami.pipe.FifoPipe;
 import net.kwami.pipe.MessagePipe;
@@ -22,26 +22,10 @@ import net.kwami.pipe.TcpPipe;
 import net.kwami.utils.Configurator;
 import net.kwami.utils.MyLogger;
 
-public class PipeServer {
+public final class PipeServer {
 
 	private static final MyLogger logger = new MyLogger(PipeServer.class);
-	private final ConcurrentMap<RemoteEndpoint, MessagePipe> pipesToClients = new ConcurrentHashMap<>();
-	private final ConcurrentMap<MessageOrigin, Future<String>> executingRequests = new ConcurrentHashMap<>();
-	private final MyThreadPoolExecutor threadPoolExecutor;
-	private final Gson gson = new GsonBuilder().create();
-	private final ByteBuffer commandBuffer;
-	private final int serverPort;
-	private final Object responseTransmitterLock = new Object();
-
-	public PipeServer() throws Exception {
-		super();
-		ServerConfig config = Configurator.get(ServerConfig.class);
-		commandBuffer = ByteBuffer.allocate(config.getCommandBufferSize());
-		this.serverPort = config.getPort();
-		threadPoolExecutor = new MyThreadPoolExecutor(this, config.getCorePoolSize(), config.getMaxPoolSize(),
-				config.getKeepAliveTime(), TimeUnit.DAYS,
-				new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
-	}
+	private static byte[] fifoByteMap = { 1 };
 
 	public static void main(String[] args) {
 		System.setProperty("config.default.file.type", "json");
@@ -52,19 +36,51 @@ public class PipeServer {
 		}
 	}
 
-	public void call() {
+	public static void freeFifo(int index) {
+		synchronized (fifoByteMap) {
+			fifoByteMap[index] = 0;
+		}
+	}
+
+	private final List<ManagedThread> managedThreads = new ArrayList<>();
+	private final ConcurrentMap<MessageOrigin, Future<String>> executingRequests = new ConcurrentHashMap<>();
+	private final MyThreadPoolExecutor threadPoolExecutor;
+	private final ByteBuffer commandBuffer;
+	private final int pipeCount;
+	private final int serverPort;
+	private final Object responseTransmitterLock = new Object();
+	private int fifoByteMapPosition;
+
+	public PipeServer() throws Exception {
+		super();
+		ServerConfig config = Configurator.get(ServerConfig.class);
+		commandBuffer = ByteBuffer.allocate(config.getCommandBufferSize());
+		this.serverPort = config.getPort();
+		threadPoolExecutor = new MyThreadPoolExecutor(this, config.getCorePoolSize(), config.getMaxPoolSize(),
+				config.getKeepAliveTime(), TimeUnit.DAYS,
+				new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
+		pipeCount = config.getMaxFifoMessagePipes() * 2;
+		if (pipeCount == 0)
+			return;
+		fifoByteMap = new byte[pipeCount];
+		Runtime.getRuntime().exec("rm -rf fifo");
+		Runtime.getRuntime().exec("mkdir fifo");
+		for (int i = 0; i < pipeCount; i++) {
+			String cmd = "mkfifo fifo/" + i;
+			Runtime.getRuntime().exec(cmd);
+		}
+	}
+
+	public final void call() throws IOException {
 		try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
-			startResponseTransmitter();
+			ManagedThread responseTransmitter = startResponseTransmitter();
 			serverChannel.socket()
 					.bind(new InetSocketAddress(InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS), serverPort));
 			Thread.currentThread()
 					.setName("PipeServerThread" + serverChannel.socket().getLocalSocketAddress().toString());
 			while (true) {
 				SocketChannel socketChannel = serverChannel.accept();
-				socketChannel.read(commandBuffer);
-				String requestStr = new String(commandBuffer.array(), 0, commandBuffer.position());
-				commandBuffer.clear();
-				Command request = gson.fromJson(requestStr, Command.class);
+				Command request = Command.read(socketChannel, commandBuffer);
 				if (request.getCommand() == Command.Cmd.CONNECT) {
 					InetSocketAddress remoteSocketAddress = (InetSocketAddress) socketChannel.getRemoteAddress();
 					RemoteEndpoint remoteEndpoint = new RemoteEndpoint(serverPort, remoteSocketAddress);
@@ -73,6 +89,13 @@ public class PipeServer {
 					} else {
 						startTcpRequestReader(socketChannel, remoteEndpoint);
 					}
+				} else if (request.getCommand() == Command.Cmd.SHUTDOWN) {
+					responseTransmitter.terminate();
+					for (ManagedThread pipe : managedThreads) {
+						pipe.terminate();
+					}
+					managedThreads.clear();
+					break;
 				}
 			}
 		} catch (Exception e) {
@@ -80,67 +103,88 @@ public class PipeServer {
 		}
 	}
 
-	private void startResponseTransmitter() {
+	private final ManagedThread startResponseTransmitter() {
 		ResponseTransmitter rt = new ResponseTransmitter(this);
+		managedThreads.add(rt);
 		rt.setDaemon(true);
 		rt.setName("ResponseTransmitterThread");
 		rt.start();
+		return rt;
 	}
 
-	private ManagedThread startTcpRequestReader(SocketChannel socketChannel, RemoteEndpoint remoteEndpoint)
+	private final void startTcpRequestReader(final SocketChannel socketChannel, final RemoteEndpoint remoteEndpoint)
 			throws Exception {
 		Command response = new Command(Command.Cmd.RESPONSE);
 		response.addParameter("protocol", "TCP");
-		commandBuffer.put(response.toString().getBytes());
-		commandBuffer.flip();
-		socketChannel.write(commandBuffer);
+		response.write(socketChannel, commandBuffer);
 		MessagePipe msgPipe = new TcpPipe(remoteEndpoint, socketChannel);
-		pipesToClients.put(remoteEndpoint, msgPipe);
-		RequestSubmitter requestSubmitter = new RequestSubmitter(this, msgPipe);
+		RequestReader requestSubmitter = new RequestReader(this, msgPipe);
 		requestSubmitter.setDaemon(true);
-		requestSubmitter.setName(String.format("TcpRequestReaderThread on %s", remoteEndpoint.toString()));
+		requestSubmitter.setName("TcpRequestReaderThread for " + remoteEndpoint.toString());
 		requestSubmitter.start();
-		return requestSubmitter;
+		managedThreads.add(requestSubmitter);
+		return;
 	}
 
-	private ManagedThread startFifoRequestReader(SocketChannel socketChannel, RemoteEndpoint remoteEndpoint)
+	private final int getFreeFifo() {
+		synchronized (fifoByteMap) {
+			for (int i = fifoByteMapPosition; i < fifoByteMap.length; i++)
+				if (fifoByteMap[i] == 0) {
+					fifoByteMap[i] = 1;
+					fifoByteMapPosition = i;
+					return i;
+				}
+			// try to reuse if available
+			for (int i = 0; i < fifoByteMap.length; i++)
+				if (fifoByteMap[i] == 0) {
+					fifoByteMap[i] = 1;
+					fifoByteMapPosition = i;
+					return i;
+				}
+		}
+		return -1;
+	}
+
+	private final void startFifoRequestReader(final SocketChannel socketChannel, final RemoteEndpoint remoteEndpoint)
 			throws Exception {
-		String fifoNameRequests = String.format("fifo/requests.%d", remoteEndpoint.getRemotePort());
-		String fifoNameResponses = String.format("fifo/responses.%d", remoteEndpoint.getRemotePort());
-		Runtime.getRuntime().exec("mkfifo " + fifoNameRequests);
-		Runtime.getRuntime().exec("mkfifo " + fifoNameResponses);
-		Thread.sleep(2000);
+		String fifoNameRequests = null;
+		String fifoNameResponses = null;
+		int i = getFreeFifo();
+		if (i >= 0)
+			fifoNameRequests = "fifo/" + i;
+		if (i >= 0) {
+			i = getFreeFifo();
+			fifoNameResponses = "fifo/" + i;
+		}
+		if (i < 0) {
+			logger.error("Server is out of FIFO pipes, falling back to TCP");
+			startTcpRequestReader(socketChannel, remoteEndpoint);
+			return;
+		}
 		MessagePipe msgPipe = new FifoPipe(remoteEndpoint, fifoNameRequests, fifoNameResponses);
-		pipesToClients.put(remoteEndpoint, msgPipe);
-		RequestSubmitter requestSubmitter = new RequestSubmitter(this, msgPipe);
-		requestSubmitter.setDaemon(true);
-		requestSubmitter.setName(String.format("FifoRequestReaderThread on: %s", remoteEndpoint.toString()));
-		requestSubmitter.start();
+		RequestReader requestReader = new RequestReader(this, msgPipe);
+		requestReader.setDaemon(true);
+		requestReader.setName("FifoRequestReaderThread for " + fifoNameRequests);
+		requestReader.start();
+		managedThreads.add(requestReader);
 		Command response = new Command(Command.Cmd.RESPONSE);
 		response.addParameter("protocol", "FIFO");
 		String s = Paths.get(fifoNameRequests).toAbsolutePath().toString();
 		response.addParameter(FifoPipe.SERVER_READ_PATH_KEY, s);
 		s = Paths.get(fifoNameResponses).toAbsolutePath().toString();
 		response.addParameter(FifoPipe.SERVER_WRITE_PATH_KEY, s);
-		commandBuffer.put(response.toString().getBytes());
-		commandBuffer.flip();
-		socketChannel.write(commandBuffer);
-		return requestSubmitter;
+		response.write(socketChannel, commandBuffer);
 	}
 
-	public Object getResponseTransmitterLock() {
+	public final Object getResponseTransmitterLock() {
 		return responseTransmitterLock;
 	}
 
-	public ConcurrentMap<RemoteEndpoint, MessagePipe> getPipesToClients() {
-		return pipesToClients;
-	}
-
-	public ConcurrentMap<MessageOrigin, Future<String>> getExecutingRequests() {
+	public final ConcurrentMap<MessageOrigin, Future<String>> getExecutingRequests() {
 		return executingRequests;
 	}
 
-	public MyThreadPoolExecutor getThreadPoolExecutor() {
+	public final MyThreadPoolExecutor getThreadPoolExecutor() {
 		return threadPoolExecutor;
 	}
 

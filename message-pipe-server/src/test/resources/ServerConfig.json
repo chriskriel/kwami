@@ -5,6 +5,7 @@
   "maxPoolSize": 10,
   "submitQueueSize": 10,
   "commandBufferSize": 1024,
+  "maxFifoMessagePipes": 12,
   "keepAliveTimeUnit": "DAYS",
   "callableImplementation": "net.kwami.pipe.server.DummyCallable"
 }

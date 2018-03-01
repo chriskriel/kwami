@@ -22,6 +22,7 @@ public class RequestTransmitter extends ManagedThread {
 
 	@Override
 	public void run() {
+		logger.info("Starting");
 		try {
 			while (mustRun) {
 				if (mustBlock)
@@ -52,6 +53,7 @@ public class RequestTransmitter extends ManagedThread {
 				}
 			}
 		} finally {
+			logger.info("Stopping");
 			context.setRequestTransmitter(null);
 		}
 	}

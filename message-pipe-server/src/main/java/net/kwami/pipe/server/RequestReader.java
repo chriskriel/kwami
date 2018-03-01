@@ -9,15 +9,15 @@ import net.kwami.pipe.MessagePipe;
 import net.kwami.utils.Configurator;
 import net.kwami.utils.MyLogger;
 
-public class RequestSubmitter extends ManagedThread {
-	private static final MyLogger logger = new MyLogger(RequestSubmitter.class);
+public class RequestReader extends ManagedThread {
+	private static final MyLogger logger = new MyLogger(RequestReader.class);
 	private final PipeServer server;
 	private final MessagePipe messagePipe;
 	private final ByteBuffer workBuffer;
 	private final Class<StringCallable> callableClass;
 
 	@SuppressWarnings("unchecked")
-	public RequestSubmitter(PipeServer server, MessagePipe messagePipe) throws Exception {
+	public RequestReader(PipeServer server, MessagePipe messagePipe) throws Exception {
 		this.server = server;
 		this.messagePipe = messagePipe;
 		ServerConfig config = Configurator.get(ServerConfig.class);
@@ -27,6 +27,7 @@ public class RequestSubmitter extends ManagedThread {
 
 	@Override
 	public void run() {
+		logger.info("Starting");
 		try {
 			while (mustRun) {
 				if (mustBlock)
@@ -58,8 +59,14 @@ public class RequestSubmitter extends ManagedThread {
 				}
 			}
 		} finally {
+			logger.info("Stopping");
 			try {
+				if (messagePipe != null) {
+					Message msg = new Message(0, MessagePipe.END_OF_STREAM);
+					messagePipe.write(workBuffer, msg);
+					messagePipe.close();
 				messagePipe.close();
+				}
 			} catch (Exception e) {
 			}
 		}

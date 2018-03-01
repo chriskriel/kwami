@@ -22,6 +22,7 @@ public class ResponseReader extends ManagedThread {
 
 	@Override
 	public void run() {
+		logger.info("Starting");
 		try {
 			while (mustRun) {
 				if (mustBlock)
@@ -33,6 +34,14 @@ public class ResponseReader extends ManagedThread {
 					}
 				try {
 					Message response = context.getMessagePipe().read(workBuffer);
+					if (response.getData().equals(MessagePipe.END_OF_STREAM)) {
+						try {
+							context.setResponseReader(null);
+							context.close();
+						} catch (Exception e) {
+						}
+						break;
+					}
 					Message originalRequest = context.getOutstandingRequests().get(response.getId());
 					originalRequest.setData(response.getData());
 					originalRequest.setStatus(Message.Status.DONE);
@@ -55,6 +64,7 @@ public class ResponseReader extends ManagedThread {
 				}
 			}
 		} finally {
+			logger.info("Stopping");
 			context.setResponseReader(null);
 		}
 	}

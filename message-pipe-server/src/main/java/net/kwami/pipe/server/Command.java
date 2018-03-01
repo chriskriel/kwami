@@ -1,5 +1,10 @@
 package net.kwami.pipe.server;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import net.kwami.utils.MyProperties;
@@ -9,9 +14,17 @@ public class Command {
 		CONNECT, SHUTDOWN, RESTART, QUERY, RESPONSE
 	}
 
+	private static Gson gson = new GsonBuilder().create();
+
+	public static Command read(SocketChannel socketChannel, ByteBuffer workBuffer) throws IOException {
+		workBuffer.clear();
+		socketChannel.read(workBuffer);
+		return fromBytes(workBuffer.array(), workBuffer.position());
+	}
+
 	public static final Command fromBytes(byte[] bytes, int length) {
 		String json = new String(bytes, 0, length);
-		return new GsonBuilder().create().fromJson(json, Command.class);
+		return gson.fromJson(json, Command.class);
 	}
 
 	private Cmd command = Cmd.CONNECT;
@@ -22,6 +35,13 @@ public class Command {
 
 	public Command(Cmd command) {
 		this.command = command;
+	}
+
+	public final void write(final SocketChannel socketChannel, final ByteBuffer commandBuffer) throws IOException {
+		commandBuffer.clear();
+		commandBuffer.put(this.toString().getBytes());
+		commandBuffer.flip();
+		socketChannel.write(commandBuffer);
 	}
 
 	public byte[] getBytes() {
@@ -52,7 +72,7 @@ public class Command {
 
 	@Override
 	public String toString() {
-		return new GsonBuilder().create().toJson(this);
+		return gson.toJson(this);
 	}
 
 }
