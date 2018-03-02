@@ -1,11 +1,12 @@
 {
   "keepAliveTime": 10000,
+  "responseTransmitterSleepMs": 10,
   "port": 58080,
   "corePoolSize": 10,
   "maxPoolSize": 10,
   "submitQueueSize": 10,
   "commandBufferSize": 1024,
-  "maxFifoMessagePipes": 12,
+  "maxFifoMessagePipes": 3,
   "keepAliveTimeUnit": "DAYS",
   "callableImplementation": "net.kwami.pipe.server.DummyCallable"
 }

@@ -4,8 +4,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import net.kwami.pipe.RemoteEndpoint;
+import net.kwami.utils.MyLogger;
 
 public class PipeClientTester extends Thread {
+	private static final MyLogger logger = new MyLogger(PipeClientTester.class);
 	static class MessageSenderThread extends Thread {
 		int threadNum;
 		int clientThreadNum;
@@ -22,13 +24,24 @@ public class PipeClientTester extends Thread {
 			String threadName = String.format("Thread-%s-%s", clientThreadNum, threadNum);
 			Thread.currentThread().setName(threadName);
 			try {
+				sendRequest(threadName, 0);
+				Thread.sleep(3000);
 				for (int i = 1; i < 500; i++) {
-					String s = client.sendRequest(threadName + " request-" + i, 10000000);
-					System.out.println(threadName + " received: '" + s + "' for request-" + i);
+					sendRequest(threadName, i);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		}
+		
+		private void sendRequest(String threadName, int i) throws Exception {
+			long start = System.currentTimeMillis();
+			String request = threadName + " request-" + i;
+			String s = client.sendRequest(request, 10000000);
+			long latency = System.currentTimeMillis() - start;
+			logger.debug("%s received after %dms: '%s' for %s", threadName, latency, s, request);
+//			System.out.println(threadName + " received after " + latency + "ms: '" + s + "' for " + request);
+			
 		}
 	}
 
@@ -42,11 +55,14 @@ public class PipeClientTester extends Thread {
 		Thread[] threads = new Thread[5];
 		for (int i = 0; i < threads.length; i++) {
 			threads[i] = new PipeClientTester(i);
-			threads[i].run();
 		}
 		for (int i = 0; i < threads.length; i++) {
-			threads[i].join();
+			threads[i].run();
 		}
+//		for (int i = 0; i < threads.length; i++) {
+//			threads[i].join();
+//		}
+		logger.debug("D O N E !");
 	}
 
 	@Override
@@ -62,9 +78,9 @@ public class PipeClientTester extends Thread {
 					threads[i] = new MessageSenderThread(client, threadNum, i);
 					threads[i].run();
 				}
-				for (int i = 0; i < threads.length; i++) {
-					threads[i].join();
-				}
+//				for (int i = 0; i < threads.length; i++) {
+//					threads[i].join();
+//				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

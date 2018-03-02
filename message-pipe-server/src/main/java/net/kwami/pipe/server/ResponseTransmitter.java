@@ -15,16 +15,19 @@ public class ResponseTransmitter extends ManagedThread {
 	private static final MyLogger logger = new MyLogger(ResponseTransmitter.class);
 	private final ByteBuffer workBuffer;
 	private final PipeServer server;
+	private final long idleSleepTime;
 
-	public ResponseTransmitter(PipeServer server) {
+	public ResponseTransmitter(PipeServer server, long idleSleepTime) {
 		super();
 		this.server = server;
 		workBuffer = ByteBuffer.allocate(Short.MAX_VALUE);
+		this.idleSleepTime = idleSleepTime;
 	}
 
 	@Override
 	public void run() {
 		logger.info("Starting");
+		int noneDoneCnt = 0;
 		try {
 			while (mustRun) {
 				if (mustBlock)
@@ -36,11 +39,12 @@ public class ResponseTransmitter extends ManagedThread {
 					}
 				MessagePipe messagePipe = null;
 				try {
-					int completedRequests = 0;
+					int transmitCnt = 0;
 					for (Entry<MessageOrigin, Future<String>> entry : server.getExecutingRequests().entrySet()) {
 						Future<String> future = entry.getValue();
 						if (future.isDone()) {
-							completedRequests++;
+							noneDoneCnt = 0;
+							transmitCnt++;
 							MessageOrigin messageOrigin = entry.getKey();
 							messagePipe = messageOrigin.getMessagePipe();
 							Message response = new Message(messageOrigin.getMsgId(), null);
@@ -54,13 +58,16 @@ public class ResponseTransmitter extends ManagedThread {
 							messagePipe.write(workBuffer, response);
 						}
 					}
-					if (completedRequests == 0) {
+					if (transmitCnt == 0) {
 						synchronized (server.getResponseTransmitterLock()) {
-							server.getResponseTransmitterLock().wait(1000);
+							if (++noneDoneCnt % 5 == 0)
+								server.getResponseTransmitterLock().wait(idleSleepTime);
+							else
+								server.getResponseTransmitterLock().wait(idleSleepTime / 10);
 						}
 					}
 				} catch (InterruptedException e) {
-					logger.error(e);
+					logger.info("interrupted, continuing");
 					continue;
 				} catch (IOException e) {
 					if (e instanceof ClosedChannelException || e.toString().contains(MessagePipe.END_OF_STREAM)) {

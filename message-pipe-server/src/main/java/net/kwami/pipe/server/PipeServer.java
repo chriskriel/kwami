@@ -24,6 +24,7 @@ import net.kwami.utils.MyLogger;
 
 public final class PipeServer {
 
+	public static final String RESPONSE_TRANSMITTER_NAME = "ResponseTransmitterThread";
 	private static final MyLogger logger = new MyLogger(PipeServer.class);
 	private static byte[] fifoByteMap = { 1 };
 
@@ -60,15 +61,17 @@ public final class PipeServer {
 				config.getKeepAliveTime(), TimeUnit.DAYS,
 				new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
 		pipeCount = config.getMaxFifoMessagePipes() * 2;
+		Runtime.getRuntime().exec("rm -rf fifo");
 		if (pipeCount == 0)
 			return;
 		fifoByteMap = new byte[pipeCount];
-		Runtime.getRuntime().exec("rm -rf fifo");
 		Runtime.getRuntime().exec("mkdir fifo");
 		for (int i = 0; i < pipeCount; i++) {
 			String cmd = "mkfifo fifo/" + i;
 			Runtime.getRuntime().exec(cmd);
 		}
+		// wait for File System to do the above
+		Thread.sleep(3000); 
 	}
 
 	public final void call() throws IOException {
@@ -104,10 +107,11 @@ public final class PipeServer {
 	}
 
 	private final ManagedThread startResponseTransmitter() {
-		ResponseTransmitter rt = new ResponseTransmitter(this);
+		ServerConfig config = Configurator.get(ServerConfig.class);
+		ResponseTransmitter rt = new ResponseTransmitter(this, config.getResponseTransmitterSleepMs());
 		managedThreads.add(rt);
 		rt.setDaemon(true);
-		rt.setName("ResponseTransmitterThread");
+		rt.setName(RESPONSE_TRANSMITTER_NAME);
 		rt.start();
 		return rt;
 	}
@@ -137,6 +141,7 @@ public final class PipeServer {
 			// try to reuse if available
 			for (int i = 0; i < fifoByteMap.length; i++)
 				if (fifoByteMap[i] == 0) {
+					logger.debug("reusing FIFO %d", i);
 					fifoByteMap[i] = 1;
 					fifoByteMapPosition = i;
 					return i;
@@ -149,20 +154,26 @@ public final class PipeServer {
 			throws Exception {
 		String fifoNameRequests = null;
 		String fifoNameResponses = null;
+		int[] usedFifos = new int[2];
 		int i = getFreeFifo();
-		if (i >= 0)
+		if (i >= 0) {
 			fifoNameRequests = "fifo/" + i;
+			usedFifos[0] = i;
+		}
 		if (i >= 0) {
 			i = getFreeFifo();
 			fifoNameResponses = "fifo/" + i;
+			usedFifos[1] = i;
 		}
 		if (i < 0) {
 			logger.error("Server is out of FIFO pipes, falling back to TCP");
 			startTcpRequestReader(socketChannel, remoteEndpoint);
 			return;
 		}
+		logger.info(remoteEndpoint + " Communication will be via FIFOs");
 		MessagePipe msgPipe = new FifoPipe(remoteEndpoint, fifoNameRequests, fifoNameResponses);
 		RequestReader requestReader = new RequestReader(this, msgPipe);
+		requestReader.setFifoIndexes(usedFifos);
 		requestReader.setDaemon(true);
 		requestReader.setName("FifoRequestReaderThread for " + fifoNameRequests);
 		requestReader.start();
@@ -186,6 +197,10 @@ public final class PipeServer {
 
 	public final MyThreadPoolExecutor getThreadPoolExecutor() {
 		return threadPoolExecutor;
+	}
+
+	public List<ManagedThread> getManagedThreads() {
+		return managedThreads;
 	}
 
 }
