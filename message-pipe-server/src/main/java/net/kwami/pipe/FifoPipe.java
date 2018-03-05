@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-public class FifoPipe extends MessagePipe {
+public class FifoPipe extends Pipe {
 	public static final String SERVER_READ_PATH_KEY = "readPath";
 	public static final String SERVER_WRITE_PATH_KEY = "writePath";
 	private FileChannel readChannel;
@@ -67,15 +67,17 @@ public class FifoPipe extends MessagePipe {
 	@Override
 	public Message read(final ByteBuffer workBuffer) throws IOException {
 		if (readChannel == null)
-			throw new IOException(MessagePipe.READING_DISABLED);
-		return super.read(workBuffer);
+			throw new IOException(Pipe.READING_DISABLED);
+		synchronized (readChannel) {
+			return super.read(workBuffer);
+		}
 	}
 
 	@Override
 	protected void readFully(final ByteBuffer byteBuffer) throws IOException {
 		while (byteBuffer.position() != byteBuffer.limit()) {
 			if (readChannel.read(byteBuffer) < 0)
-				throw new IOException(MessagePipe.END_OF_STREAM);
+				throw new IOException(Pipe.END_OF_STREAM);
 		}
 	}
 
@@ -94,9 +96,11 @@ public class FifoPipe extends MessagePipe {
 	@Override
 	public void write(final ByteBuffer workBuffer, final Message msg) throws IOException {
 		if (writeChannel == null)
-			throw new IOException(MessagePipe.WRITING_DISABLED);
-		prepareWriteBuffer(workBuffer, msg);
-		writeChannel.write(workBuffer);
+			throw new IOException(Pipe.WRITING_DISABLED);
+		synchronized (writeChannel) {
+			prepareWriteBuffer(workBuffer, msg);
+			writeChannel.write(workBuffer);
+		}
 	}
 
 }

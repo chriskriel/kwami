@@ -16,7 +16,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import net.kwami.pipe.FifoPipe;
-import net.kwami.pipe.MessagePipe;
+import net.kwami.pipe.Pipe;
 import net.kwami.pipe.RemoteEndpoint;
 import net.kwami.pipe.TcpPipe;
 import net.kwami.utils.Configurator;
@@ -44,7 +44,7 @@ public final class PipeServer {
 	}
 
 	private final List<ManagedThread> managedThreads = new ArrayList<>();
-	private final ConcurrentMap<MessageOrigin, Future<String>> executingRequests = new ConcurrentHashMap<>();
+	private final ConcurrentMap<CallableMessage, Future<String>> executingRequests = new ConcurrentHashMap<>();
 	private final MyThreadPoolExecutor threadPoolExecutor;
 	private final ByteBuffer commandBuffer;
 	private final int pipeCount;
@@ -76,7 +76,7 @@ public final class PipeServer {
 
 	public final void call() throws IOException {
 		try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
-			ManagedThread responseTransmitter = startResponseTransmitter();
+//			ManagedThread responseTransmitter = startResponseTransmitter();
 			serverChannel.socket()
 					.bind(new InetSocketAddress(InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS), serverPort));
 			Thread.currentThread()
@@ -93,7 +93,7 @@ public final class PipeServer {
 						startTcpRequestReader(socketChannel, remoteEndpoint);
 					}
 				} else if (request.getCommand() == Command.Cmd.SHUTDOWN) {
-					responseTransmitter.terminate();
+//					responseTransmitter.terminate();
 					for (ManagedThread pipe : managedThreads) {
 						pipe.terminate();
 					}
@@ -106,22 +106,12 @@ public final class PipeServer {
 		}
 	}
 
-	private final ManagedThread startResponseTransmitter() {
-		ServerConfig config = Configurator.get(ServerConfig.class);
-		ResponseTransmitter rt = new ResponseTransmitter(this, config.getResponseTransmitterSleepMs());
-		managedThreads.add(rt);
-		rt.setDaemon(true);
-		rt.setName(RESPONSE_TRANSMITTER_NAME);
-		rt.start();
-		return rt;
-	}
-
 	private final void startTcpRequestReader(final SocketChannel socketChannel, final RemoteEndpoint remoteEndpoint)
 			throws Exception {
 		Command response = new Command(Command.Cmd.RESPONSE);
 		response.addParameter("protocol", "TCP");
 		response.write(socketChannel, commandBuffer);
-		MessagePipe msgPipe = new TcpPipe(remoteEndpoint, socketChannel);
+		Pipe msgPipe = new TcpPipe(remoteEndpoint, socketChannel);
 		RequestReader requestSubmitter = new RequestReader(this, msgPipe);
 		requestSubmitter.setDaemon(true);
 		requestSubmitter.setName("TcpRequestReaderThread for " + remoteEndpoint.toString());
@@ -171,7 +161,7 @@ public final class PipeServer {
 			return;
 		}
 		logger.info(remoteEndpoint + " Communication will be via FIFOs");
-		MessagePipe msgPipe = new FifoPipe(remoteEndpoint, fifoNameRequests, fifoNameResponses);
+		Pipe msgPipe = new FifoPipe(remoteEndpoint, fifoNameRequests, fifoNameResponses);
 		RequestReader requestReader = new RequestReader(this, msgPipe);
 		requestReader.setFifoIndexes(usedFifos);
 		requestReader.setDaemon(true);
@@ -191,7 +181,7 @@ public final class PipeServer {
 		return responseTransmitterLock;
 	}
 
-	public final ConcurrentMap<MessageOrigin, Future<String>> getExecutingRequests() {
+	public final ConcurrentMap<CallableMessage, Future<String>> getExecutingRequests() {
 		return executingRequests;
 	}
 

@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import net.kwami.pipe.Message;
-import net.kwami.pipe.MessagePipe;
+import net.kwami.pipe.Pipe;
 import net.kwami.utils.MyLogger;
 
 public class ResponseTransmitter extends ManagedThread {
@@ -37,17 +37,17 @@ public class ResponseTransmitter extends ManagedThread {
 						}
 					} catch (InterruptedException e) {
 					}
-				MessagePipe messagePipe = null;
+				Pipe messagePipe = null;
 				try {
 					int transmitCnt = 0;
-					for (Entry<MessageOrigin, Future<String>> entry : server.getExecutingRequests().entrySet()) {
+					for (Entry<CallableMessage, Future<String>> entry : server.getExecutingRequests().entrySet()) {
 						Future<String> future = entry.getValue();
 						if (future.isDone()) {
 							noneDoneCnt = 0;
 							transmitCnt++;
-							MessageOrigin messageOrigin = entry.getKey();
-							messagePipe = messageOrigin.getMessagePipe();
-							Message response = new Message(messageOrigin.getMsgId(), null);
+							CallableMessage messageOrigin = entry.getKey();
+							messagePipe = messageOrigin.getPipe();
+							Message response = new Message(messageOrigin.getMsg().getId(), null);
 							try {
 								response.setData(future.get());
 							} catch (ExecutionException e) {
@@ -70,7 +70,7 @@ public class ResponseTransmitter extends ManagedThread {
 					logger.info("interrupted, continuing");
 					continue;
 				} catch (IOException e) {
-					if (e instanceof ClosedChannelException || e.toString().contains(MessagePipe.END_OF_STREAM)) {
+					if (e instanceof ClosedChannelException || e.toString().contains(Pipe.END_OF_STREAM)) {
 						logger.info("%s was closed, terminating", messagePipe.getRemoteEndpoint().toString());
 						try {
 							messagePipe.close();

@@ -6,7 +6,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
 import net.kwami.pipe.Message;
-import net.kwami.pipe.MessagePipe;
+import net.kwami.pipe.Pipe;
 import net.kwami.pipe.TcpPipe;
 
 public class TcpEchoServer {
@@ -17,12 +17,12 @@ public class TcpEchoServer {
 		ServerSocketChannel serverChannel = ServerSocketChannel.open();
 		serverChannel.socket().bind(new InetSocketAddress("0.0.0.0", 58080));
 		SocketChannel socketChannel = serverChannel.accept();
-		try (MessagePipe pipe = new TcpPipe(null, socketChannel)) {
+		try (Pipe pipe = new TcpPipe(null, socketChannel)) {
 			while (true) {
 				try {
 					msg = pipe.read(buffer);
 				} catch (Exception e) {
-					if (e.getMessage().equals(MessagePipe.END_OF_STREAM)) {
+					if (e.getMessage().equals(Pipe.END_OF_STREAM)) {
 						System.out.println("client closed connection");
 						break;
 					}

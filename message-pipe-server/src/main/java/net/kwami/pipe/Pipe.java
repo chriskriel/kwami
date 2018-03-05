@@ -3,7 +3,7 @@ package net.kwami.pipe;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public abstract class MessagePipe implements AutoCloseable {
+public abstract class Pipe implements AutoCloseable {
 	public static final String END_OF_STREAM = "END-OF-STREAM";
 	public static final String READING_DISABLED = "READING-DISABLED";
 	public static final String WRITING_DISABLED = "WRITING-DISABLED";

@@ -37,10 +37,10 @@ public class PipeClientTester extends Thread {
 		private void sendRequest(String threadName, int i) throws Exception {
 			long start = System.currentTimeMillis();
 			String request = threadName + " request-" + i;
-			String s = client.sendRequest(request, 10000000);
+			String s = client.sendRequest(request, 50);
 			long latency = System.currentTimeMillis() - start;
-			logger.debug("%s received after %dms: '%s' for %s", threadName, latency, s, request);
-//			System.out.println(threadName + " received after " + latency + "ms: '" + s + "' for " + request);
+//			logger.debug("%s received after %dms: '%s' for %s", threadName, latency, s, request);
+			System.out.printf("%s received after %dms: '%s' for %s\n", threadName, latency, s, request);
 			
 		}
 	}

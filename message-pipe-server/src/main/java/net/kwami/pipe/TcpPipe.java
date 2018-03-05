@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
-public class TcpPipe extends MessagePipe {
+public class TcpPipe extends Pipe {
 	private final SocketChannel socketChannel;
 
 	/**
@@ -39,7 +39,7 @@ public class TcpPipe extends MessagePipe {
 	 *             NIO exceptions are simply percolated up the stack.
 	 */
 	@Override
-	public void write(final ByteBuffer workBuffer, final Message message) throws IOException {
+	public synchronized void write(final ByteBuffer workBuffer, final Message message) throws IOException {
 		prepareWriteBuffer(workBuffer, message);
 		socketChannel.write(workBuffer);
 	}
@@ -48,7 +48,7 @@ public class TcpPipe extends MessagePipe {
 	protected void readFully(final ByteBuffer workBuffer) throws IOException {
 		while (workBuffer.position() != workBuffer.limit()) {
 			if (socketChannel.read(workBuffer) < 0)
-				throw new IOException(MessagePipe.END_OF_STREAM);
+				throw new IOException(Pipe.END_OF_STREAM);
 		}
 	}
 

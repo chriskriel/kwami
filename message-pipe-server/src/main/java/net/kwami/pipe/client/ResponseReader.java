@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 
 import net.kwami.pipe.Message;
-import net.kwami.pipe.MessagePipe;
+import net.kwami.pipe.Pipe;
 import net.kwami.pipe.server.ManagedThread;
 import net.kwami.utils.MyLogger;
 
@@ -33,8 +33,8 @@ public class ResponseReader extends ManagedThread {
 					} catch (InterruptedException e) {
 					}
 				try {
-					Message response = context.getMessagePipe().read(workBuffer);
-					if (response.getData().equals(MessagePipe.END_OF_STREAM)) {
+					Message response = context.getPipe().read(workBuffer);
+					if (response.getData().equals(Pipe.END_OF_STREAM)) {
 						try {
 							context.setResponseReader(null);
 							context.close();
@@ -43,20 +43,23 @@ public class ResponseReader extends ManagedThread {
 						break;
 					}
 					Message originalRequest = context.getOutstandingRequests().get(response.getId());
-					originalRequest.setData(response.getData());
-					originalRequest.setStatus(Message.Status.DONE);
+					// client may have timed-out and removed the original request
+					if (originalRequest == null)
+						continue;
 					synchronized (originalRequest) {
+						originalRequest.setData(response.getData());
+						originalRequest.setStatus(Message.Status.DONE);
 						originalRequest.notify();
 					}
 				} catch (IOException e) {
 					if (e instanceof ClosedChannelException) {
 						logger.info("%s was closed by another thread, terminating",
-								context.getMessagePipe().getRemoteEndpoint().toString());
+								context.getPipe().getRemoteEndpoint().toString());
 						break;
 					}
-					if (e.toString().contains(MessagePipe.END_OF_STREAM)) {
+					if (e.toString().contains(Pipe.END_OF_STREAM)) {
 						logger.info("%s was closed by the server, terminating",
-								context.getMessagePipe().getRemoteEndpoint().toString());
+								context.getPipe().getRemoteEndpoint().toString());
 						break;
 					}
 					logger.error(e);

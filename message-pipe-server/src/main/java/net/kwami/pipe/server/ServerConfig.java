@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 import com.google.gson.GsonBuilder;
 
 public class ServerConfig {
-	private long responseTransmitterSleepMs = 500;
 	private long keepAliveTime = 10000;
 	private int port = 58080;
 	private int corePoolSize = 10;
@@ -86,14 +85,6 @@ public class ServerConfig {
 
 	public void setMaxFifoMessagePipes(int maxFifoMessagePipes) {
 		this.maxFifoMessagePipes = maxFifoMessagePipes;
-	}
-
-	public long getResponseTransmitterSleepMs() {
-		return responseTransmitterSleepMs;
-	}
-
-	public void setResponseTransmitterSleepMs(long responseTransmitterSleepMs) {
-		this.responseTransmitterSleepMs = responseTransmitterSleepMs;
 	}
 
 	@Override

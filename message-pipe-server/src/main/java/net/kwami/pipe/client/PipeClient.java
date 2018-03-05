@@ -13,21 +13,23 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import net.kwami.pipe.FifoPipe;
 import net.kwami.pipe.Message;
-import net.kwami.pipe.MessagePipe;
+import net.kwami.pipe.Message.Status;
+import net.kwami.pipe.Pipe;
 import net.kwami.pipe.RemoteEndpoint;
 import net.kwami.pipe.TcpPipe;
-import net.kwami.pipe.Message.Status;
 import net.kwami.pipe.server.Command;
 import net.kwami.pipe.server.Command.Cmd;
+import net.kwami.utils.MyLogger;
 import net.kwami.utils.MyProperties;
 
 public class PipeClient implements AutoCloseable {
+	private static final MyLogger logger = new MyLogger(PipeClient.class);
 	public static final ConcurrentMap<RemoteEndpoint, PipeClient> register = new ConcurrentHashMap<>();
 	public final AtomicLong nextMsgId = new AtomicLong();
 	private final BlockingQueue<Long> transmitQueue;
 	private final ConcurrentMap<Long, Message> outstandingRequests = new ConcurrentHashMap<>();
 	private final ByteBuffer commandBuffer = ByteBuffer.allocate(1024);
-	private MessagePipe messagePipe;
+	private Pipe pipe;
 	private ResponseReader responseReader;
 	private RequestTransmitter requestTransmitter;
 	private boolean isClosed = false;
@@ -42,20 +44,22 @@ public class PipeClient implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
+		logger.info("auto closing pipe %s", pipe.getRemoteEndpoint().toString());
 		isClosed = true;
 		// When auto-closing the responseReader is active and we have a MessagePipe,
 		// so notify the server to reclaim the pipe. The other scenario is when the
 		// server sent a command to close the pipe, then the ResponseReader will
 		// no longer be running.
-		if (messagePipe != null && responseReader != null) {
-			Message msg = new Message(0, MessagePipe.END_OF_STREAM);
-			messagePipe.write(commandBuffer, msg);
-			messagePipe.close();
+		if (pipe != null && responseReader != null) {
+			Message msg = new Message(0, Pipe.END_OF_STREAM);
+			pipe.write(commandBuffer, msg);
+			pipe.close();
 		}
 		if (requestTransmitter != null)
 			requestTransmitter.terminate();
 		if (responseReader != null)
 			responseReader.terminate();
+		register.remove(pipe.getRemoteEndpoint());
 	}
 
 	public String sendRequest(String data, long timeoutMs) throws Exception {
@@ -69,28 +73,29 @@ public class PipeClient implements AutoCloseable {
 			boolean successFul = transmitQueue.offer(msgId, queueWaitMs, TimeUnit.MILLISECONDS);
 			if (!successFul)
 				throw new Exception(String.format("%s: failed to add message to transmit queue after %dms",
-						messagePipe.getRemoteEndpoint().toString(), queueWaitMs));
+						pipe.getRemoteEndpoint().toString(), queueWaitMs));
 			msg.setStatus(Status.WAIT);
 			synchronized (msg) {
-				msg.wait(timeoutMs);
+				if (msg.getStatus() != Message.Status.DONE)
+					msg.wait(timeoutMs);
 			}
-			if (msg.getStatus() == Status.WAIT)
-				throw new Exception(String.format("%s: request '%s' has timed out",
-						messagePipe.getRemoteEndpoint().toString(), data));
+			if (msg.getStatus() != Status.DONE)
+				throw new Exception(
+						String.format("%s: request '%s' has timed out", pipe.getRemoteEndpoint().toString(), data));
 			return msg.getData();
 		} finally {
 			outstandingRequests.remove(msgId);
 		}
 	}
 
-	private synchronized void createClientThreads() throws Exception {
+	private void createClientThreads() throws Exception {
 		requestTransmitter = new RequestTransmitter(this);
 		responseReader = new ResponseReader(this);
 		requestTransmitter.setDaemon(true);
-		requestTransmitter.setName(String.format("RequestTransmitter: %s", messagePipe.getRemoteEndpoint().toString()));
+		requestTransmitter.setName(String.format("RequestTransmitter: %s", pipe.getRemoteEndpoint().toString()));
 		requestTransmitter.start();
 		responseReader.setDaemon(true);
-		responseReader.setName(String.format("ResponseReader: %s", messagePipe.getRemoteEndpoint().toString()));
+		responseReader.setName(String.format("ResponseReader: %s", pipe.getRemoteEndpoint().toString()));
 		responseReader.start();
 	}
 
@@ -114,7 +119,7 @@ public class PipeClient implements AutoCloseable {
 		if (protocol == null)
 			throw new Exception(String.format("Could not determine protocol for Pipe %s", remoteEndpoint.toString()));
 		if (protocol.equals("TCP"))
-			messagePipe = new TcpPipe(remoteEndpoint, socketChannel);
+			pipe = new TcpPipe(remoteEndpoint, socketChannel);
 		else if (protocol.equals("FIFO")) {
 			socketChannel.close();
 			String readPath = parameters.getProperty(FifoPipe.SERVER_WRITE_PATH_KEY);
@@ -125,7 +130,7 @@ public class PipeClient implements AutoCloseable {
 			if (writePath == null)
 				throw new Exception(String.format("for pipe %s the %s cannot be null", remoteEndpoint.toString(),
 						FifoPipe.SERVER_READ_PATH_KEY));
-			messagePipe = new FifoPipe(remoteEndpoint, readPath, writePath);
+			pipe = new FifoPipe(remoteEndpoint, readPath, writePath);
 		} else
 			throw new Exception(String.format("Unknown protocol of '%s' returned from %s:%d", protocol,
 					remoteEndpoint.getRemoteHost(), remoteEndpoint.getRemotePort()));
@@ -152,12 +157,12 @@ public class PipeClient implements AutoCloseable {
 		return transmitQueue;
 	}
 
-	public MessagePipe getMessagePipe() {
-		return messagePipe;
+	public Pipe getPipe() {
+		return pipe;
 	}
 
-	public void setMessagePipe(MessagePipe messagePipe) {
-		this.messagePipe = messagePipe;
+	public void setPipe(Pipe pipe) {
+		this.pipe = pipe;
 	}
 
 	public ConcurrentMap<Long, Message> getOutstandingRequests() {

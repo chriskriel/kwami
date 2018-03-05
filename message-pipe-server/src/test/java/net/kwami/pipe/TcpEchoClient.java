@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 import net.kwami.pipe.Message;
-import net.kwami.pipe.MessagePipe;
+import net.kwami.pipe.Pipe;
 import net.kwami.pipe.TcpPipe;
 
 public class TcpEchoClient {
@@ -14,7 +14,7 @@ public class TcpEchoClient {
 		Message msg = new Message(10000, "");
 		ByteBuffer buffer = ByteBuffer.allocate(1024);
 		SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress("127.0.0.1", 58080));
-		try (MessagePipe pipe = new TcpPipe(null, socketChannel)) {
+		try (Pipe pipe = new TcpPipe(null, socketChannel)) {
 			for (int i = 0; i < 10; i++) {
 				msg.setData("message no: " + String.valueOf(i));
 				pipe.write(buffer, msg);
