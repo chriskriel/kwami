@@ -76,7 +76,6 @@ public final class PipeServer {
 
 	public final void call() throws IOException {
 		try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
-//			ManagedThread responseTransmitter = startResponseTransmitter();
 			serverChannel.socket()
 					.bind(new InetSocketAddress(InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS), serverPort));
 			Thread.currentThread()
@@ -93,7 +92,6 @@ public final class PipeServer {
 						startTcpRequestReader(socketChannel, remoteEndpoint);
 					}
 				} else if (request.getCommand() == Command.Cmd.SHUTDOWN) {
-//					responseTransmitter.terminate();
 					for (ManagedThread pipe : managedThreads) {
 						pipe.terminate();
 					}

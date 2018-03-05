@@ -25,8 +25,8 @@ public class PipeClientTester extends Thread {
 			Thread.currentThread().setName(threadName);
 			try {
 				sendRequest(threadName, 0);
-				Thread.sleep(3000);
-				for (int i = 1; i < 500; i++) {
+//				Thread.sleep(3000);
+				for (int i = 1; i < 1000; i++) {
 					sendRequest(threadName, i);
 				}
 			} catch (Exception e) {
@@ -52,6 +52,7 @@ public class PipeClientTester extends Thread {
 	}
 
 	public static void main(String[] args) throws Exception {
+		long start = System.currentTimeMillis();
 		Thread[] threads = new Thread[5];
 		for (int i = 0; i < threads.length; i++) {
 			threads[i] = new PipeClientTester(i);
@@ -62,6 +63,7 @@ public class PipeClientTester extends Thread {
 //		for (int i = 0; i < threads.length; i++) {
 //			threads[i].join();
 //		}
+		System.out.printf("timing %dms", System.currentTimeMillis() - start);
 		logger.debug("D O N E !");
 	}
 

@@ -12,8 +12,8 @@ public class FifoEchoClient {
 		Message msg = new Message(10000, "");
 		ByteBuffer buffer = ByteBuffer.allocate(1024);
 		try (Pipe pipe = new FifoPipe(null, 
-				"/home/chris/git/kwami/general/message-pipe-server/test/echo.responses", 
-				"/home/chris/git/kwami/general/message-pipe-server/test/echo.requests")) {
+				"/home/chris/git/kwami/general/kwami-pipe-server/test/echo.responses", 
+				"/home/chris/git/kwami/general/kwami-pipe-server/test/echo.requests")) {
 			for (int i = 0; i < 1000; i++) {
 				msg.setData("message no: " + String.valueOf(i));
 				pipe.write(buffer, msg);
