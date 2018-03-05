@@ -12,7 +12,6 @@ import net.kwami.utils.MyLogger;
 
 public class MyThreadPoolExecutor extends ThreadPoolExecutor {
 	private static final MyLogger logger = new MyLogger(MyThreadPoolExecutor.class);
-	private final ByteBuffer workBuffer = ByteBuffer.allocate(Short.MAX_VALUE + 2048);
 
 	public MyThreadPoolExecutor(PipeServer server, int corePoolSize, int maximumPoolSize, long keepAliveTime,
 			TimeUnit unit, BlockingQueue<Runnable> workQueue) {
@@ -26,6 +25,7 @@ public class MyThreadPoolExecutor extends ThreadPoolExecutor {
 		if (t == null && r instanceof Future<?>) {
 			try {
 				Object result = ((Future<?>) r).get();
+				ByteBuffer workBuffer = ByteBuffer.allocate(Short.MAX_VALUE + 2048);
 				callableMessage = (CallableMessage) result;
 				callableMessage.getPipe().write(workBuffer, callableMessage.getMsg());
 			} catch (CancellationException ce) {

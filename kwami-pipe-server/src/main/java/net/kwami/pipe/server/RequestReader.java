@@ -43,9 +43,6 @@ public class RequestReader extends ManagedThread {
 					MyCallable callable = callableClass.newInstance();
 					callable.setParameter(new CallableMessage(request, pipe));
 					server.getThreadPoolExecutor().submit(callable);
-//					Future<CallableMessage> future = server.getThreadPoolExecutor().submit(callable);
-//					CallableMessage msgKey = new CallableMessage(request.getId(), pipe);
-//					server.getExecutingRequests().put(msgKey, future);
 				} catch (Exception e) {
 					if (e instanceof ClosedChannelException) {
 						logger.info("%s was closed, terminating", pipe.getRemoteEndpoint().toString());

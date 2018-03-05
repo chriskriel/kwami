@@ -11,17 +11,19 @@ public class PipeClientTester extends Thread {
 	static class MessageSenderThread extends Thread {
 		int threadNum;
 		int clientThreadNum;
+		String testName;
 		PipeClient client;
 
-		public MessageSenderThread(PipeClient client, int clientThreadNum, int threadNum) {
+		public MessageSenderThread(PipeClient client, int clientThreadNum, int threadNum, String testName) {
 			super();
 			this.threadNum = threadNum;
 			this.client = client;
 			this.clientThreadNum = clientThreadNum;
+			this.testName = testName;
 		}
 
 		public void run() {
-			String threadName = String.format("Thread-%s-%s", clientThreadNum, threadNum);
+			String threadName = String.format("%s-Thread-%s-%s", testName, clientThreadNum, threadNum);
 			Thread.currentThread().setName(threadName);
 			try {
 				sendRequest(threadName, 0);
@@ -46,16 +48,22 @@ public class PipeClientTester extends Thread {
 	}
 
 	private int threadNum;
+	private String testName;
 
-	public PipeClientTester(int threadNum) {
+	public PipeClientTester(int threadNum, String testName) {
 		this.threadNum = threadNum;
+		this.testName = testName;
 	}
 
 	public static void main(String[] args) throws Exception {
+		String testName = "test";
+		if (args.length == 1)
+			testName = args[0];
+		
 		long start = System.currentTimeMillis();
-		Thread[] threads = new Thread[5];
+		Thread[] threads = new Thread[1];
 		for (int i = 0; i < threads.length; i++) {
-			threads[i] = new PipeClientTester(i);
+			threads[i] = new PipeClientTester(i, testName);
 		}
 		for (int i = 0; i < threads.length; i++) {
 			threads[i].run();
@@ -70,14 +78,13 @@ public class PipeClientTester extends Thread {
 	@Override
 	public void run() {
 		try {
-			Thread.currentThread().setName("PipeClientTesterThread-" + threadNum);
 			String remoteHost = InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS).getHostAddress();
 			InetSocketAddress remoteSocketAddress = new InetSocketAddress(remoteHost, 58080);
 			RemoteEndpoint endpoint = new RemoteEndpoint(48080 + threadNum, remoteSocketAddress);
 			try (PipeClient client = new PipeClient(endpoint, 10)) {
 				Thread[] threads = new Thread[5];
 				for (int i = 0; i < threads.length; i++) {
-					threads[i] = new MessageSenderThread(client, threadNum, i);
+					threads[i] = new MessageSenderThread(client, threadNum, i, testName);
 					threads[i].run();
 				}
 //				for (int i = 0; i < threads.length; i++) {

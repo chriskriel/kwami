@@ -68,9 +68,7 @@ public class FifoPipe extends Pipe {
 	public Message read(final ByteBuffer workBuffer) throws IOException {
 		if (readChannel == null)
 			throw new IOException(Pipe.READING_DISABLED);
-		synchronized (readChannel) {
-			return super.read(workBuffer);
-		}
+		return super.read(workBuffer);
 	}
 
 	@Override
