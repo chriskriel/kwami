@@ -9,42 +9,42 @@ public abstract class Pipe implements AutoCloseable {
 	public static final String WRITING_DISABLED = "WRITING-DISABLED";
 	public static final String TCP_READY = "TCP-READY";
 	private RemoteEndpoint remoteEndpoint;
+	protected ByteBuffer readBuffer = ByteBuffer.allocate(Short.MAX_VALUE + 1024);
+	protected ByteBuffer writeBuffer = ByteBuffer.allocate(Short.MAX_VALUE + 1024);
 
-	public abstract void write(final ByteBuffer workBuffer, final Message message) throws IOException;
+	public abstract void write(final Message message) throws IOException;
 
-	protected abstract void readFully(final ByteBuffer workBuffer) throws IOException;
+	protected abstract void readFully() throws IOException;
 
-	protected void prepareWriteBuffer(final ByteBuffer workBuffer, final Message message) {
-		workBuffer.clear();
-		workBuffer.putLong(message.getId());
+	protected void prepareWriteBuffer(final Message message) throws IOException {
+		writeBuffer.clear();
+		writeBuffer.putLong(message.getId());
 		byte[] dataBytes = message.getDataBytes();
-		workBuffer.putInt(dataBytes.length);
-		workBuffer.put(dataBytes);
-		workBuffer.flip();
+		if (dataBytes.length > Short.MAX_VALUE)
+			throw new IOException(String.format("data length is %d, max allowed is %d", dataBytes.length, Short.MAX_VALUE));
+		writeBuffer.putInt(dataBytes.length);
+		writeBuffer.put(dataBytes);
+		writeBuffer.flip();
 	}
 
 	/**
 	 * Retrieves a Message from the TCP stream.
 	 * 
-	 * @param workBuffer
-	 *            An empty buffer that the caller must provide for temporary use
-	 *            during the execution of this method. It must be large enough for
-	 *            the biggest message that may be received.
 	 * @return The zacobcx.ppfe.container.Message that was sent by the remote
 	 *         end-point.
 	 * @throws IOException
 	 *             NIO exceptions are simply percolated up the stack.
 	 */
-	public Message read(final ByteBuffer workBuffer) throws IOException {
-		workBuffer.clear();
-		workBuffer.limit(12);
-		readFully(workBuffer);
-		long id = workBuffer.getLong(0);
-		int mlen = workBuffer.getInt(Long.BYTES);
-		workBuffer.clear();
-		workBuffer.limit(mlen);
-		readFully(workBuffer);
-		String data = new String(workBuffer.array(), 0, mlen);
+	public Message read() throws IOException {
+		readBuffer.clear();
+		readBuffer.limit(12);
+		readFully();
+		long id = readBuffer.getLong(0);
+		int mlen = readBuffer.getInt(Long.BYTES);
+		readBuffer.clear();
+		readBuffer.limit(mlen);
+		readFully();
+		String data = new String(readBuffer.array(), 0, mlen);
 		return new Message(id, data);
 	}
 

@@ -52,7 +52,7 @@ public class PipeClient implements AutoCloseable {
 		// no longer be running.
 		if (pipe != null && responseReader != null) {
 			Message msg = new Message(0, Pipe.END_OF_STREAM);
-			pipe.write(commandBuffer, msg);
+			pipe.write(msg);
 			pipe.close();
 		}
 		if (requestTransmitter != null)

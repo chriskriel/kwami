@@ -1,7 +1,6 @@
 package net.kwami.pipe.client;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 
 import net.kwami.pipe.Message;
@@ -12,12 +11,10 @@ import net.kwami.utils.MyLogger;
 public class ResponseReader extends ManagedThread {
 	private static final MyLogger logger = new MyLogger(ResponseReader.class);
 	private PipeClient context;
-	private final ByteBuffer workBuffer;
 
 	public ResponseReader(PipeClient context) {
 		super();
 		this.context = context;
-		workBuffer = ByteBuffer.allocate(Short.MAX_VALUE);
 	}
 
 	@Override
@@ -33,7 +30,7 @@ public class ResponseReader extends ManagedThread {
 					} catch (InterruptedException e) {
 					}
 				try {
-					Message response = context.getPipe().read(workBuffer);
+					Message response = context.getPipe().read();
 					if (response.getData().equals(Pipe.END_OF_STREAM)) {
 						try {
 							context.setResponseReader(null);

@@ -1,7 +1,6 @@
 package net.kwami.pipe.server;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -13,14 +12,12 @@ import net.kwami.utils.MyLogger;
 
 public class ResponseTransmitter extends ManagedThread {
 	private static final MyLogger logger = new MyLogger(ResponseTransmitter.class);
-	private final ByteBuffer workBuffer;
 	private final PipeServer server;
 	private final long idleSleepTime;
 
 	public ResponseTransmitter(PipeServer server, long idleSleepTime) {
 		super();
 		this.server = server;
-		workBuffer = ByteBuffer.allocate(Short.MAX_VALUE);
 		this.idleSleepTime = idleSleepTime;
 	}
 
@@ -55,7 +52,7 @@ public class ResponseTransmitter extends ManagedThread {
 								response.setData("ERROR: " + error);
 							}
 							server.getExecutingRequests().remove(messageOrigin);
-							messagePipe.write(workBuffer, response);
+							messagePipe.write(response);
 						}
 					}
 					if (transmitCnt == 0) {

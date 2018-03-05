@@ -1,7 +1,6 @@
 package net.kwami.pipe;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 public class TcpPipe extends Pipe {
@@ -29,25 +28,23 @@ public class TcpPipe extends Pipe {
 	/**
 	 * Sends a Message to the remote end-point
 	 * 
-	 * @param workBuffer
-	 *            An empty buffer that the caller must provide for temporary use
-	 *            during the execution of this method. It must be large enough for
-	 *            the biggest message that may be sent.
 	 * @param message
 	 *            The zacobcx.ppfe.container.Message that must be sent.
 	 * @throws IOException
 	 *             NIO exceptions are simply percolated up the stack.
 	 */
 	@Override
-	public synchronized void write(final ByteBuffer workBuffer, final Message message) throws IOException {
-		prepareWriteBuffer(workBuffer, message);
-		socketChannel.write(workBuffer);
+	public void write(final Message message) throws IOException {
+		synchronized (writeBuffer) {
+			prepareWriteBuffer(message);
+			socketChannel.write(writeBuffer);
+		}
 	}
 
 	@Override
-	protected void readFully(final ByteBuffer workBuffer) throws IOException {
-		while (workBuffer.position() != workBuffer.limit()) {
-			if (socketChannel.read(workBuffer) < 0)
+	protected void readFully() throws IOException {
+		while (readBuffer.position() != readBuffer.limit()) {
+			if (socketChannel.read(readBuffer) < 0)
 				throw new IOException(Pipe.END_OF_STREAM);
 		}
 	}

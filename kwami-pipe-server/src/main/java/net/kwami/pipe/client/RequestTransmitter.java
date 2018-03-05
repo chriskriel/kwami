@@ -1,7 +1,6 @@
 package net.kwami.pipe.client;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
 
 import net.kwami.pipe.Message;
@@ -12,12 +11,10 @@ import net.kwami.utils.MyLogger;
 public class RequestTransmitter extends ManagedThread {
 	private static final MyLogger logger = new MyLogger(RequestTransmitter.class);
 	private PipeClient context;
-	private final ByteBuffer workBuffer;
 
 	public RequestTransmitter(PipeClient context) {
 		super();
 		this.context = context;
-		workBuffer = ByteBuffer.allocate(Short.MAX_VALUE);
 	}
 
 	@Override
@@ -35,7 +32,7 @@ public class RequestTransmitter extends ManagedThread {
 					Message msg = context.getOutstandingRequests().get(msgId);
 					while (msg.getStatus() != Message.Status.WAIT)
 						Thread.sleep(2);
-					context.getPipe().write(workBuffer, msg);
+					context.getPipe().write(msg);
 				} catch (InterruptedException e) {
 					continue;
 				} catch (IOException e) {

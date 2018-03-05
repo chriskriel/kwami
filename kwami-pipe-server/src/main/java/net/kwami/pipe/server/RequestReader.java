@@ -1,6 +1,5 @@
 package net.kwami.pipe.server;
 
-import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 
 import net.kwami.pipe.FifoPipe;
@@ -13,7 +12,6 @@ public class RequestReader extends ManagedThread {
 	private static final MyLogger logger = new MyLogger(RequestReader.class);
 	private final PipeServer server;
 	private final Pipe pipe;
-	private final ByteBuffer workBuffer;
 	private final Class<MyCallable> callableClass;
 	private int[] fifoIndexes;
 
@@ -23,7 +21,6 @@ public class RequestReader extends ManagedThread {
 		this.pipe = pipe;
 		ServerConfig config = Configurator.get(ServerConfig.class);
 		callableClass = (Class<MyCallable>) Class.forName(config.getCallableImplementation());
-		workBuffer = ByteBuffer.allocate(Short.MAX_VALUE);
 	}
 
 	@Override
@@ -37,7 +34,7 @@ public class RequestReader extends ManagedThread {
 					} catch (InterruptedException e) {
 					}
 				try {
-					Message request = pipe.read(workBuffer);
+					Message request = pipe.read();
 					if (request.getData().equals(Pipe.END_OF_STREAM))
 						break;
 					MyCallable callable = callableClass.newInstance();
@@ -63,7 +60,7 @@ public class RequestReader extends ManagedThread {
 				if (pipe != null) {
 					if (pipe instanceof FifoPipe) {
 						Message msg = new Message(0, Pipe.END_OF_STREAM);
-						pipe.write(workBuffer, msg);
+						pipe.write(msg);
 						Thread.sleep(10000);
 						if (fifoIndexes != null)
 							for (int i = 0; i < fifoIndexes.length; i++)

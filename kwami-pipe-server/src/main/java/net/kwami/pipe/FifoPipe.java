@@ -1,7 +1,6 @@
 package net.kwami.pipe;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,26 +54,22 @@ public class FifoPipe extends Pipe {
 	/**
 	 * Retrieves a Message from the FIFO stream.
 	 * 
-	 * @param workBuffer
-	 *            An empty buffer that the caller must provide for temporary use
-	 *            during the execution of this method. It must be large enough for
-	 *            the biggest message that may be received.
 	 * @return The zacobcx.ppfe.container.Message that was sent by the remote
 	 *         end-point.
 	 * @throws IOException
 	 *             NIO exceptions are simply percolated up the stack.
 	 */
 	@Override
-	public Message read(final ByteBuffer workBuffer) throws IOException {
+	public Message read() throws IOException {
 		if (readChannel == null)
 			throw new IOException(Pipe.READING_DISABLED);
-		return super.read(workBuffer);
+		return super.read();
 	}
 
 	@Override
-	protected void readFully(final ByteBuffer byteBuffer) throws IOException {
-		while (byteBuffer.position() != byteBuffer.limit()) {
-			if (readChannel.read(byteBuffer) < 0)
+	protected void readFully() throws IOException {
+		while (readBuffer.position() != readBuffer.limit()) {
+			if (readChannel.read(readBuffer) < 0)
 				throw new IOException(Pipe.END_OF_STREAM);
 		}
 	}
@@ -82,22 +77,18 @@ public class FifoPipe extends Pipe {
 	/**
 	 * Sends a Message to the remote end-point
 	 * 
-	 * @param workBuffer
-	 *            An empty buffer that the caller must provide for temporary use
-	 *            during the execution of this method. It must be large enough for
-	 *            the biggest message that may be sent.
 	 * @param msg
 	 *            The zacobcx.ppfe.container.Message that must be sent.
 	 * @throws IOException
 	 *             NIO exceptions are simply percolated up the stack.
 	 */
 	@Override
-	public void write(final ByteBuffer workBuffer, final Message msg) throws IOException {
+	public void write(final Message msg) throws IOException {
 		if (writeChannel == null)
 			throw new IOException(Pipe.WRITING_DISABLED);
-		synchronized (writeChannel) {
-			prepareWriteBuffer(workBuffer, msg);
-			writeChannel.write(workBuffer);
+		synchronized (writeBuffer) {
+			prepareWriteBuffer(msg);
+			writeChannel.write(writeBuffer);
 		}
 	}
 

@@ -1,6 +1,5 @@
 package net.kwami.pipe.server;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -25,9 +24,8 @@ public class MyThreadPoolExecutor extends ThreadPoolExecutor {
 		if (t == null && r instanceof Future<?>) {
 			try {
 				Object result = ((Future<?>) r).get();
-				ByteBuffer workBuffer = ByteBuffer.allocate(Short.MAX_VALUE + 2048);
 				callableMessage = (CallableMessage) result;
-				callableMessage.getPipe().write(workBuffer, callableMessage.getMsg());
+				callableMessage.getPipe().write(callableMessage.getMsg());
 			} catch (CancellationException ce) {
 				t = ce;
 			} catch (ExecutionException ee) {
