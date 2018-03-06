@@ -28,7 +28,7 @@ public class PipeClientTester extends Thread {
 			try {
 				sendRequest(threadName, 0);
 //				Thread.sleep(3000);
-				for (int i = 1; i < 1000; i++) {
+				for (int i = 1; i < 5000; i++) {
 					sendRequest(threadName, i);
 				}
 			} catch (Exception e) {
@@ -81,7 +81,8 @@ public class PipeClientTester extends Thread {
 			String remoteHost = InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS).getHostAddress();
 			InetSocketAddress remoteSocketAddress = new InetSocketAddress(remoteHost, 58080);
 			RemoteEndpoint endpoint = new RemoteEndpoint(48080 + threadNum, remoteSocketAddress);
-			try (PipeClient client = new PipeClient(endpoint, 10)) {
+			PipeClient client = new PipeClient(endpoint, 50);
+			try {
 				Thread[] threads = new Thread[5];
 				for (int i = 0; i < threads.length; i++) {
 					threads[i] = new MessageSenderThread(client, threadNum, i, testName);
@@ -90,6 +91,8 @@ public class PipeClientTester extends Thread {
 //				for (int i = 0; i < threads.length; i++) {
 //					threads[i].join();
 //				}
+			} finally {
+				client.close();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
