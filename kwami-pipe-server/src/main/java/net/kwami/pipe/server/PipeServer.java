@@ -71,7 +71,7 @@ public final class PipeServer {
 			Runtime.getRuntime().exec(cmd);
 		}
 		// wait for File System to do the above
-		Thread.sleep(3000); 
+		Thread.sleep(3000);
 	}
 
 	public final void call() throws IOException {

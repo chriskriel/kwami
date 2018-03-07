@@ -30,6 +30,9 @@ public class RequestTransmitter extends ManagedThread {
 				try {
 					long msgId = context.getTransmitQueue().take();
 					Message msg = context.getOutstandingRequests().get(msgId);
+					// the client may have timed out and removed the message
+					if (msg == null)
+						continue;
 					while (msg.getStatus() != Message.Status.WAIT)
 						Thread.sleep(2);
 					context.getPipe().write(msg);

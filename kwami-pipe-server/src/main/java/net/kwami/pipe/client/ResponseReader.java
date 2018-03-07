@@ -41,8 +41,10 @@ public class ResponseReader extends ManagedThread {
 					}
 					Message originalRequest = context.getOutstandingRequests().get(response.getId());
 					// client may have timed-out and removed the original request
-					if (originalRequest == null)
+					if (originalRequest == null) {
+						logger.error("no outstanding request for response id %d", response.getId());
 						continue;
+					}
 					synchronized (originalRequest) {
 						originalRequest.setData(response.getData());
 						originalRequest.setStatus(Message.Status.DONE);

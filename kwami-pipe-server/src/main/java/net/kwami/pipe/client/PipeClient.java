@@ -44,7 +44,7 @@ public class PipeClient implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		logger.info("auto closing pipe %s", pipe.getRemoteEndpoint().toString());
+		logger.info("%s", pipe.getRemoteEndpoint().toString());
 		isClosed = true;
 		// When auto-closing the responseReader is active and we have a MessagePipe,
 		// so notify the server to reclaim the pipe. The other scenario is when the
@@ -67,21 +67,23 @@ public class PipeClient implements AutoCloseable {
 			throw new Exception("PipeClient has been closed");
 		long msgId = nextMsgId.incrementAndGet();
 		Message msg = new Message(msgId, data);
-		outstandingRequests.put(msgId, msg);
 		try {
 			long queueWaitMs = timeoutMs / 2;
 			boolean successFul = transmitQueue.offer(msgId, queueWaitMs, TimeUnit.MILLISECONDS);
 			if (!successFul)
-				throw new Exception(String.format("%s: failed to add message to transmit queue after %dms",
+				throw new TimeoutException(String.format("%s: failed to add message to transmit queue after %dms",
 						pipe.getRemoteEndpoint().toString(), queueWaitMs));
+			outstandingRequests.put(msgId, msg);
 			msg.setStatus(Status.WAIT);
 			synchronized (msg) {
 				if (msg.getStatus() != Message.Status.DONE)
 					msg.wait(timeoutMs);
 			}
-			if (msg.getStatus() != Status.DONE)
-				throw new Exception(
-						String.format("%s: request '%s' has timed out", pipe.getRemoteEndpoint().toString(), data));
+			if (msg.getStatus() != Status.DONE) {
+				outstandingRequests.remove(msgId);
+				throw new TimeoutException(
+						String.format("%s: waiting for response from server on request '%s'", pipe.getRemoteEndpoint().toString(), data));
+			}
 			return msg.getData();
 		} finally {
 			outstandingRequests.remove(msgId);

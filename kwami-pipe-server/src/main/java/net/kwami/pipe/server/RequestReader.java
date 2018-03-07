@@ -1,6 +1,7 @@
 package net.kwami.pipe.server;
 
 import java.nio.channels.ClosedChannelException;
+import java.util.concurrent.RejectedExecutionException;
 
 import net.kwami.pipe.FifoPipe;
 import net.kwami.pipe.Message;
@@ -40,14 +41,20 @@ public class RequestReader extends ManagedThread {
 					MyCallable callable = callableClass.newInstance();
 					callable.setParameter(new CallableMessage(request, pipe));
 					server.getThreadPoolExecutor().submit(callable);
+				} catch (RejectedExecutionException e) {
+					logger.error("%s: %s", pipe.getRemoteEndpoint().toString(), e.toString());
+					try {
+						Thread.sleep(20); // back off a bit
+					} catch (InterruptedException e1) {
+					}
+					continue;
 				} catch (Exception e) {
 					if (e instanceof ClosedChannelException) {
 						logger.info("%s was closed, terminating", pipe.getRemoteEndpoint().toString());
 						break;
 					}
 					if (e.toString().contains(Pipe.END_OF_STREAM)) {
-						logger.info("%s was closed by the client, terminating",
-								pipe.getRemoteEndpoint().toString());
+						logger.info("%s was closed by the client, terminating", pipe.getRemoteEndpoint().toString());
 						break;
 					}
 					logger.error(e);

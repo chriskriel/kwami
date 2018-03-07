@@ -2,22 +2,25 @@ package net.kwami.pipe.client;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 
 import net.kwami.pipe.RemoteEndpoint;
 import net.kwami.utils.MyLogger;
 
 public class PipeClientTester extends Thread {
 	private static final MyLogger logger = new MyLogger(PipeClientTester.class);
+
 	static class MessageSenderThread extends Thread {
 		int threadNum;
 		int clientThreadNum;
 		String testName;
-		PipeClient client;
+		RemoteEndpoint endpoint;
 
-		public MessageSenderThread(PipeClient client, int clientThreadNum, int threadNum, String testName) {
+		public MessageSenderThread(RemoteEndpoint endpoint, int clientThreadNum, int threadNum, String testName)
+				throws Exception {
 			super();
+			this.endpoint = endpoint;
 			this.threadNum = threadNum;
-			this.client = client;
 			this.clientThreadNum = clientThreadNum;
 			this.testName = testName;
 		}
@@ -25,25 +28,27 @@ public class PipeClientTester extends Thread {
 		public void run() {
 			String threadName = String.format("%s-Thread-%s-%s", testName, clientThreadNum, threadNum);
 			Thread.currentThread().setName(threadName);
-			try {
-				sendRequest(threadName, 0);
-//				Thread.sleep(3000);
-				for (int i = 1; i < 5000; i++) {
-					sendRequest(threadName, i);
+			try (PipeClient client = new PipeClient(endpoint, 50)) {
+				for (int i = 0; i < 5000; i++) {
+					try {
+						sendRequest(client, threadName, i);
+					} catch (TimeoutException e) {
+						System.out.printf("On %s: %s\n", threadName, e.toString());
+						continue;
+					}
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		
-		private void sendRequest(String threadName, int i) throws Exception {
+
+		private void sendRequest(PipeClient client, String threadName, int i) throws Exception {
 			long start = System.currentTimeMillis();
 			String request = threadName + " request-" + i;
-			String s = client.sendRequest(request, 50);
+			String s = client.sendRequest(request, 200);
 			long latency = System.currentTimeMillis() - start;
-//			logger.debug("%s received after %dms: '%s' for %s", threadName, latency, s, request);
 			System.out.printf("%s received after %dms: '%s' for %s\n", threadName, latency, s, request);
-			
+
 		}
 	}
 
@@ -59,20 +64,19 @@ public class PipeClientTester extends Thread {
 		String testName = "test";
 		if (args.length == 1)
 			testName = args[0];
-		
+
 		long start = System.currentTimeMillis();
 		Thread[] threads = new Thread[1];
 		for (int i = 0; i < threads.length; i++) {
 			threads[i] = new PipeClientTester(i, testName);
 		}
 		for (int i = 0; i < threads.length; i++) {
-			threads[i].run();
+			threads[i].start();
 		}
-//		for (int i = 0; i < threads.length; i++) {
-//			threads[i].join();
-//		}
-		System.out.printf("timing %dms", System.currentTimeMillis() - start);
-		logger.debug("D O N E !");
+		for (int i = 0; i < threads.length; i++) {
+			threads[i].join();
+		}
+		System.out.printf("D O N E ! (timing %dms)\n", System.currentTimeMillis() - start);
 	}
 
 	@Override
@@ -81,20 +85,19 @@ public class PipeClientTester extends Thread {
 			String remoteHost = InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS).getHostAddress();
 			InetSocketAddress remoteSocketAddress = new InetSocketAddress(remoteHost, 58080);
 			RemoteEndpoint endpoint = new RemoteEndpoint(48080 + threadNum, remoteSocketAddress);
-			PipeClient client = new PipeClient(endpoint, 50);
 			try {
 				Thread[] threads = new Thread[5];
 				for (int i = 0; i < threads.length; i++) {
-					threads[i] = new MessageSenderThread(client, threadNum, i, testName);
-					threads[i].run();
+					threads[i] = new MessageSenderThread(endpoint, threadNum, i, testName);
+					threads[i].start();
 				}
-//				for (int i = 0; i < threads.length; i++) {
-//					threads[i].join();
-//				}
-			} finally {
-				client.close();
+				for (int i = 0; i < threads.length; i++) {
+					threads[i].join();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
+		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
 	}
