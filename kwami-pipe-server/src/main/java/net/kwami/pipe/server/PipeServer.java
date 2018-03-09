@@ -22,6 +22,10 @@ import net.kwami.pipe.TcpPipe;
 import net.kwami.utils.Configurator;
 import net.kwami.utils.MyLogger;
 
+/**
+ * @author Chris Kriel
+ *
+ */
 public final class PipeServer {
 
 	public static final String RESPONSE_TRANSMITTER_NAME = "ResponseTransmitterThread";

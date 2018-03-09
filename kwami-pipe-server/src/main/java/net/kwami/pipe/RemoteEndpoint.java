@@ -80,4 +80,8 @@ public class RemoteEndpoint implements Comparable<RemoteEndpoint> {
 	public void setForThisMachine(boolean forThisMachine) {
 		this.forThisMachine = forThisMachine;
 	}
+
+	public int getLocalPort() {
+		return localPort;
+	}
 }
