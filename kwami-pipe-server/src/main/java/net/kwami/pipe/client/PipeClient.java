@@ -94,10 +94,10 @@ public class PipeClient implements AutoCloseable {
 		requestTransmitter = new RequestTransmitter(this);
 		responseReader = new ResponseReader(this);
 		requestTransmitter.setDaemon(true);
-		requestTransmitter.setName(String.format("RequestTransmitter: %s", pipe.getRemoteEndpoint().toString()));
+		requestTransmitter.setName(String.format("ReqXmtr%s", pipe.getRemoteEndpoint().toString()));
 		requestTransmitter.start();
 		responseReader.setDaemon(true);
-		responseReader.setName(String.format("ResponseReader: %s", pipe.getRemoteEndpoint().toString()));
+		responseReader.setName(String.format("RespRdr%s", pipe.getRemoteEndpoint().toString()));
 		responseReader.start();
 	}
 

@@ -3,7 +3,10 @@ package net.kwami.pipe;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import net.kwami.utils.MyLogger;
+
 public abstract class Pipe implements AutoCloseable {
+	private static final MyLogger logger = new MyLogger(Pipe.class);
 	public static final String END_OF_STREAM = "END-OF-STREAM";
 	public static final String READING_DISABLED = "READING-DISABLED";
 	public static final String WRITING_DISABLED = "WRITING-DISABLED";
@@ -17,6 +20,7 @@ public abstract class Pipe implements AutoCloseable {
 	protected abstract void readFully() throws IOException;
 
 	protected void prepareWriteBuffer(final Message message) throws IOException {
+		logger.trace(message.getData());
 		writeBuffer.clear();
 		writeBuffer.putLong(message.getId());
 		byte[] dataBytes = message.getDataBytes();
@@ -45,6 +49,7 @@ public abstract class Pipe implements AutoCloseable {
 		readBuffer.limit(mlen);
 		readFully();
 		String data = new String(readBuffer.array(), 0, mlen);
+		logger.trace(data);
 		return new Message(id, data);
 	}
 

@@ -4,9 +4,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+import net.kwami.utils.MyLogger;
+
 public class RemoteEndpoint implements Comparable<RemoteEndpoint> {
 
 	public static final String MACHINE_ADDRESS = "machine-address";
+	private static final MyLogger logger = new MyLogger(RemoteEndpoint.class);
 	private final String remoteHost;
 	private final int remotePort;
 	private final int localPort;
@@ -27,19 +30,7 @@ public class RemoteEndpoint implements Comparable<RemoteEndpoint> {
 
 	@Override
 	public String toString() {
-		return String.format("PIPE/%s:%d", remoteHost, remotePort);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null)
-			return false;
-		if (!(obj instanceof RemoteEndpoint))
-			return false;
-		RemoteEndpoint other = (RemoteEndpoint) obj;
-		if (this.remoteHost.equals(other.remoteHost) && this.remotePort == other.remotePort)
-			return true;
-		return false;
+		return String.format("/%d:%s:%d", localPort, remoteHost, remotePort);
 	}
 
 	@Override
@@ -83,5 +74,37 @@ public class RemoteEndpoint implements Comparable<RemoteEndpoint> {
 
 	public int getLocalPort() {
 		return localPort;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + localPort;
+		result = prime * result + ((remoteHost == null) ? 0 : remoteHost.hashCode());
+		result = prime * result + remotePort;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		logger.trace(this.toString());
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		RemoteEndpoint other = (RemoteEndpoint) obj;
+		if (localPort != other.localPort)
+			return false;
+		if (remoteHost == null) {
+			if (other.remoteHost != null)
+				return false;
+		} else if (!remoteHost.equals(other.remoteHost))
+			return false;
+		if (remotePort != other.remotePort)
+			return false;
+		return true;
 	}
 }

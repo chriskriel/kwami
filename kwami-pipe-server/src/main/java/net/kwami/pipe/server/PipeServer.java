@@ -116,7 +116,7 @@ public final class PipeServer {
 		Pipe msgPipe = new TcpPipe(remoteEndpoint, socketChannel);
 		RequestReader requestSubmitter = new RequestReader(this, msgPipe);
 		requestSubmitter.setDaemon(true);
-		requestSubmitter.setName("TcpRequestReaderThread for " + remoteEndpoint.toString());
+		requestSubmitter.setName("ReqRdr" + remoteEndpoint.toString());
 		requestSubmitter.start();
 		managedThreads.add(requestSubmitter);
 		return;
@@ -167,7 +167,7 @@ public final class PipeServer {
 		RequestReader requestReader = new RequestReader(this, msgPipe);
 		requestReader.setFifoIndexes(usedFifos);
 		requestReader.setDaemon(true);
-		requestReader.setName("FifoRequestReaderThread for " + fifoNameRequests);
+		requestReader.setName("ReqRdr/" + fifoNameRequests);
 		requestReader.start();
 		managedThreads.add(requestReader);
 		Command response = new Command(Command.Cmd.RESPONSE);
