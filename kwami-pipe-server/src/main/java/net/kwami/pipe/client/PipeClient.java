@@ -24,22 +24,19 @@ import net.kwami.utils.MyProperties;
 
 public class PipeClient implements AutoCloseable {
 	private static final MyLogger logger = new MyLogger(PipeClient.class);
-	public static final ConcurrentMap<RemoteEndpoint, PipeClient> register = new ConcurrentHashMap<>();
 	public final AtomicLong nextMsgId = new AtomicLong();
 	private final BlockingQueue<Long> transmitQueue;
 	private final ConcurrentMap<Long, Message> outstandingRequests = new ConcurrentHashMap<>();
-	private final ByteBuffer commandBuffer = ByteBuffer.allocate(1024);
 	private Pipe pipe;
 	private ResponseReader responseReader;
 	private RequestTransmitter requestTransmitter;
-	private boolean isClosed = false;
+	private Boolean isClosed = false;
 
 	public PipeClient(RemoteEndpoint remoteEndpoint, int maxTransmitQueueSize) throws Exception {
 		super();
 		transmitQueue = new ArrayBlockingQueue<>(maxTransmitQueueSize);
 		createMessagePipe(remoteEndpoint);
 		createClientThreads();
-		register.put(remoteEndpoint, this);
 	}
 
 	@Override
@@ -59,7 +56,6 @@ public class PipeClient implements AutoCloseable {
 			requestTransmitter.terminate();
 		if (responseReader != null)
 			responseReader.terminate();
-		register.remove(pipe.getRemoteEndpoint());
 	}
 
 	public String sendRequest(String data, long timeoutMs) throws Exception {
@@ -107,6 +103,7 @@ public class PipeClient implements AutoCloseable {
 				remoteEndpoint.getRemotePort());
 		socketChannel.connect(socketAddress);
 		Command cmd = new Command(Cmd.CONNECT);
+		ByteBuffer commandBuffer = ByteBuffer.allocate(1024);
 		commandBuffer.put(cmd.getBytes());
 		commandBuffer.flip();
 		socketChannel.write(commandBuffer);
@@ -143,7 +140,7 @@ public class PipeClient implements AutoCloseable {
 		return responseReader;
 	}
 
-	public void setResponseReader(ResponseReader responseReader) {
+	void setResponseReader(ResponseReader responseReader) {
 		this.responseReader = responseReader;
 	}
 
@@ -151,7 +148,7 @@ public class PipeClient implements AutoCloseable {
 		return requestTransmitter;
 	}
 
-	public void setRequestTransmitter(RequestTransmitter requestTransmitter) {
+	void setRequestTransmitter(RequestTransmitter requestTransmitter) {
 		this.requestTransmitter = requestTransmitter;
 	}
 
@@ -162,10 +159,10 @@ public class PipeClient implements AutoCloseable {
 	public Pipe getPipe() {
 		return pipe;
 	}
-
-	public void setPipe(Pipe pipe) {
-		this.pipe = pipe;
-	}
+//
+//	public void setPipe(Pipe pipe) {
+//		this.pipe = pipe;
+//	}
 
 	public ConcurrentMap<Long, Message> getOutstandingRequests() {
 		return outstandingRequests;
