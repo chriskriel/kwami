@@ -89,7 +89,8 @@ public final class PipeServer {
 				Command request = Command.read(socketChannel, commandBuffer);
 				if (request.getCommand() == Command.Cmd.CONNECT) {
 					InetSocketAddress remoteSocketAddress = (InetSocketAddress) socketChannel.getRemoteAddress();
-					RemoteEndpoint remoteEndpoint = new RemoteEndpoint(serverPort, remoteSocketAddress);
+					RemoteEndpoint remoteEndpoint = new RemoteEndpoint(remoteSocketAddress.getHostString(),
+							remoteSocketAddress.getPort());
 					if (remoteEndpoint.isForThisMachine()) {
 						startFifoRequestReader(socketChannel, remoteEndpoint);
 					} else {

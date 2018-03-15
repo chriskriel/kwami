@@ -1,7 +1,6 @@
 package net.kwami.pipe.client;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 import net.kwami.pipe.RemoteEndpoint;
@@ -26,6 +25,7 @@ public class PipeClientTester extends Thread {
 		}
 
 		public void run() {
+			logger.info("starting");
 			String threadName = String.format("%s-Thread-%s-%s", testName, clientThreadNum, threadNum);
 			Thread.currentThread().setName(threadName);
 			try (PipeClient client = new PipeClient(endpoint, 50)) {
@@ -83,8 +83,7 @@ public class PipeClientTester extends Thread {
 	public void run() {
 		try {
 			String remoteHost = InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS).getHostAddress();
-			InetSocketAddress remoteSocketAddress = new InetSocketAddress(remoteHost, 58080);
-			RemoteEndpoint endpoint = new RemoteEndpoint(48080 + threadNum, remoteSocketAddress);
+			RemoteEndpoint endpoint = new RemoteEndpoint(remoteHost, 58080);
 			try {
 				Thread[] threads = new Thread[5];
 				for (int i = 0; i < threads.length; i++) {

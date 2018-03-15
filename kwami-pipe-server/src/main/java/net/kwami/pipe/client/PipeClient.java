@@ -1,7 +1,5 @@
 package net.kwami.pipe.client;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -77,8 +75,8 @@ public class PipeClient implements AutoCloseable {
 			}
 			if (msg.getStatus() != Status.DONE) {
 				outstandingRequests.remove(msgId);
-				throw new TimeoutException(
-						String.format("%s: waiting for response from server on request '%s'", pipe.getRemoteEndpoint().toString(), data));
+				throw new TimeoutException(String.format("%s: waiting for response from server on request '%s'",
+						pipe.getRemoteEndpoint().toString(), data));
 			}
 			return msg.getData();
 		} finally {
@@ -99,9 +97,7 @@ public class PipeClient implements AutoCloseable {
 
 	private void createMessagePipe(RemoteEndpoint remoteEndpoint) throws Exception {
 		SocketChannel socketChannel = SocketChannel.open();
-		SocketAddress socketAddress = new InetSocketAddress(remoteEndpoint.getRemoteHost(),
-				remoteEndpoint.getRemotePort());
-		socketChannel.connect(socketAddress);
+		socketChannel.connect(remoteEndpoint);
 		Command cmd = new Command(Cmd.CONNECT);
 		ByteBuffer commandBuffer = ByteBuffer.allocate(1024);
 		commandBuffer.put(cmd.getBytes());
@@ -131,8 +127,8 @@ public class PipeClient implements AutoCloseable {
 						FifoPipe.SERVER_READ_PATH_KEY));
 			pipe = new FifoPipe(remoteEndpoint, readPath, writePath);
 		} else
-			throw new Exception(String.format("Unknown protocol of '%s' returned from %s:%d", protocol,
-					remoteEndpoint.getRemoteHost(), remoteEndpoint.getRemotePort()));
+			throw new Exception(
+					String.format("Unknown protocol of '%s' returned from %s", protocol, remoteEndpoint.toString()));
 		return;
 	}
 
@@ -159,10 +155,10 @@ public class PipeClient implements AutoCloseable {
 	public Pipe getPipe() {
 		return pipe;
 	}
-//
-//	public void setPipe(Pipe pipe) {
-//		this.pipe = pipe;
-//	}
+	//
+	// public void setPipe(Pipe pipe) {
+	// this.pipe = pipe;
+	// }
 
 	public ConcurrentMap<Long, Message> getOutstandingRequests() {
 		return outstandingRequests;
