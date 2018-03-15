@@ -1,9 +1,11 @@
-package net.kwami.pipe.client;
+package net.kwami.pipe.test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import net.kwami.pipe.RemoteEndpoint;
+import net.kwami.pipe.client.PipeClient;
+import net.kwami.pipe.client.TimeoutException;
 import net.kwami.utils.MyLogger;
 
 public class PipeClientTester extends Thread {

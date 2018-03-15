@@ -1,8 +1,10 @@
-package net.kwami.pipe.client;
+package net.kwami.pipe.test;
 
 import java.net.InetAddress;
 
 import net.kwami.pipe.RemoteEndpoint;
+import net.kwami.pipe.client.PipeClient;
+import net.kwami.pipe.client.TimeoutException;
 import net.kwami.utils.MyLogger;
 
 public class ThreadedClientTester extends Thread {
@@ -31,7 +33,7 @@ public class ThreadedClientTester extends Thread {
 				try {
 					sendRequest(client, threadName, i);
 				} catch (TimeoutException e) {
-					System.out.printf("On %s: %s\n", threadName, e.toString());
+					logger.info("On %s: %s", threadName, e.toString());
 					continue;
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -44,7 +46,7 @@ public class ThreadedClientTester extends Thread {
 			String request = threadName + " request-" + i;
 			String s = client.sendRequest(request, 100);
 			long latency = System.currentTimeMillis() - start;
-			System.out.printf("%s received after %dms: '%s' for %s\n", threadName, latency, s, request);
+			logger.info("%s received after %dms: '%s' for %s", threadName, latency, s, request);
 
 		}
 	}
@@ -78,7 +80,7 @@ public class ThreadedClientTester extends Thread {
 		for (int i = 0; i < threads.length; i++) {
 			threads[i].join();
 		}
-		System.out.printf("D O N E ! (timing %dms)\n", System.currentTimeMillis() - start);
+		logger.info("D O N E ! (timing %dms)", System.currentTimeMillis() - start);
 	}
 
 	@Override

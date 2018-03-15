@@ -63,11 +63,13 @@ public class PipeClient implements AutoCloseable {
 		Message msg = new Message(msgId, data);
 		try {
 			long queueWaitMs = timeoutMs / 2;
+			outstandingRequests.put(msgId, msg);
 			boolean successFul = transmitQueue.offer(msgId, queueWaitMs, TimeUnit.MILLISECONDS);
-			if (!successFul)
+			if (!successFul) {
+				outstandingRequests.remove(msgId);
 				throw new TimeoutException(String.format("%s: failed to add message to transmit queue after %dms",
 						pipe.getRemoteEndpoint().toString(), queueWaitMs));
-			outstandingRequests.put(msgId, msg);
+			}
 			msg.setStatus(Status.WAIT);
 			synchronized (msg) {
 				if (msg.getStatus() != Message.Status.DONE)
@@ -75,8 +77,8 @@ public class PipeClient implements AutoCloseable {
 			}
 			if (msg.getStatus() != Status.DONE) {
 				outstandingRequests.remove(msgId);
-				throw new TimeoutException(String.format("%s: waiting for response from server on request '%s'",
-						pipe.getRemoteEndpoint().toString(), data));
+				throw new TimeoutException(String.format("%s, msgId %d waiting for response from server on request '%s'",
+						pipe.getRemoteEndpoint().toString(), msgId, data));
 			}
 			return msg.getData();
 		} finally {

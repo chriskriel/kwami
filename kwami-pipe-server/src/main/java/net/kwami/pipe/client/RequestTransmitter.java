@@ -28,13 +28,14 @@ public class RequestTransmitter extends ManagedThread {
 					} catch (InterruptedException e) {
 					}
 				try {
-					logger.trace("%s: outstanding: %d", context.getPipe().getRemoteEndpoint().toString(),
-							context.getOutstandingRequests().size());
 					long msgId = context.getTransmitQueue().take();
 					Message msg = context.getOutstandingRequests().get(msgId);
 					// the client may have timed out and removed the message
-					if (msg == null)
+					if (msg == null) {
+						logger.trace("msgId %d was a null message, outstanding: %d", msgId,
+								context.getOutstandingRequests().size());
 						continue;
+					}
 					while (msg.getStatus() != Message.Status.WAIT)
 						Thread.sleep(2);
 					context.getPipe().write(msg);
