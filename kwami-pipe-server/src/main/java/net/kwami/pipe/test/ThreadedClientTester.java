@@ -60,10 +60,11 @@ public class ThreadedClientTester extends Thread {
 		this.pipeNo = pipeNo;
 		this.threadsPerPipe = threadsPerPipe;
 		this.msgsPerThread = msgsPerThread;
-		client = new PipeClient(endpoint, 50);
+		client = new PipeClient(endpoint);
 	}
 
 	public static void main(String[] args) throws Exception {
+		System.setProperty("config.default.file.type", "json");
 		int pipes = Integer.parseInt(args[0]);
 		int threadsPerPipe = Integer.parseInt(args[1]);
 		int msgsPerThread = Integer.parseInt(args[2]);

@@ -30,7 +30,7 @@ public class PipeClientTester extends Thread {
 			logger.info("starting");
 			String threadName = String.format("%s-Thread-%s-%s", testName, clientThreadNum, threadNum);
 			Thread.currentThread().setName(threadName);
-			try (PipeClient client = new PipeClient(endpoint, 50)) {
+			try (PipeClient client = new PipeClient(endpoint)) {
 				for (int i = 0; i < 5000; i++) {
 					try {
 						sendRequest(client, threadName, i);
@@ -63,6 +63,7 @@ public class PipeClientTester extends Thread {
 	}
 
 	public static void main(String[] args) throws Exception {
+		System.setProperty("config.default.file.type", "json");
 		String testName = "test";
 		if (args.length == 1)
 			testName = args[0];

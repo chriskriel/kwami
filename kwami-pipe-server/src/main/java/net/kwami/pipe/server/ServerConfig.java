@@ -15,6 +15,11 @@ public class ServerConfig {
 	private TimeUnit keepAliveTimeUnit = TimeUnit.DAYS;
 	private String callableImplementation = "net.kwami.pipe.server.DummyCallable";
 
+	@Override
+	public String toString() {
+		return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(this);
+	}
+
 	public String getCallableImplementation() {
 		return callableImplementation;
 	}
@@ -85,10 +90,5 @@ public class ServerConfig {
 
 	public void setMaxFifoMessagePipes(int maxFifoMessagePipes) {
 		this.maxFifoMessagePipes = maxFifoMessagePipes;
-	}
-
-	@Override
-	public String toString() {
-		return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(this);
 	}
 }

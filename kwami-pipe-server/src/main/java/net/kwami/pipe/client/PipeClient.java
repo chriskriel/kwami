@@ -17,6 +17,7 @@ import net.kwami.pipe.RemoteEndpoint;
 import net.kwami.pipe.TcpPipe;
 import net.kwami.pipe.server.Command;
 import net.kwami.pipe.server.Command.Cmd;
+import net.kwami.utils.Configurator;
 import net.kwami.utils.MyLogger;
 import net.kwami.utils.MyProperties;
 
@@ -25,14 +26,17 @@ public class PipeClient implements AutoCloseable {
 	public final AtomicLong nextMsgId = new AtomicLong();
 	private final BlockingQueue<Long> transmitQueue;
 	private final ConcurrentMap<Long, Message> outstandingRequests = new ConcurrentHashMap<>();
+	private final int maxOutstanding;
 	private Pipe pipe;
 	private ResponseReader responseReader;
 	private RequestTransmitter requestTransmitter;
 	private Boolean isClosed = false;
 
-	public PipeClient(RemoteEndpoint remoteEndpoint, int maxTransmitQueueSize) throws Exception {
+	public PipeClient(RemoteEndpoint remoteEndpoint) throws Exception {
 		super();
-		transmitQueue = new ArrayBlockingQueue<>(maxTransmitQueueSize);
+		ClientConfig config = Configurator.get(ClientConfig.class);
+		this.maxOutstanding = config.getMaxOutstanding();
+		transmitQueue = new ArrayBlockingQueue<>(config.getMaxTransmitQueue());
 		createMessagePipe(remoteEndpoint);
 		createClientThreads();
 	}
@@ -59,6 +63,8 @@ public class PipeClient implements AutoCloseable {
 	public String sendRequest(String data, long timeoutMs) throws Exception {
 		if (isClosed)
 			throw new Exception("PipeClient has been closed");
+		if (outstandingRequests.size() > maxOutstanding)
+			throw new Exception(String.format("outstanding requests reached maximum of %d", maxOutstanding));
 		long msgId = nextMsgId.incrementAndGet();
 		Message msg = new Message(msgId, data);
 		try {
@@ -77,8 +83,9 @@ public class PipeClient implements AutoCloseable {
 			}
 			if (msg.getStatus() != Status.DONE) {
 				outstandingRequests.remove(msgId);
-				throw new TimeoutException(String.format("%s, msgId %d waiting for response from server on request '%s'",
-						pipe.getRemoteEndpoint().toString(), msgId, data));
+				throw new TimeoutException(
+						String.format("%s, msgId %d waiting for response from server on request '%s'",
+								pipe.getRemoteEndpoint().toString(), msgId, data));
 			}
 			return msg.getData();
 		} finally {
@@ -157,10 +164,6 @@ public class PipeClient implements AutoCloseable {
 	public Pipe getPipe() {
 		return pipe;
 	}
-	//
-	// public void setPipe(Pipe pipe) {
-	// this.pipe = pipe;
-	// }
 
 	public ConcurrentMap<Long, Message> getOutstandingRequests() {
 		return outstandingRequests;
