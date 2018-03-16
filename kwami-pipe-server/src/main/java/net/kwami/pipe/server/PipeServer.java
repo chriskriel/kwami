@@ -83,7 +83,7 @@ public final class PipeServer {
 			serverChannel.socket()
 					.bind(new InetSocketAddress(InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS), serverPort));
 			Thread.currentThread()
-					.setName("PipeServerThread" + serverChannel.socket().getLocalSocketAddress().toString());
+					.setName("PipeServer" + serverChannel.socket().getLocalSocketAddress().toString());
 			while (true) {
 				SocketChannel socketChannel = serverChannel.accept();
 				Command request = Command.read(socketChannel, commandBuffer);
