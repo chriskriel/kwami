@@ -10,7 +10,7 @@ import net.kwami.utils.Configurator;
 import net.kwami.utils.MyLogger;
 
 public class RequestReader extends ManagedThread {
-	private static final MyLogger logger = new MyLogger(RequestReader.class);
+	private static final MyLogger LOGGER = new MyLogger(RequestReader.class);
 	private final PipeServer server;
 	private final Pipe pipe;
 	private final Class<MyCallable> callableClass;
@@ -26,7 +26,7 @@ public class RequestReader extends ManagedThread {
 
 	@Override
 	public void run() {
-		logger.info("Starting");
+		LOGGER.info("Starting");
 		try {
 			while (mustRun) {
 				if (mustBlock)
@@ -42,7 +42,7 @@ public class RequestReader extends ManagedThread {
 					callable.setParameter(new CallableMessage(request, pipe));
 					server.getThreadPoolExecutor().submit(callable);
 				} catch (RejectedExecutionException e) {
-					logger.error("%s: %s", pipe.getRemoteEndpoint().toString(), e.toString());
+					LOGGER.error("%s: %s", pipe.getRemoteEndpoint().toString(), e.toString());
 					try {
 						Thread.sleep(20); // back off a bit
 					} catch (InterruptedException e1) {
@@ -50,19 +50,19 @@ public class RequestReader extends ManagedThread {
 					continue;
 				} catch (Exception e) {
 					if (e instanceof ClosedChannelException) {
-						logger.info("%s was closed, terminating", pipe.getRemoteEndpoint().toString());
+						LOGGER.info("%s was closed, terminating", pipe.getRemoteEndpoint().toString());
 						break;
 					}
 					if (e.toString().contains(Pipe.END_OF_STREAM)) {
-						logger.info("%s was closed by the client, terminating", pipe.getRemoteEndpoint().toString());
+						LOGGER.info("%s was closed by the client, terminating", pipe.getRemoteEndpoint().toString());
 						break;
 					}
-					logger.error(e);
+					LOGGER.error(e);
 					break;
 				}
 			}
 		} finally {
-			logger.info("Stopping");
+			LOGGER.info("Stopping");
 			try {
 				if (pipe != null) {
 					if (pipe instanceof FifoPipe) {

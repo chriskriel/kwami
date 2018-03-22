@@ -26,7 +26,7 @@ import net.kwami.utils.MyLogger;
 public final class PipeServer {
 
 	public static final String RESPONSE_TRANSMITTER_NAME = "ResponseTransmitterThread";
-	private static final MyLogger logger = new MyLogger(PipeServer.class);
+	private static final MyLogger LOGGER = new MyLogger(PipeServer.class);
 	private static byte[] fifoByteMap = { 1 };
 
 	public static void main(String[] args) {
@@ -100,7 +100,7 @@ public final class PipeServer {
 				}
 			}
 		} catch (Exception e) {
-			logger.error(e, "SERIOUS PROBLEM: System is not functional");
+			LOGGER.error(e, "SERIOUS PROBLEM: System is not functional");
 		}
 	}
 
@@ -129,7 +129,7 @@ public final class PipeServer {
 			// try to reuse if available
 			for (int i = 0; i < fifoByteMap.length; i++)
 				if (fifoByteMap[i] == 0) {
-					logger.debug("reusing FIFO %d", i);
+					LOGGER.debug("reusing FIFO %d", i);
 					fifoByteMap[i] = 1;
 					fifoByteMapPosition = i;
 					return i;
@@ -154,11 +154,11 @@ public final class PipeServer {
 			usedFifos[1] = i;
 		}
 		if (i < 0) {
-			logger.error("Server is out of FIFO pipes, falling back to TCP");
+			LOGGER.error("Server is out of FIFO pipes, falling back to TCP");
 			startTcpRequestReader(socketChannel, remoteEndpoint);
 			return;
 		}
-		logger.info(remoteEndpoint + " Communication will be via FIFOs");
+		LOGGER.info(remoteEndpoint + " Communication will be via FIFOs");
 		Pipe msgPipe = new FifoPipe(remoteEndpoint, fifoNameRequests, fifoNameResponses);
 		RequestReader requestReader = new RequestReader(this, msgPipe);
 		requestReader.setFifoIndexes(usedFifos);

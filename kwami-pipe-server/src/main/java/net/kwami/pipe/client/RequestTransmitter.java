@@ -9,7 +9,7 @@ import net.kwami.pipe.server.ManagedThread;
 import net.kwami.utils.MyLogger;
 
 public class RequestTransmitter extends ManagedThread {
-	private static final MyLogger logger = new MyLogger(RequestTransmitter.class);
+	private static final MyLogger LOGGER = new MyLogger(RequestTransmitter.class);
 	private PipeClient context;
 
 	public RequestTransmitter(PipeClient context) {
@@ -19,7 +19,7 @@ public class RequestTransmitter extends ManagedThread {
 
 	@Override
 	public void run() {
-		logger.info("Starting");
+		LOGGER.info("Starting");
 		try {
 			while (mustRun) {
 				if (mustBlock)
@@ -32,7 +32,7 @@ public class RequestTransmitter extends ManagedThread {
 					Message msg = context.getOutstandingRequests().get(msgId);
 					// the client may have timed out and removed the message
 					if (msg == null) {
-						logger.trace("msgId %d was a null message, outstanding: %d", msgId,
+						LOGGER.trace("msgId %d was a null message, outstanding: %d", msgId,
 								context.getOutstandingRequests().size());
 						continue;
 					}
@@ -43,19 +43,19 @@ public class RequestTransmitter extends ManagedThread {
 					continue;
 				} catch (IOException e) {
 					if (e instanceof AsynchronousCloseException) {
-						logger.info("%s was closed by another thread, terminating",
+						LOGGER.info("%s was closed by another thread, terminating",
 								context.getPipe().getRemoteEndpoint().toString());
 						break;
 					}
 					if (e.toString().contains(Pipe.END_OF_STREAM)) {
-						logger.info("%s was closed by the server, terminating",
+						LOGGER.info("%s was closed by the server, terminating",
 								context.getPipe().getRemoteEndpoint().toString());
 						break;
 					}
 				}
 			}
 		} finally {
-			logger.info("Stopping");
+			LOGGER.info("Stopping");
 			context.setRequestTransmitter(null);
 		}
 	}

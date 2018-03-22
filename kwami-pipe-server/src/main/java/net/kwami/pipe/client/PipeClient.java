@@ -22,7 +22,7 @@ import net.kwami.utils.MyLogger;
 import net.kwami.utils.MyProperties;
 
 public class PipeClient implements AutoCloseable {
-	private static final MyLogger logger = new MyLogger(PipeClient.class);
+	private static final MyLogger LOGGER = new MyLogger(PipeClient.class);
 	public final AtomicLong nextMsgId = new AtomicLong();
 	private final BlockingQueue<Long> transmitQueue;
 	private final ConcurrentMap<Long, Message> outstandingRequests = new ConcurrentHashMap<>();
@@ -43,7 +43,7 @@ public class PipeClient implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		logger.info("%s", pipe.getRemoteEndpoint().toString());
+		LOGGER.info("%s", pipe.getRemoteEndpoint().toString());
 		isClosed = true;
 		// When auto-closing the responseReader is active and we have a MessagePipe,
 		// so notify the server to reclaim the pipe. The other scenario is when the

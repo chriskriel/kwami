@@ -9,7 +9,7 @@ import net.kwami.pipe.server.ManagedThread;
 import net.kwami.utils.MyLogger;
 
 public class ResponseReader extends ManagedThread {
-	private static final MyLogger logger = new MyLogger(ResponseReader.class);
+	private static final MyLogger LOGGER = new MyLogger(ResponseReader.class);
 	private PipeClient context;
 
 	public ResponseReader(PipeClient context) {
@@ -19,7 +19,7 @@ public class ResponseReader extends ManagedThread {
 
 	@Override
 	public void run() {
-		logger.info("Starting");
+		LOGGER.info("Starting");
 		try {
 			while (mustRun) {
 				if (mustBlock)
@@ -42,7 +42,7 @@ public class ResponseReader extends ManagedThread {
 					Message originalRequest = context.getOutstandingRequests().get(response.getId());
 					// client may have timed-out and removed the original request
 					if (originalRequest == null) {
-						logger.error("no outstanding request for response id %d", response.getId());
+						LOGGER.error("no outstanding request for response id %d", response.getId());
 						continue;
 					}
 					synchronized (originalRequest) {
@@ -52,21 +52,21 @@ public class ResponseReader extends ManagedThread {
 					}
 				} catch (IOException e) {
 					if (e instanceof ClosedChannelException) {
-						logger.info("%s was closed by another thread, terminating",
+						LOGGER.info("%s was closed by another thread, terminating",
 								context.getPipe().getRemoteEndpoint().toString());
 						break;
 					}
 					if (e.toString().contains(Pipe.END_OF_STREAM)) {
-						logger.info("%s was closed by the server, terminating",
+						LOGGER.info("%s was closed by the server, terminating",
 								context.getPipe().getRemoteEndpoint().toString());
 						break;
 					}
-					logger.error(e);
+					LOGGER.error(e);
 					break;
 				}
 			}
 		} finally {
-			logger.info("Stopping");
+			LOGGER.info("Stopping");
 			context.setResponseReader(null);
 		}
 	}

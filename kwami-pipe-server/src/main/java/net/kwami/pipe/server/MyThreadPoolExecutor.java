@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import net.kwami.utils.MyLogger;
 
 public class MyThreadPoolExecutor extends ThreadPoolExecutor {
-	private static final MyLogger logger = new MyLogger(MyThreadPoolExecutor.class);
+	private static final MyLogger LOGGER = new MyLogger(MyThreadPoolExecutor.class);
 
 	public MyThreadPoolExecutor(PipeServer server, int corePoolSize, int maximumPoolSize, long keepAliveTime,
 			TimeUnit unit, BlockingQueue<Runnable> workQueue) {
@@ -37,7 +37,7 @@ public class MyThreadPoolExecutor extends ThreadPoolExecutor {
 			}
 		}
 		if (t != null)
-			logger.error(t);
+			LOGGER.error(t);
 	}
 
 }
