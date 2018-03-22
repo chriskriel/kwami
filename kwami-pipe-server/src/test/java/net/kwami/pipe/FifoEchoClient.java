@@ -5,8 +5,8 @@ public class FifoEchoClient {
 	public static void main(String[] args) throws Exception {
 		Message msg = new Message(10000, "");
 		try (Pipe pipe = new FifoPipe(null, 
-				"/home/chris/git/kwami/general/kwami-pipe-server/test/echo.responses", 
-				"/home/chris/git/kwami/general/kwami-pipe-server/test/echo.requests")) {
+				"/home/chris/git/kwami/general/kwami-pipe-server/work/echo.responses", 
+				"/home/chris/git/kwami/general/kwami-pipe-server/work/echo.requests")) {
 			for (int i = 0; i < 1000; i++) {
 				msg.setData("message no: " + String.valueOf(i));
 				pipe.write(msg);
