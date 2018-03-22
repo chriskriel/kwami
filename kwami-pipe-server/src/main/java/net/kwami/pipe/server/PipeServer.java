@@ -10,9 +10,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import net.kwami.pipe.FifoPipe;
@@ -48,12 +45,10 @@ public final class PipeServer {
 	}
 
 	private final List<ManagedThread> managedThreads = new ArrayList<>();
-	private final ConcurrentMap<CallableMessage, Future<String>> executingRequests = new ConcurrentHashMap<>();
 	private final MyThreadPoolExecutor threadPoolExecutor;
 	private final ByteBuffer commandBuffer;
 	private final int pipeCount;
 	private final int serverPort;
-	private final Object responseTransmitterLock = new Object();
 	private int fifoByteMapPosition;
 
 	public PipeServer() throws Exception {
@@ -178,14 +173,6 @@ public final class PipeServer {
 		s = Paths.get(fifoNameResponses).toAbsolutePath().toString();
 		response.addParameter(FifoPipe.SERVER_WRITE_PATH_KEY, s);
 		response.write(socketChannel, commandBuffer);
-	}
-
-	public final Object getResponseTransmitterLock() {
-		return responseTransmitterLock;
-	}
-
-	public final ConcurrentMap<CallableMessage, Future<String>> getExecutingRequests() {
-		return executingRequests;
 	}
 
 	public final MyThreadPoolExecutor getThreadPoolExecutor() {
