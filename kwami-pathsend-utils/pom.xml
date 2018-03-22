@@ -30,7 +30,7 @@
         <dependency>
             <groupId>net.kwami</groupId>
             <artifactId>kwami-base-utils</artifactId>
-            <version>12</version>
+            <version>16</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
