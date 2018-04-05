@@ -12,7 +12,7 @@ import net.kwami.utils.MyLogger;
 public class MyThreadPoolExecutor extends ThreadPoolExecutor {
 	private static final MyLogger LOGGER = new MyLogger(MyThreadPoolExecutor.class);
 
-	public MyThreadPoolExecutor(PipeServer server, int corePoolSize, int maximumPoolSize, long keepAliveTime,
+	public MyThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime,
 			TimeUnit unit, BlockingQueue<Runnable> workQueue) {
 		super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue);
 	}

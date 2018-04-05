@@ -13,6 +13,10 @@ public class Command {
 	public static enum Cmd {
 		CONNECT, SHUTDOWN, RESTART, QUERY, RESPONSE
 	}
+	
+	public static enum Parm {
+		FORCE_TCP
+	}
 
 	private static Gson gson = new GsonBuilder().create();
 

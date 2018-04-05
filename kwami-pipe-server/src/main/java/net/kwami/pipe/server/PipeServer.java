@@ -56,7 +56,7 @@ public final class PipeServer {
 		ServerConfig config = Configurator.get(ServerConfig.class);
 		commandBuffer = ByteBuffer.allocate(config.getCommandBufferSize());
 		this.serverPort = config.getPort();
-		threadPoolExecutor = new MyThreadPoolExecutor(this, config.getCorePoolSize(), config.getMaxPoolSize(),
+		threadPoolExecutor = new MyThreadPoolExecutor(config.getCorePoolSize(), config.getMaxPoolSize(),
 				config.getKeepAliveTime(), TimeUnit.DAYS,
 				new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
 		pipeCount = config.getMaxFifoMessagePipes() * 2;
@@ -77,8 +77,7 @@ public final class PipeServer {
 		try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
 			serverChannel.socket()
 					.bind(new InetSocketAddress(InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS), serverPort));
-			Thread.currentThread()
-					.setName("PipeServer" + serverChannel.socket().getLocalSocketAddress().toString());
+			Thread.currentThread().setName("PipeServer" + serverChannel.socket().getLocalSocketAddress().toString());
 			while (true) {
 				SocketChannel socketChannel = serverChannel.accept();
 				Command request = Command.read(socketChannel, commandBuffer);
@@ -86,10 +85,11 @@ public final class PipeServer {
 					InetSocketAddress remoteSocketAddress = (InetSocketAddress) socketChannel.getRemoteAddress();
 					RemoteEndpoint remoteEndpoint = new RemoteEndpoint(remoteSocketAddress.getHostString(),
 							remoteSocketAddress.getPort());
-					if (remoteEndpoint.isForThisMachine()) {
-						startFifoRequestReader(socketChannel, remoteEndpoint);
-					} else {
+					if (!remoteEndpoint.isForThisMachine()
+							|| request.getParameters().getBooleanProperty(Command.Parm.FORCE_TCP.name(), false)) {
 						startTcpRequestReader(socketChannel, remoteEndpoint);
+					} else {
+						startFifoRequestReader(socketChannel, remoteEndpoint);
 					}
 				} else if (request.getCommand() == Command.Cmd.SHUTDOWN) {
 					for (ManagedThread pipe : managedThreads) {
