@@ -1,4 +1,4 @@
-package net.kwami.utils;
+package test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,8 +6,10 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class RuntimeExec {
-	private static final MyLogger logger = new MyLogger(RuntimeExec.class);
+import net.kwami.utils.MyLogger;
+
+public abstract class RuntimeExecExample {
+	private static final MyLogger logger = new MyLogger(RuntimeExecExample.class);
 
 	public static boolean issue(String cmd) {
 		boolean success = true;

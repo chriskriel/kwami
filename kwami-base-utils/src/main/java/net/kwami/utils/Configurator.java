@@ -3,6 +3,8 @@ package net.kwami.utils;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -113,17 +115,34 @@ public abstract class Configurator {
 	public final static <T> T get(Class<T> classT, String resourceName, boolean useCache) {
 		URL url = classT.getResource(resourceName);
 		T t = null;
-		if (useCache && (t = getCachedObject(resourceName, url)) != null)
+		Field f = null;
+		try {
+			f = classT.getDeclaredField("cachedCopy");
+			if (!Modifier.isTransient(f.getModifiers()))
+				f = null;
+			if (!f.getType().isAssignableFrom(boolean.class))
+				f = null;
+		} catch (Exception e) {
+		}
+		if (useCache && (t = getCachedObject(resourceName, url.getFile())) != null) {
+			try {
+				if (f != null)
+					f.set(t, true);
+			} catch (Exception e) {
+			}
 			return t;
+		}
 		synchronized (classT) {
-			if (useCache && (t = getCachedObject(resourceName, url)) != null)
+			if (useCache && (t = getCachedObject(resourceName, url.getFile())) != null)
 				return t;
 			try (InputStream is = classT.getResourceAsStream(resourceName)) {
 				LOGGER.debug("resource=%s", resourceName);
 				InputStreamReader rdr = new InputStreamReader(is);
 				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 				t = gson.fromJson(rdr, classT);
-			} catch (Exception e) {
+				if (f != null)
+					f.set(t, false);
+			} catch (Throwable e) {
 				LOGGER.error(e, "error processing %s", resourceName);
 				throw new RuntimeException(e);
 			}
@@ -143,7 +162,7 @@ public abstract class Configurator {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T getCachedObject(String simpleName, URL url) {
+	private static <T> T getCachedObject(String simpleName, String fileName) {
 		CachedObject cachedEntity = CACHE.get(simpleName);
 		if (cachedEntity == null) {
 			return null;
@@ -151,7 +170,7 @@ public abstract class Configurator {
 		if (!cachedEntity.hasExpired()) {
 			return (T) cachedEntity.object;
 		}
-		File f = new File(url.getFile());
+		File f = new File(fileName);
 		if (f.lastModified() < cachedEntity.expireTime - REFRESH_MS) {
 			CACHE.put(simpleName, new CachedObject(REFRESH_MS, cachedEntity.object));
 			return (T) cachedEntity.object;
