@@ -12,47 +12,46 @@ public class MyProperties extends Properties {
 	private static final String ERR_MSG = "returning defaultValue %d because property '%s', with value '%s', cannot be parsed as %s";
 	private static final long serialVersionUID = 1L;
 	private static final MyLogger LOGGER = new MyLogger(MyProperties.class);
-	
 
 	/*
-		Allows the use of JSON strings as properties. This method will instantiate
-		the JSON string as an object of the type of the default value.
-		@param property
-			the name of the property that has a JSON string as a value
-		@param defaultValue
-			the default value if the property is null. The class of this
-			parameter also determines the class of the returned value
-		@return
-			an object of the same class as the default value passed in
-	*/
+	 * Allows the use of JSON strings as properties. This method will instantiate
+	 * the JSON string as an object of the type of the default value.
+	 * 
+	 * @param property the name of the property that has a JSON string as a value
+	 * 
+	 * @param defaultValue the default value if the property is null. The class of
+	 * this parameter also determines the class of the returned value
+	 * 
+	 * @return an object of the same class as the default value passed in
+	 */
 	@SuppressWarnings("unchecked")
-	public final <T> T getJsonProperty(String property, T defaultValue) {
-		String s = getProperty(property);
+	public final <T> T getJsonProperty(Object key, T defaultValue) {
+		String s = getProperty(key.toString());
 		if (s == null)
 			return defaultValue;
-		return (T)new GsonBuilder().create().fromJson(s, defaultValue.getClass());
+		return (T) new GsonBuilder().create().fromJson(s, defaultValue.getClass());
 	}
 
 	/*
-		Allows the use of JSON strings as properties. This method will serialize
-		the object as a JSON string using the type of the value.
-		@param property
-			the name of the property that has a JSON string as a value
-		@param value
-			the object to serialize
-		@return
-			an object of the same class as the default value passed in
-	*/
-	public final <T> void setJsonProperty(String property, T value) {
-		super.setProperty(property, new GsonBuilder().create().toJson(value));
+	 * Allows the use of JSON strings as properties. This method will serialize the
+	 * object as a JSON string using the type of the value.
+	 * 
+	 * @param property the name of the property that has a JSON string as a value
+	 * 
+	 * @param value the object to serialize
+	 * 
+	 * @return an object of the same class as the default value passed in
+	 */
+	public final <T> void setJsonProperty(Object key, T value) {
+		super.setProperty(key.toString(), new GsonBuilder().create().toJson(value));
 	}
 
-	public final void setBooleanProperty(String property, boolean value) {
-		setProperty(property, String.valueOf(value));
+	public final void setBooleanProperty(Object key, boolean value) {
+		setProperty(key.toString(), String.valueOf(value));
 	}
 
-	public final boolean getBooleanProperty(String property, boolean defaultValue) {
-		String s = getProperty(property);
+	public final boolean getBooleanProperty(Object key, boolean defaultValue) {
+		String s = getProperty(key.toString());
 		if (s == null)
 			return defaultValue;
 		s = s.trim();
@@ -60,76 +59,84 @@ public class MyProperties extends Properties {
 		return b;
 	}
 
-	public final void setByteProperty(String property, byte value) {
-		setProperty(property, String.valueOf(value));
+	public final void setByteProperty(Object key, byte value) {
+		setProperty(key.toString(), String.valueOf(value));
 	}
 
-	public final byte getByteProperty(String property, byte defaultValue) {
-		String s = getProperty(property);
+	public final byte getByteProperty(Object key, byte defaultValue) {
+		String s = getProperty(key.toString());
 		if (s == null)
 			return defaultValue;
 		try {
 			return Byte.parseByte(s);
 		} catch (NumberFormatException e) {
-			LOGGER.error(ERR_MSG, defaultValue, property, s, "a byte");
+			LOGGER.error(ERR_MSG, defaultValue, key.toString(), s, "a byte");
 		}
 		return defaultValue;
 	}
 
-	public final void setShortProperty(String property, short value) {
-		setProperty(property, String.valueOf(value));
+	public final void setShortProperty(Object key, short value) {
+		setProperty(key.toString(), String.valueOf(value));
 	}
 
-	public final short getShortProperty(String property, short defaultValue) {
-		String s = getProperty(property);
+	public final short getShortProperty(Object key, short defaultValue) {
+		String s = getProperty(key.toString());
 		if (s == null)
 			return defaultValue;
 		try {
 			return Short.parseShort(s);
 		} catch (NumberFormatException e) {
-			LOGGER.error(ERR_MSG, defaultValue, property, s, "a short");
+			LOGGER.error(ERR_MSG, defaultValue, key.toString(), s, "a short");
 		}
 		return defaultValue;
 	}
 
-	public final void setIntProperty(String property, int value) {
-		setProperty(property, String.valueOf(value));
+	public final void setIntProperty(Object key, int value) {
+		setProperty(key.toString(), String.valueOf(value));
 	}
 
-	public final int getIntProperty(String property, int defaultValue) {
-		String s = getProperty(property);
+	public final int getIntProperty(Object key, int defaultValue) {
+		String s = getProperty(key.toString());
 		if (s == null)
 			return defaultValue;
 		try {
 			return Integer.parseInt(s);
 		} catch (NumberFormatException e) {
-			LOGGER.error(ERR_MSG, defaultValue, property, s, "an int");
+			LOGGER.error(ERR_MSG, defaultValue, key.toString(), s, "an int");
 		}
 		return defaultValue;
 	}
 
-	public final void setLongProperty(String property, long value) {
-		setProperty(property, String.valueOf(value));
+	public final void setLongProperty(Object key, long value) {
+		setProperty(key.toString(), String.valueOf(value));
 	}
 
-	public final long getLongProperty(String property, long defaultValue) {
-		String s = getProperty(property);
+	public final long getLongProperty(Object key, long defaultValue) {
+		String s = getProperty(key.toString());
 		if (s == null)
 			return defaultValue;
 		try {
 			return Long.parseLong(s);
 		} catch (NumberFormatException e) {
-			LOGGER.error(ERR_MSG, defaultValue, property, s, "a long");
+			LOGGER.error(ERR_MSG, defaultValue, key.toString(), s, "a long");
 		}
 		return defaultValue;
 	}
 	
-        @Override
+	public final String getProperty(Object keyObj) {
+		return getProperty(keyObj.toString());
+	}
+
+	@Override
 	public final String getProperty(String key) {
 		return this.getProperty(key, null);
 	}
-	
-        @Override
+
+	public final String getProperty(Object keyObj, String defaultValue) {
+		return getProperty(keyObj.toString(), defaultValue);
+	}
+
+	@Override
 	public final String getProperty(String key, String defaultValue) {
 		String original;
 		if (defaultValue == null)
@@ -143,6 +150,10 @@ public class MyProperties extends Properties {
 		String newValue = replaceVarWithSystemProperty(original);
 		LOGGER.debug("key=%s,original='%s',new='%s'", key, original, newValue);
 		return newValue;
+	}
+	
+	public final Object setProperty(Object keyObj, Object valueObj) {
+		return setProperty(keyObj.toString(), valueObj.toString());
 	}
 
 	private String replaceVarWithSystemProperty(String original) {
