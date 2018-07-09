@@ -18,6 +18,7 @@ import net.kwami.pipe.RemoteEndpoint;
 import net.kwami.pipe.TcpPipe;
 import net.kwami.utils.Configurator;
 import net.kwami.utils.MyLogger;
+import net.kwami.utils.MyProperties;
 
 /**
  * @author Chris Kriel
@@ -60,9 +61,9 @@ public final class PipeServer {
 				config.getKeepAliveTime(), TimeUnit.DAYS,
 				new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
 		pipeCount = config.getMaxFifoMessagePipes() * 2;
-		Runtime.getRuntime().exec("rm -rf fifo");
 		if (pipeCount == 0)
 			return;
+		Runtime.getRuntime().exec("rm -rf fifo");
 		fifoByteMap = new byte[pipeCount];
 		Runtime.getRuntime().exec("mkdir fifo");
 		for (int i = 0; i < pipeCount; i++) {
@@ -85,11 +86,15 @@ public final class PipeServer {
 					InetSocketAddress remoteSocketAddress = (InetSocketAddress) socketChannel.getRemoteAddress();
 					RemoteEndpoint remoteEndpoint = new RemoteEndpoint(remoteSocketAddress.getHostString(),
 							remoteSocketAddress.getPort());
-					if (!remoteEndpoint.isForThisMachine()
-							|| request.getParameters().getBooleanProperty(Command.Parm.FORCE_TCP.name(), false)) {
+					MyProperties parms = request.getParameters();
+					if (!remoteEndpoint.isForThisMachine())
 						startTcpRequestReader(socketChannel, remoteEndpoint);
-					} else {
-						startFifoRequestReader(socketChannel, remoteEndpoint);
+					else {
+						if (parms != null && parms.getBooleanProperty(Command.Parm.FORCE_TCP, false)) {
+							startTcpRequestReader(socketChannel, remoteEndpoint);
+						} else {
+							startFifoRequestReader(socketChannel, remoteEndpoint);
+						}
 					}
 				} else if (request.getCommand() == Command.Cmd.SHUTDOWN) {
 					for (ManagedThread pipe : managedThreads) {
