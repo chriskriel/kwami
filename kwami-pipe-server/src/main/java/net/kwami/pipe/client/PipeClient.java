@@ -106,7 +106,7 @@ public class PipeClient implements AutoCloseable {
 
 	private void createMessagePipe(RemoteEndpoint remoteEndpoint) throws Exception {
 		SocketChannel socketChannel = SocketChannel.open();
-		socketChannel.connect(remoteEndpoint);
+		socketChannel.connect(remoteEndpoint.getSocketAddress());
 		Command cmd = new Command(Cmd.CONNECT);
 		ByteBuffer commandBuffer = ByteBuffer.allocate(1024);
 		commandBuffer.put(cmd.getBytes());
