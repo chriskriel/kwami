@@ -47,6 +47,11 @@ public class RemoteEndpoint {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return addressStr;
+	}
+
 	public InetSocketAddress getSocketAddress() {
 		return socketAddress;
 	}
@@ -57,5 +62,9 @@ public class RemoteEndpoint {
 
 	public void setForThisMachine(boolean forThisMachine) {
 		this.forThisMachine = forThisMachine;
+	}
+
+	public String getAddressStr() {
+		return addressStr;
 	}
 }
