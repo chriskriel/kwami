@@ -1,5 +1,6 @@
 package net.kwami.pipe.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -8,6 +9,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -48,7 +50,6 @@ public final class PipeServer {
 	private final List<ManagedThread> managedThreads = new ArrayList<>();
 	private final MyThreadPoolExecutor threadPoolExecutor;
 	private final ByteBuffer commandBuffer;
-	private final int pipeCount;
 	private final int serverPort;
 	private int fifoByteMapPosition;
 
@@ -61,18 +62,25 @@ public final class PipeServer {
 		threadPoolExecutor = new MyThreadPoolExecutor(config.getCorePoolSize(), config.getMaxPoolSize(),
 				config.getKeepAliveTime(), TimeUnit.DAYS,
 				new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
-		pipeCount = config.getMaxFifoMessagePipes() * 2;
-		if (pipeCount == 0)
-			return;
-		Runtime.getRuntime().exec("rm -rf fifo");
-		fifoByteMap = new byte[pipeCount];
-		Runtime.getRuntime().exec("mkdir fifo");
-		for (int i = 0; i < pipeCount; i++) {
-			String cmd = "mkfifo fifo/" + i;
-			Runtime.getRuntime().exec(cmd);
+		int i = 0;
+		File fifoDir = new File(System.getProperty("user.dir"));
+		fifoDir = new File(fifoDir, "fifo");
+		if (fifoDir.exists()) {
+			String[] fifos = fifoDir.list();
+			List<String> fifoList = Arrays.asList(fifos);
+			for (; i < fifos.length; i++) {
+				String fifoName = String.valueOf(i);
+				if (fifoList.contains(fifoName)) {
+					continue;
+				} else {
+					if (i > 0 && (i % 2) != 1)
+						i--;
+					break;
+				}
+			}
 		}
-		// wait for File System to do the above
-		Thread.sleep(3000);
+		LOGGER.info("FIFOs 0 to %d can be used as %d bi-directional connections to this server", i - 1, i / 2);
+		fifoByteMap = new byte[i];
 	}
 
 	public final void call() throws IOException {

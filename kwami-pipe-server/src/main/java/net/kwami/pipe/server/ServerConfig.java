@@ -11,7 +11,6 @@ public class ServerConfig {
 	private int maxPoolSize = 10;
 	private int submitQueueSize = 10;
 	private int commandBufferSize = 256;
-	private int maxFifoMessagePipes = 10;
 	private TimeUnit keepAliveTimeUnit = TimeUnit.DAYS;
 	private String callableImplementation = "net.kwami.pipe.server.DummyCallable";
 
@@ -82,13 +81,5 @@ public class ServerConfig {
 
 	public void setKeepAliveTimeUnit(TimeUnit keepAliveTimeUnit) {
 		this.keepAliveTimeUnit = keepAliveTimeUnit;
-	}
-
-	public int getMaxFifoMessagePipes() {
-		return maxFifoMessagePipes;
-	}
-
-	public void setMaxFifoMessagePipes(int maxFifoMessagePipes) {
-		this.maxFifoMessagePipes = maxFifoMessagePipes;
 	}
 }
