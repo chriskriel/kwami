@@ -57,6 +57,7 @@ public final class PipeServer {
 		ServerConfig config = Configurator.get(ServerConfig.class);
 		commandBuffer = ByteBuffer.allocate(config.getCommandBufferSize());
 		this.serverPort = config.getPort();
+		System.setProperty("pipe.server.port", String.valueOf(this.serverPort));
 		threadPoolExecutor = new MyThreadPoolExecutor(config.getCorePoolSize(), config.getMaxPoolSize(),
 				config.getKeepAliveTime(), TimeUnit.DAYS,
 				new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
