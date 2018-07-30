@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.kwami</groupId>
     <artifactId>kwami-base-utils</artifactId>
-    <version>18</version>
+    <version>19</version>
     <packaging>jar</packaging>
 
     <name>kwami-base-utils</name>

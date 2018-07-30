@@ -3,8 +3,6 @@ package net.kwami.utils;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,16 +12,23 @@ import com.google.gson.GsonBuilder;
 
 class CachedObject {
 
-	long expireTime;
+	long cachedTime;
 	Object object;
 
 	CachedObject(long refreshInterval, Object object) {
-		this.expireTime = System.currentTimeMillis() + refreshInterval;
+		cachedTime = System.currentTimeMillis();
 		this.object = object;
 	}
 
-	final boolean hasExpired() {
-		return expireTime < System.currentTimeMillis();
+	final boolean hasExpired(long resfreshIntervalMs) {
+		long expireTime = cachedTime + resfreshIntervalMs;
+		if (expireTime < System.currentTimeMillis())
+			return true;
+		return false;
+	}
+	
+	final boolean needsRefresh(long lastModified) {
+		return lastModified > cachedTime;
 	}
 }
 
@@ -39,11 +44,11 @@ public abstract class Configurator {
 
 	private static final MyLogger LOGGER = new MyLogger(Configurator.class);
 	private static final Map<String, CachedObject> CACHE = new ConcurrentHashMap<String, CachedObject>();
-	private static final long REFRESH_MS;
+	private static final long LIFETIME_MILLIS;
 	private static final String CONFIG_FILE_TYPE;
 
 	static {
-		REFRESH_MS = Long.parseLong(System.getProperty("config.caching.mins", "2")) * 60000;
+		LIFETIME_MILLIS = Long.parseLong(System.getProperty("config.caching.mins", "2")) * 60000;
 		CONFIG_FILE_TYPE = System.getProperty("config.default.file.type", "js");
 	}
 
@@ -113,45 +118,34 @@ public abstract class Configurator {
 	 * @return an object of the specified class is returned
 	 */
 	public final static <T> T get(Class<T> classT, String resourceName, boolean useCache) {
-		URL url = classT.getResource(resourceName);
-		T t = null;
-		Field f = null;
-		try {
-			f = classT.getDeclaredField("cachedCopy");
-			if (!Modifier.isTransient(f.getModifiers()))
-				f = null;
-			if (!f.getType().isAssignableFrom(boolean.class))
-				f = null;
-		} catch (Exception e) {
-		}
-		if (useCache && (t = getCachedObject(resourceName, url.getFile())) != null) {
-			try {
-				if (f != null)
-					f.set(t, true);
-			} catch (Exception e) {
-			}
+		T t = getCachedObject(useCache, classT, resourceName);
+		if (t != null) {
 			return t;
 		}
 		synchronized (classT) {
-			if (useCache && (t = getCachedObject(resourceName, url.getFile())) != null)
+			t = getCachedObject(useCache, classT, resourceName);
+			if (t != null)
 				return t;
+			LOGGER.info("Loading %s from resource %s", classT.getName(), resourceName);
 			try (InputStream is = classT.getResourceAsStream(resourceName)) {
-				LOGGER.debug("resource=%s", resourceName);
 				InputStreamReader rdr = new InputStreamReader(is);
 				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 				t = gson.fromJson(rdr, classT);
-				if (f != null)
-					f.set(t, false);
 			} catch (Throwable e) {
-				LOGGER.error(e, "error processing %s", resourceName);
+				String err = String.format("%s: error processing %s", e.toString(), resourceName);
+				LOGGER.error(err);
+				System.err.println(err);
 				throw new RuntimeException(e);
 			}
 			if (t != null) {
 				if (useCache) {
-					CACHE.put(resourceName, new CachedObject(REFRESH_MS, t));
+					CACHE.put(classT.getName(), new CachedObject(LIFETIME_MILLIS, t));
 				}
 			} else {
-				LOGGER.error("could not create %s from %s", classT.getSimpleName(), resourceName);
+				String err = String.format("could not create %s from %s", classT.getName(), resourceName);
+				LOGGER.error(err);
+				System.err.println(err);
+				throw new RuntimeException(err);
 			}
 			return t;
 		}
@@ -162,19 +156,24 @@ public abstract class Configurator {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T getCachedObject(String simpleName, String fileName) {
-		CachedObject cachedEntity = CACHE.get(simpleName);
-		if (cachedEntity == null) {
+	private static <T> T getCachedObject(boolean useCache, Class<T> classT, String resourceName) {
+		if (!useCache)
+			return null;
+		String key = classT.getName();
+		CachedObject cachedObject = CACHE.get(key);
+		if (cachedObject == null) {
 			return null;
 		}
-		if (!cachedEntity.hasExpired()) {
-			return (T) cachedEntity.object;
+		if (!cachedObject.hasExpired(LIFETIME_MILLIS)) {
+			return (T) cachedObject.object;
 		}
-		File f = new File(fileName);
-		if (f.lastModified() < cachedEntity.expireTime - REFRESH_MS) {
-			CACHE.put(simpleName, new CachedObject(REFRESH_MS, cachedEntity.object));
-			return (T) cachedEntity.object;
-		}
-		return null;
+		// CachedObject has expired, check if it changed on File System
+		URL url = classT.getResource(resourceName);
+		File f = new File(url.getFile());
+		if (cachedObject.needsRefresh(f.lastModified()))
+			return null;
+		// re-cache the object with a new lease on life
+		CACHE.put(key, new CachedObject(LIFETIME_MILLIS, cachedObject.object));
+		return (T) cachedObject.object;
 	}
 }

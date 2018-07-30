@@ -10,7 +10,7 @@
   <groupId>net.kwami</groupId>
   <artifactId>kwami-base-utils</artifactId>
   <name>kwami-base-utils</name>
-  <version>18</version>
+  <version>19</version>
   <url>http://maven.apache.org</url>
   <build>
     <defaultGoal>clean deploy</defaultGoal>
