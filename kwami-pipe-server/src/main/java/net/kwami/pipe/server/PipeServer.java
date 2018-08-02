@@ -59,6 +59,7 @@ public final class PipeServer {
 		commandBuffer = ByteBuffer.allocate(config.getCommandBufferSize());
 		this.serverPort = config.getPort();
 		System.setProperty("pipe.server.port", String.valueOf(this.serverPort));
+		System.setProperty("pipe.server.host", RemoteEndpoint.getMachineAddress());
 		threadPoolExecutor = new MyThreadPoolExecutor(config.getCorePoolSize(), config.getMaxPoolSize(),
 				config.getKeepAliveTime(), TimeUnit.DAYS,
 				new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
@@ -86,7 +87,7 @@ public final class PipeServer {
 	public final void call() throws IOException {
 		try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
 			serverChannel.socket()
-					.bind(new InetSocketAddress(InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS), serverPort));
+					.bind(new InetSocketAddress(InetAddress.getByName(RemoteEndpoint.getMachineAddress()), serverPort));
 			Thread.currentThread().setName("PipeServer" + serverChannel.socket().getLocalSocketAddress().toString());
 			while (true) {
 				SocketChannel socketChannel = serverChannel.accept();
@@ -96,7 +97,7 @@ public final class PipeServer {
 					RemoteEndpoint remoteEndpoint = new RemoteEndpoint(remoteSocketAddress.getHostString(),
 							remoteSocketAddress.getPort());
 					MyProperties parms = request.getParameters();
-					if (!remoteEndpoint.isForThisMachine())
+					if (!remoteEndpoint.isOnThisMachine())
 						startTcpRequestReader(socketChannel, remoteEndpoint);
 					else {
 						if (parms != null && parms.getBooleanProperty(Command.Parm.FORCE_TCP, false)) {

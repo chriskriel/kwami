@@ -1,25 +1,24 @@
 package net.kwami.pipe;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 
 public class RemoteEndpoint {
 
-	public static final String MACHINE_ADDRESS = "machine-address";
-	private boolean forThisMachine = false;
+	private final String remoteHost;
 	private final String addressStr;
 	private final InetSocketAddress socketAddress;
+	
+	public static String getMachineAddress() {
+		String machineAddress = System.getenv("MACHINE_ADDRESS");
+		if (machineAddress == null)
+			machineAddress = "127.0.0.1";
+		return machineAddress;
+	}
 
 	public RemoteEndpoint(String remoteHost, int remotePort) {
+		this.remoteHost = remoteHost;
 		addressStr = String.format("%s:%d", remoteHost, remotePort);
 		socketAddress = new InetSocketAddress(remoteHost, remotePort);
-		try {
-			String ppfeLocalAddress = InetAddress.getByName(MACHINE_ADDRESS).getHostAddress();
-			if (ppfeLocalAddress.equals(remoteHost))
-				forThisMachine = true;
-		} catch (UnknownHostException e1) {
-		}
 	}
 
 	@Override
@@ -56,12 +55,11 @@ public class RemoteEndpoint {
 		return socketAddress;
 	}
 
-	public boolean isForThisMachine() {
-		return forThisMachine;
-	}
-
-	public void setForThisMachine(boolean forThisMachine) {
-		this.forThisMachine = forThisMachine;
+	public boolean isOnThisMachine() {
+		String machineAddress = getMachineAddress();
+		if (machineAddress.equals(remoteHost))
+			return true;
+		return false;
 	}
 
 	public String getAddressStr() {

@@ -85,7 +85,7 @@ public class PipeClientTester extends Thread {
 	@Override
 	public void run() {
 		try {
-			String remoteHost = InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS).getHostAddress();
+			String remoteHost = InetAddress.getByName(RemoteEndpoint.getMachineAddress()).getHostAddress();
 			RemoteEndpoint endpoint = new RemoteEndpoint(remoteHost, 58080);
 			try {
 				Thread[] threads = new Thread[5];

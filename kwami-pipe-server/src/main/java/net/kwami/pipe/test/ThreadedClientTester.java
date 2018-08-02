@@ -69,7 +69,7 @@ public class ThreadedClientTester extends Thread {
 		int threadsPerPipe = Integer.parseInt(args[1]);
 		int msgsPerThread = Integer.parseInt(args[2]);
 		long start = System.currentTimeMillis();
-		String remoteHost = InetAddress.getByName(RemoteEndpoint.MACHINE_ADDRESS).getHostAddress();
+		String remoteHost = InetAddress.getByName(RemoteEndpoint.getMachineAddress()).getHostAddress();
 		RemoteEndpoint endpoint = new RemoteEndpoint(remoteHost, 58080);
 		Thread[] threads = new Thread[pipes];
 		for (int i = 0; i < threads.length; i++) {
