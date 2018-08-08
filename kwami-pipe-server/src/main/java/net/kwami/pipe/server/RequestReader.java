@@ -16,12 +16,10 @@ public class RequestReader extends ManagedThread {
 	private final Class<MyCallable> callableClass;
 	private int[] fifoIndexes;
 
-	@SuppressWarnings("unchecked")
-	public RequestReader(PipeServer server, Pipe pipe) throws Exception {
+	public RequestReader(PipeServer server, Pipe pipe, Class<MyCallable> callableClass) throws Exception {
 		this.server = server;
 		this.pipe = pipe;
-		ServerConfig config = Configurator.get(ServerConfig.class);
-		callableClass = (Class<MyCallable>) Class.forName(config.getCallableImplementation());
+		this.callableClass = callableClass;
 	}
 
 	@Override

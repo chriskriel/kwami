@@ -2,7 +2,7 @@ package net.kwami.pipe.server;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
+import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
@@ -51,18 +51,19 @@ public final class PipeServer {
 	private final MyThreadPoolExecutor threadPoolExecutor;
 	private final ByteBuffer commandBuffer;
 	private final int serverPort;
+	private final Class<MyCallable> callableClass;
 	private int fifoByteMapPosition;
 
 	public PipeServer() throws Exception {
 		super();
 		ServerConfig config = Configurator.get(ServerConfig.class);
+		callableClass = loadCallableClass(config);
 		commandBuffer = ByteBuffer.allocate(config.getCommandBufferSize());
 		this.serverPort = config.getPort();
 		System.setProperty("pipe.server.port", String.valueOf(this.serverPort));
 		System.setProperty("pipe.server.host", RemoteEndpoint.getMachineAddress());
-		threadPoolExecutor = new MyThreadPoolExecutor(config.getCorePoolSize(), config.getMaxPoolSize(),
-				config.getKeepAliveTime(), TimeUnit.DAYS,
-				new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
+		threadPoolExecutor = new MyThreadPoolExecutor(config.getCorePoolSize(), config.getMaxPoolSize(), config.getKeepAliveTime(),
+				TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
 		int i = 0;
 		File fifoDir = new File(System.getProperty("user.dir"));
 		fifoDir = new File(fifoDir, "fifo");
@@ -84,10 +85,16 @@ public final class PipeServer {
 		fifoByteMap = new byte[i];
 	}
 
+	public Class<MyCallable> loadCallableClass(ServerConfig config) throws Exception {
+		@SuppressWarnings("unchecked")
+		Class<MyCallable> callableClass = (Class<MyCallable>) Class.forName(config.getCallableImplementation());
+		return callableClass;
+	}
+
 	public final void call() throws IOException {
 		try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
 			serverChannel.socket()
-					.bind(new InetSocketAddress(InetAddress.getByName(RemoteEndpoint.getMachineAddress()), serverPort));
+					.bind(new InetSocketAddress(Inet4Address.getByName(RemoteEndpoint.getMachineAddress()), serverPort));
 			Thread.currentThread().setName("PipeServer" + serverChannel.socket().getLocalSocketAddress().toString());
 			while (true) {
 				SocketChannel socketChannel = serverChannel.accept();
@@ -125,7 +132,7 @@ public final class PipeServer {
 		response.addParameter("protocol", "TCP");
 		response.write(socketChannel, commandBuffer);
 		Pipe msgPipe = new TcpPipe(remoteEndpoint, socketChannel);
-		RequestReader requestSubmitter = new RequestReader(this, msgPipe);
+		RequestReader requestSubmitter = new RequestReader(this, msgPipe, callableClass);
 		requestSubmitter.setDaemon(true);
 		requestSubmitter.setName("ReqRdr" + remoteEndpoint.toString());
 		requestSubmitter.start();
@@ -175,7 +182,7 @@ public final class PipeServer {
 		}
 		LOGGER.info(remoteEndpoint + " Communication will be via FIFOs");
 		Pipe msgPipe = new FifoPipe(remoteEndpoint, fifoNameRequests, fifoNameResponses);
-		RequestReader requestReader = new RequestReader(this, msgPipe);
+		RequestReader requestReader = new RequestReader(this, msgPipe, callableClass);
 		requestReader.setFifoIndexes(usedFifos);
 		requestReader.setDaemon(true);
 		requestReader.setName("ReqRdr/" + fifoNameRequests);
