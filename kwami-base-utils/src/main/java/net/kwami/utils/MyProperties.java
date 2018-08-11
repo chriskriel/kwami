@@ -17,7 +17,7 @@ public class MyProperties extends Properties {
 	 * Allows the use of JSON strings as properties. This method will instantiate
 	 * the JSON string as an object of the type of the default value.
 	 * 
-	 * @param property the name of the property that has a JSON string as a value
+	 * @param key the name of the property that has a JSON string as a value
 	 * 
 	 * @param defaultValue the default value if the property is null. The class of
 	 * this parameter also determines the class of the returned value
@@ -36,14 +36,14 @@ public class MyProperties extends Properties {
 	 * Allows the use of JSON strings as properties. This method will serialize the
 	 * object as a JSON string using the type of the value.
 	 * 
-	 * @param property the name of the property that has a JSON string as a value
+	 * @param key the name of the property that has a JSON string as a value
 	 * 
 	 * @param value the object to serialize
 	 * 
 	 * @return an object of the same class as the default value passed in
 	 */
 	public final <T> void setJsonProperty(Object key, T value) {
-		super.setProperty(key.toString(), new GsonBuilder().create().toJson(value));
+		setProperty(key.toString(), new GsonBuilder().create().toJson(value));
 	}
 
 	public final void setBooleanProperty(Object key, boolean value) {
@@ -55,7 +55,7 @@ public class MyProperties extends Properties {
 		if (s == null)
 			return defaultValue;
 		s = s.trim();
-		boolean b = s.equalsIgnoreCase("true") || s.equals("1");
+		boolean b = s.equalsIgnoreCase("true") || s.equals("1") || s.equalsIgnoreCase("on");
 		return b;
 	}
 
@@ -153,7 +153,7 @@ public class MyProperties extends Properties {
 	}
 	
 	public final Object setProperty(Object keyObj, Object valueObj) {
-		return setProperty(keyObj.toString(), valueObj.toString());
+		return super.setProperty(keyObj.toString(), valueObj.toString());
 	}
 
 	private String replaceVarWithSystemProperty(String original) {
@@ -166,8 +166,7 @@ public class MyProperties extends Properties {
 		if (sysProp == null)
 			return original;
 		bldr.replace(start, end + 1, sysProp);
-		String newValue = bldr.toString();
-		return newValue;
+		return bldr.toString();
 	}
 
 	@Override
