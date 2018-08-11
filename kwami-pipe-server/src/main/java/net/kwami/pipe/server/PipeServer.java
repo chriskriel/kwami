@@ -57,11 +57,11 @@ public final class PipeServer {
 	public PipeServer() throws Exception {
 		super();
 		ServerConfig config = Configurator.get(ServerConfig.class);
-		callableClass = loadCallableClass(config);
 		commandBuffer = ByteBuffer.allocate(config.getCommandBufferSize());
 		this.serverPort = config.getPort();
 		System.setProperty("pipe.server.port", String.valueOf(this.serverPort));
 		System.setProperty("pipe.server.host", RemoteEndpoint.getMachineAddress());
+		callableClass = loadCallableClass(config);
 		threadPoolExecutor = new MyThreadPoolExecutor(config.getCorePoolSize(), config.getMaxPoolSize(), config.getKeepAliveTime(),
 				TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
 		int i = 0;
