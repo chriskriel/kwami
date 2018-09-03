@@ -12,16 +12,23 @@ import com.google.gson.GsonBuilder;
 
 class CachedObject {
 
-	long expireTime;
+	long cachedTime;
 	Object object;
 
 	CachedObject(long refreshInterval, Object object) {
-		this.expireTime = System.currentTimeMillis() + refreshInterval;
+		cachedTime = System.currentTimeMillis();
 		this.object = object;
 	}
 
-	boolean hasExpired() {
-		return expireTime < System.currentTimeMillis();
+	final boolean hasExpired(long resfreshIntervalMs) {
+		long expireTime = cachedTime + resfreshIntervalMs;
+		if (expireTime < System.currentTimeMillis())
+			return true;
+		return false;
+	}
+	
+	final boolean needsRefresh(long lastModified) {
+		return lastModified > cachedTime;
 	}
 }
 
@@ -35,12 +42,14 @@ class CachedObject {
  */
 public abstract class Configurator {
 
-	private static final MyLogger logger = new MyLogger(Configurator.class);
-	private static final Map<String, CachedObject> cache = new ConcurrentHashMap<String, CachedObject>();
-	private static final long refreshInterval;
+	private static final MyLogger LOGGER = new MyLogger(Configurator.class);
+	private static final Map<String, CachedObject> CACHE = new ConcurrentHashMap<String, CachedObject>();
+	private static final long LIFETIME_MILLIS;
+	private static final String CONFIG_FILE_TYPE;
 
 	static {
-		refreshInterval = Long.parseLong(System.getProperty("config.caching.mins", "2")) * 60000;
+		LIFETIME_MILLIS = Long.parseLong(System.getProperty("config.caching.mins", "2")) * 60000;
+		CONFIG_FILE_TYPE = System.getProperty("config.default.file.type", "js");
 	}
 
 	/*
@@ -54,7 +63,7 @@ public abstract class Configurator {
 	 * 
 	 * @return an object of the specified class is returned
 	 */
-	public static <T> T get(Class<T> classT) {
+	public final static <T> T get(Class<T> classT) {
 		return get(classT, true);
 	}
 
@@ -70,32 +79,31 @@ public abstract class Configurator {
 	 * 
 	 * @return an object of the specified class is returned
 	 */
-	public static <T> T get(Class<T> classT, String resourceName) {
+	public final static <T> T get(Class<T> classT, String resourceName) {
 		return get(classT, resourceName, true);
 	}
 
 	/*
-	 * Create an object of the specified class from a JSON file. If caching is required 
-	 * and the object has already been cached, return it from the cache.
+	 * Create an object of the specified class from a JSON file. If caching is
+	 * required and the object has already been cached, return it from the cache.
 	 * 
 	 * @param classT the Class of the object to be created. The simple name of this
 	 * class with a suffix of .js is used as the filename of the JSON file. The file
 	 * must be available on the classpath.
 	 * 
-	 * @param useCache If false a new object is created and not cached. The
-	 * default is true.
+	 * @param useCache If false a new object is created and not cached. The default
+	 * is true.
 	 * 
 	 * @return an object of the specified class is returned
 	 */
-	public static <T> T get(Class<T> classT, boolean useCache) {
-		String resourceName = String.format("/%s.js", classT.getSimpleName());
+	public final static <T> T get(Class<T> classT, boolean useCache) {
+		String resourceName = String.format("/%s.%s", classT.getSimpleName(), CONFIG_FILE_TYPE);
 		return get(classT, resourceName, useCache);
 	}
 
-
 	/*
-	 * Create an object of the specified class from a JSON file. If caching is required 
-	 * and the object has already been cached, return it from the cache.
+	 * Create an object of the specified class from a JSON file. If caching is
+	 * required and the object has already been cached, return it from the cache.
 	 * 
 	 * @param classT the Class of the object to be created. The simple name of this
 	 * class with a suffix of .js is used as the filename of the JSON file. The file
@@ -104,57 +112,68 @@ public abstract class Configurator {
 	 * @param resourceName The name of the JSON file from which the object will get
 	 * its values. The file must be available on the classpath.
 	 * 
-	 * @param useCache If false a new object is created and not cached. The
-	 * default is true.
+	 * @param useCache If false a new object is created and not cached. The default
+	 * is true.
 	 * 
 	 * @return an object of the specified class is returned
 	 */
-	public static <T> T get(Class<T> classT, String resourceName, boolean useCache) {
-		URL url = classT.getResource(resourceName);
-		T t = null;
-		if (useCache && (t = getCachedObject(resourceName, url)) != null)
+	public final static <T> T get(Class<T> classT, String resourceName, boolean useCache) {
+		T t = getCachedObject(useCache, classT, resourceName);
+		if (t != null) {
 			return t;
+		}
 		synchronized (classT) {
-			if (useCache && (t = getCachedObject(resourceName, url)) != null)
+			t = getCachedObject(useCache, classT, resourceName);
+			if (t != null)
 				return t;
+			LOGGER.info("Loading %s from resource %s", classT.getName(), resourceName);
 			try (InputStream is = classT.getResourceAsStream(resourceName)) {
-				logger.debug("resource=%s", resourceName);
 				InputStreamReader rdr = new InputStreamReader(is);
 				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 				t = gson.fromJson(rdr, classT);
-			} catch (Exception e) {
-				logger.error(e, "error processing %s", resourceName);
+			} catch (Throwable e) {
+				String err = String.format("%s: error processing %s", e.toString(), resourceName);
+				LOGGER.error(err);
+				System.err.println(err);
 				throw new RuntimeException(e);
 			}
 			if (t != null) {
 				if (useCache) {
-					cache.put(resourceName, new CachedObject(refreshInterval, t));
+					CACHE.put(classT.getName(), new CachedObject(LIFETIME_MILLIS, t));
 				}
 			} else {
-				logger.error("could not create %s from %s", classT.getSimpleName(), resourceName);
+				String err = String.format("could not create %s from %s", classT.getName(), resourceName);
+				LOGGER.error(err);
+				System.err.println(err);
+				throw new RuntimeException(err);
 			}
 			return t;
 		}
 	}
 
-	public static String toJson(Object obj) {
+	public final static String toJson(Object obj) {
 		return new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create().toJson(obj);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T getCachedObject(String simpleName, URL url) {
-		CachedObject cachedEntity = cache.get(simpleName);
-		if (cachedEntity == null) {
+	private static <T> T getCachedObject(boolean useCache, Class<T> classT, String resourceName) {
+		if (!useCache)
+			return null;
+		String key = classT.getName();
+		CachedObject cachedObject = CACHE.get(key);
+		if (cachedObject == null) {
 			return null;
 		}
-		if (!cachedEntity.hasExpired()) {
-			return (T) cachedEntity.object;
+		if (!cachedObject.hasExpired(LIFETIME_MILLIS)) {
+			return (T) cachedObject.object;
 		}
+		// CachedObject has expired, check if it changed on File System
+		URL url = classT.getResource(resourceName);
 		File f = new File(url.getFile());
-		if (f.lastModified() < cachedEntity.expireTime - refreshInterval) {
-			cache.put(simpleName, new CachedObject(refreshInterval, cachedEntity.object));
-			return (T) cachedEntity.object;
-		}
-		return null;
+		if (cachedObject.needsRefresh(f.lastModified()))
+			return null;
+		// re-cache the object with a new lease on life
+		CACHE.put(key, new CachedObject(LIFETIME_MILLIS, cachedObject.object));
+		return (T) cachedObject.object;
 	}
 }

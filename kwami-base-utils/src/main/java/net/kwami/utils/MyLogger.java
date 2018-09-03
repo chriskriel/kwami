@@ -21,14 +21,14 @@ public class MyLogger {
 		logger = Logger.getLogger(name);
 	}
 
-	public final void info(final String message) {
+	public final void info(final Object message) {
 		if (logger.isInfoEnabled())
-			logger.log(FQCN, Level.INFO, message, null);
+			logger.log(FQCN, Level.INFO, message.toString(), null);
 	}
 
-	public final void info(final Throwable t, final String message) {
+	public final void info(final Throwable t, final Object message) {
 		if (logger.isInfoEnabled())
-			logger.log(FQCN, Level.INFO, message, t);
+			logger.log(FQCN, Level.INFO, message.toString(), t);
 	}
 
 	public final void info(final String format, final Object... args) {
@@ -39,7 +39,7 @@ public class MyLogger {
 		logger.log(FQCN, Level.INFO, String.format(format, args), null);
 	}
 
-	private final boolean handledSwappedArgs(final Level level, final String format, final Object... args) {
+	private boolean handledSwappedArgs(final Level level, final String format, final Object... args) {
 		if (!(args[args.length - 1] instanceof Throwable))
 			return false;
 		if (args.length == 1) {
@@ -57,9 +57,9 @@ public class MyLogger {
 			logger.log(FQCN, Level.INFO, String.format(format, args), t);
 	}
 
-	public final void warn(final String message) {
+	public final void warn(final Object message) {
 		if (logger.isInfoEnabled())
-			logger.log(FQCN, Level.WARN, message, null);
+			logger.log(FQCN, Level.WARN, message.toString(), null);
 	}
 
 	public final void warn(final String format, final Object... args) {
@@ -70,14 +70,14 @@ public class MyLogger {
 		logger.log(FQCN, Level.WARN, String.format(format, args), null);
 	}
 
-	public final void debug(final String message) {
+	public final void debug(final Object message) {
 		if (logger.isDebugEnabled())
-			logger.log(FQCN, Level.DEBUG, message, null);
+			logger.log(FQCN, Level.DEBUG, message.toString(), null);
 	}
 
-	public final void debug(final Throwable t, final String message) {
+	public final void debug(final Throwable t, final Object message) {
 		if (logger.isDebugEnabled())
-			logger.log(FQCN, Level.DEBUG, message, t);
+			logger.log(FQCN, Level.DEBUG, message.toString(), t);
 	}
 
 	public final void debug(final String format, final Object... args) {
@@ -93,14 +93,22 @@ public class MyLogger {
 			logger.log(FQCN, Level.DEBUG, String.format(format, args), t);
 	}
 
-	public final void trace(final String message) {
-		if (logger.isTraceEnabled())
-			logger.log(FQCN, Level.TRACE, message, null);
+	public final void trace(final String heading, final byte[] data, final int length) {
+		if (!logger.isTraceEnabled())
+			return;
+		HexDumper hexDumper = new HexDumper();
+		String message = String.format("%s:(length=%d)\n%s", heading, length, hexDumper.buildHexDump(data, length));
+		logger.log(FQCN, Level.TRACE, message, null);
 	}
 
-	public final void trace(final Throwable t, final String message) {
+	public final void trace(final Object message) {
 		if (logger.isTraceEnabled())
-			logger.log(FQCN, Level.TRACE, message, t);
+			logger.log(FQCN, Level.TRACE, message.toString(), null);
+	}
+
+	public final void trace(final Throwable t, final Object message) {
+		if (logger.isTraceEnabled())
+			logger.log(FQCN, Level.TRACE, message.toString(), t);
 	}
 
 	public final void trace(final String format, final Object... args) {
@@ -116,12 +124,16 @@ public class MyLogger {
 			logger.log(FQCN, Level.TRACE, String.format(format, args), t);
 	}
 
-	public final void error(final String message) {
-		logger.log(FQCN, Level.ERROR, message, null);
+	public final void error(final Object message) {
+		logger.log(FQCN, Level.ERROR, message.toString(), null);
 	}
 
-	public final void error(final Throwable t, final String message) {
-		logger.log(FQCN, Level.ERROR, message, t);
+	public final void error(final Throwable t) {
+		error(t, t.toString());
+	}
+
+	public final void error(final Throwable t, final Object message) {
+		logger.log(FQCN, Level.ERROR, message.toString(), t);
 	}
 
 	public final void error(final String format, final Object... args) {

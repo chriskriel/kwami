@@ -1,1 +1,0 @@
-http://ppfe.vodacomtz.corp:10080/vtl-acs-web/wasp?msisdn=255767954443&type=1&sessionid=1&&msg=*150*200*20%23

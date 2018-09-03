@@ -1,16 +1,12 @@
 package net.kwami.pathsend;
 
-import net.kwami.utils.Configurator;
 import net.kwami.utils.HexDumper;
-import net.kwami.utils.ParameterBuffer;
 
 public final class Tester {
 
 	public static void main(String[] args) throws Exception {
 		HexDumper dumper = new HexDumper();
-		PathwayClient client = Configurator.get(PathwayClient.class);
-		System.out.println(client.toString());
-		ParameterBuffer parmBuf = new ParameterBuffer((short)99);
+		ParameterBuffer parmBuf = new ParameterBuffer(99);
 		parmBuf.addParameter("byte-max", Byte.MAX_VALUE);
 		parmBuf.addParameter("short-max", Short.MAX_VALUE);
 		parmBuf.addParameter("int-max", Integer.MAX_VALUE);
@@ -31,7 +27,7 @@ public final class Tester {
 		parmBuf.addParameter("string6", "bbbbbbbbbbbbBBBBBBBccccccvalue", true);
 		parmBuf.addParameter("USSD_STRING", "*909#", true);
 		System.out.println(parmBuf.getStringValue("USSD_STRING"));
-		byte[] payload = parmBuf.toByteArray();
+		byte[] payload = parmBuf.array();
 		StringBuilder sb = dumper.buildHexDump(payload);
 		System.out.println(sb.toString());
 		parmBuf = ParameterBuffer.wrap(payload);
