@@ -98,7 +98,7 @@
             <dependency>
                 <groupId>net.kwami</groupId>
                 <artifactId>kwami-base-utils</artifactId>
-                <version>18</version>
+                <version>20</version>
             </dependency>
             <dependency>
                 <groupId>org.mybatis</groupId>
