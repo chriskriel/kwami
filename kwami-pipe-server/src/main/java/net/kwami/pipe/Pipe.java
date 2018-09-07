@@ -44,7 +44,7 @@ public abstract class Pipe implements AutoCloseable {
 		readBuffer.limit(12);
 		readFully();
 		long id = readBuffer.getLong(0);
-		int mlen = readBuffer.getInt(Long.BYTES);
+		int mlen = readBuffer.getInt(Long.SIZE / Byte.SIZE);
 		readBuffer.clear();
 		readBuffer.limit(mlen);
 		readFully();

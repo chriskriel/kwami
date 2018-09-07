@@ -156,6 +156,10 @@ public class MyProperties extends Properties {
 		return super.setProperty(keyObj.toString(), valueObj.toString());
 	}
 
+	public final String removeProperty(Object keyObj) {
+		return (String) remove(keyObj.toString());
+	}
+	
 	private String replaceVarWithSystemProperty(String original) {
 		StringBuilder bldr = new StringBuilder(original);
 		int start = bldr.indexOf("${");

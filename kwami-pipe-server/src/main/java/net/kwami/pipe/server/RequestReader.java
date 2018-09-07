@@ -6,7 +6,6 @@ import java.util.concurrent.RejectedExecutionException;
 import net.kwami.pipe.FifoPipe;
 import net.kwami.pipe.Message;
 import net.kwami.pipe.Pipe;
-import net.kwami.utils.Configurator;
 import net.kwami.utils.MyLogger;
 
 public class RequestReader extends ManagedThread {
