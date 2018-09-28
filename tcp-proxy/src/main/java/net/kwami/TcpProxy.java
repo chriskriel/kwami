@@ -1,5 +1,7 @@
 package net.kwami;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -35,7 +37,8 @@ public class TcpProxy extends Thread {
 						final InputStream streamFromClient = localSocket.getInputStream();
 						final OutputStream streamToServer = remoteServer.getOutputStream();
 						final InputStream streamFromServer = remoteServer.getInputStream();
-						final OutputStream streamToClient = localSocket.getOutputStream()) {
+						final OutputStream streamToClient = localSocket.getOutputStream();
+						final OutputStream streamToFile = new FileOutputStream(new File("capture-" + proxyChannel))) {
 					Thread sendingThread = new Thread() {
 						public void run() {
 							HexDumper hexDumper = new HexDumper();
@@ -52,10 +55,6 @@ public class TcpProxy extends Thread {
 								streamToServer.flush();
 							} catch (IOException e) {
 							}
-							try {
-								streamToServer.close();
-							} catch (IOException e) {
-							}
 						}
 					};
 					sendingThread.setDaemon(true);
@@ -65,6 +64,7 @@ public class TcpProxy extends Thread {
 					try {
 						while ((bytesRead = streamFromServer.read(response)) != -1) {
 							streamToClient.write(response, 0, bytesRead);
+							streamToFile.write(request, 0, bytesRead);
 							synchronized (System.out) {
 								System.out.println(Thread.currentThread().getName());
 								System.out.println(hexDumper.buildHexDump(response, bytesRead));
@@ -72,9 +72,9 @@ public class TcpProxy extends Thread {
 							}
 						}
 						streamToClient.flush();
+						streamToFile.flush();
 					} catch (IOException e) {
 					}
-					streamToClient.close();
 				} catch (IOException e) {
 					System.err.print("Streams to and from proxy failed\n ");
 					e.printStackTrace();

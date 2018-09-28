@@ -140,14 +140,14 @@
 
 	<distributionManagement>
 		<snapshotRepository>
-			<id>BCX-Vodacom</id>
-			<name>BCX-Vodacom-snapshots</name>
-			<url>http://mvnrepo:8080/artifactory/libs-snapshot-local</url>
+			<id>VSA</id>
+			<name>VSA-snapshots</name>
+			<url>http://pamsdev:8081/artifactory/libs-snapshot-local</url>
 		</snapshotRepository>
 		<repository>
-			<id>BCX-Vodacom</id>
-			<name>BCX-Vodacom-releases</name>
-			<url>http://mvnrepo:8080/artifactory/libs-release-local</url>
+			<id>VSA</id>
+			<name>VSA-releases</name>
+			<url>http://pamsdev:8081/artifactory/libs-release-local</url>
 		</repository>
 	</distributionManagement>
 </project>
