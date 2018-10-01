@@ -35,4 +35,5 @@ nbactions.xml
 work
 fifo
 *.pid
+dependency-reduced-pom.xml
 
