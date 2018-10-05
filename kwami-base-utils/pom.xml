@@ -10,11 +10,11 @@
     <version>22</version>
     <packaging>jar</packaging>
 
-    <parent>
-        <groupId>net.kwami</groupId>
-        <artifactId>kwami-parent</artifactId>
-        <version>2</version>
-    </parent>
+	<parent>
+		<groupId>zacobcx</groupId>
+		<artifactId>root-parent</artifactId>
+		<version>1</version>
+	</parent>
 
     <dependencies>
         <dependency>

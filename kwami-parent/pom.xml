@@ -39,16 +39,40 @@
 		<dependencies>
 			<dependency>
 				<groupId>net.kwami</groupId>
-				<artifactId>kwami-base-utils</artifactId>
-				<version>22</version>
-			</dependency>
-			<dependency>
-				<groupId>net.kwami</groupId>
 				<artifactId>kwami-pathsend-utils</artifactId>
 				<version>4</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+
+    <profiles>
+        <profile>
+            <id>jdk7</id>
+            <dependencies>
+                <dependency>
+                    <groupId>net.kwami</groupId>
+                    <artifactId>kwami-base-utils</artifactId>
+                    <version>22</version>
+                    <classifier>jdk7</classifier>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>voms</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>net.kwami</groupId>
+                    <artifactId>kwami-base-utils</artifactId>
+                    <version>22</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
 	<distributionManagement>
 		<snapshotRepository>
