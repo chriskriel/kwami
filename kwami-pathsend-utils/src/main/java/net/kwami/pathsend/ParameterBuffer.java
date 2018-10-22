@@ -15,6 +15,7 @@ public final class ParameterBuffer {
 	private static final int LEN2_OFFSET = 6;
 	private static final int MSG_ID_OFFSET = 8;
 	private static final byte TERMINATOR = 0;
+	private static final int MAX_NAME = 512;
 	private int size = Short.MAX_VALUE / 16;
 	private ByteBuffer bb = null;
 	private Map<String, Integer> keys = null;
@@ -214,7 +215,7 @@ public final class ParameterBuffer {
 			me.keys = new HashMap<String, Integer>();
 		me.keys.clear();
 		int length = me.bb.getShort(LEN1_OFFSET) + HDR_LEN;
-		byte[] nameBytes = new byte[64];
+		byte[] nameBytes = new byte[MAX_NAME];
 		int j = 0, i = HDR_LEN;
 		for (; i < length; i++) {
 			byte b = me.bb.get(i);
@@ -223,7 +224,7 @@ public final class ParameterBuffer {
 				continue;
 			}
 			me.keys.put((new String(nameBytes)).trim(), ++i);
-			nameBytes = new byte[64];
+			nameBytes = new byte[MAX_NAME];
 			j = 0;
 			i += me.bb.getShort(i) + 1;
 		}
