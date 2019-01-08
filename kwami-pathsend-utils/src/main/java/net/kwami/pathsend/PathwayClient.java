@@ -53,7 +53,7 @@ public final class PathwayClient {
 					receiveBuffer.length);
 			throw new Exception(errorMsg);
 		}
-		logger.trace("responseBytes:", receiveBuffer, responseLength);
+		logger.trace("responseBytes", receiveBuffer, responseLength);
 		latency = System.currentTimeMillis() - startTime;
 		ParameterBuffer respBuf = ParameterBuffer.wrap(receiveBuffer, 0, responseLength);
 		if (latency > latencyThresholdMillis)
