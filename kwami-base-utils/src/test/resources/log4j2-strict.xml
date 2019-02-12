@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ns:Configuration
+	xmlns:ns="http://logging.apache.org/log4j/2.0/config"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://logging.apache.org/log4j/2.0/config log4j2-config.xsd"
+	strict="true">
+	<ns:Properties>
+		<ns:Property name="name1">string</ns:Property>
+	</ns:Properties>
+	<ns:Appenders>
+		<ns:Appender type="RollingFile" name="FILE" fileName="string" filePattern="" />
+		<ns:Appender type="string" name="string" />
+	</ns:Appenders>
+	<ns:Loggers>
+		<ns:Logger name="string" level="string" additivity="false">
+			<ns:AppenderRef ref="string">string</ns:AppenderRef>
+		</ns:Logger>
+		<ns:Root>
+			<ns:AppenderRef ref="string">string</ns:AppenderRef>
+		</ns:Root>
+	</ns:Loggers>
+</ns:Configuration>
