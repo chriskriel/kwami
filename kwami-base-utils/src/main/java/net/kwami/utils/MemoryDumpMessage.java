@@ -26,9 +26,10 @@ public class MemoryDumpMessage implements Message {
 		this.length = length;
 		this.hexPerLine = hexPerLine;
 	}
+	
 	@Override
 	public String getFormat() {
-		return "";
+		return null;
 	}
 
 	@Override
@@ -40,12 +41,17 @@ public class MemoryDumpMessage implements Message {
 
 	@Override
 	public Object[] getParameters() {
-		return new Object[] { new Integer(length) };
+		return null;
 	}
 
 	@Override
 	public Throwable getThrowable() {
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		return getFormattedMessage();
 	}
 
 }

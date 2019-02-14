@@ -25,7 +25,7 @@ public class JsonMessage implements Message {
 
 	@Override
 	public String getFormat() {
-		return "JSON";
+		return null;
 	}
 
 	@Override
@@ -37,12 +37,17 @@ public class JsonMessage implements Message {
 
 	@Override
 	public Object[] getParameters() {
-		return new Object[] { obj };
+		return null;
 	}
 
 	@Override
 	public Throwable getThrowable() {
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		return getFormattedMessage();
 	}
 
 }

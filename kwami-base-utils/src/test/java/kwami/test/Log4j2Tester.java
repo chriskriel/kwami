@@ -1,15 +1,17 @@
 package kwami.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.MarkerManager;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.message.StringFormattedMessage;
 import org.apache.logging.log4j.message.ThreadDumpMessage;
 import org.junit.Test;
 
+import net.kwami.utils.JsonMessage;
 import net.kwami.utils.MemoryDumpMessage;
 import net.kwami.utils.MyLogger;
 
@@ -29,16 +31,17 @@ public class Log4j2Tester {
 	private String x(int one, int two) {
 		logger.traceEntry("{}, {}", one, two);
 		logger.printf(Level.DEBUG, "%d + %d = %d", one, two, one + two);
-		logger.debug(new ParameterizedMessage("one={},two={}", one, two));
-		logger.debug(new StringFormattedMessage("one=%d,two=%d", one, two));
-		logger.trace(new ThreadDumpMessage("Here"));
+		logger.debug(new ParameterizedMessage("ParameterizedMessage: one={},two={}", one, two));
+		logger.debug(new StringFormattedMessage("StringFormattedMessage: one=%d,two=%d", one, two));
+		logger.trace(MarkerManager.getMarker("STACK"), new ThreadDumpMessage("ThreadDumpMessage"));
 		String garbage = "";
 		for (int i = 0; i < 20; i++) {
 			garbage += this.getClass().getName();
 		}
-		logger.debug(new MemoryDumpMessage("Class Name", garbage.getBytes()));
+		logger.debug(MarkerManager.getMarker("DUMP"), new MemoryDumpMessage("MemoryDumpMessage", garbage.getBytes()));
+		logger.debug(MarkerManager.getMarker("JSON"), new JsonMessage(garbage.getBytes()));
 		assertEquals(true, true);
-		return logger.traceExit("return value");
+		return logger.traceExit("Good bye!");
 	}
 
 }
