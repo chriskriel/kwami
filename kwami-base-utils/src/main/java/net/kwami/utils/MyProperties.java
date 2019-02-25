@@ -55,7 +55,8 @@ public class MyProperties extends Properties {
 		if (s == null)
 			return defaultValue;
 		s = s.trim();
-		boolean b = s.equalsIgnoreCase("true") || s.equals("1") || s.equalsIgnoreCase("on");
+		boolean b = s.equalsIgnoreCase("yes") || s.equalsIgnoreCase("true") || s.equals("1")
+				|| s.equalsIgnoreCase("on");
 		return b;
 	}
 
@@ -122,7 +123,7 @@ public class MyProperties extends Properties {
 		}
 		return defaultValue;
 	}
-	
+
 	public final String getProperty(Object keyObj) {
 		return getProperty(keyObj.toString());
 	}
@@ -151,7 +152,7 @@ public class MyProperties extends Properties {
 		LOGGER.debug("key=%s,original='%s',new='%s'", key, original, newValue);
 		return newValue;
 	}
-	
+
 	public final Object setProperty(Object keyObj, Object valueObj) {
 		return super.setProperty(keyObj.toString(), valueObj.toString());
 	}
@@ -159,7 +160,7 @@ public class MyProperties extends Properties {
 	public final String removeProperty(Object keyObj) {
 		return (String) remove(keyObj.toString());
 	}
-	
+
 	private String replaceVarWithSystemProperty(String original) {
 		StringBuilder bldr = new StringBuilder(original);
 		int start = bldr.indexOf("${");

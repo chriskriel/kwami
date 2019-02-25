@@ -50,9 +50,7 @@ public class JsonMessage implements Message {
 
 	@Override
 	public String getFormattedMessage() {
-		if (prettyFormat)
-			return GSON_PRETTY.toJson(obj);
-		return GSON.toJson(obj);
+		return toString();
 	}
 
 	@Override
@@ -67,7 +65,9 @@ public class JsonMessage implements Message {
 
 	@Override
 	public String toString() {
-		return getFormattedMessage();
+		if (prettyFormat)
+			return GSON_PRETTY.toJson(obj);
+		return GSON.toJson(obj);		
 	}
 	
 	@SuppressWarnings("unchecked")
