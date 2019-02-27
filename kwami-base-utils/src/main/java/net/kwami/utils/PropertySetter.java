@@ -6,7 +6,7 @@ import java.util.Properties;
 public abstract class PropertySetter {
 	private static final MyLogger LOGGER = new MyLogger(PropertySetter.class);
 	
-	public static final void set(Object obj, Properties props) {
+	public static final void set(final Object obj, final Properties props) {
 		for (String key : props.stringPropertyNames()) {
 			LOGGER.trace("setting property '%s'", key);
 			String value = props.getProperty(key);
@@ -37,7 +37,7 @@ public abstract class PropertySetter {
 		}
 	}
 	
-	private static Method findMethod(Object obj, String methodName) throws Exception {
+	private static Method findMethod(final Object obj, final String methodName) throws Exception {
 		Method[] methods = obj.getClass().getMethods();
 		for (Method m : methods) {
 			if (methodName.equals(m.getName()))

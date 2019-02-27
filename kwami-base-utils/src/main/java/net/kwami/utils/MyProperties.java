@@ -25,7 +25,7 @@ public class MyProperties extends Properties {
 	 * @return an object of the same class as the default value passed in
 	 */
 	@SuppressWarnings("unchecked")
-	public final <T> T getJsonProperty(Object key, T defaultValue) {
+	public final <T> T getJsonProperty(final Object key, final T defaultValue) {
 		String s = getProperty(key.toString());
 		if (s == null)
 			return defaultValue;
@@ -42,15 +42,15 @@ public class MyProperties extends Properties {
 	 * 
 	 * @return an object of the same class as the default value passed in
 	 */
-	public final <T> void setJsonProperty(Object key, T value) {
+	public final <T> void setJsonProperty(final Object key, final T value) {
 		setProperty(key.toString(), new GsonBuilder().create().toJson(value));
 	}
 
-	public final void setBooleanProperty(Object key, boolean value) {
+	public final void setBooleanProperty(final Object key, final boolean value) {
 		setProperty(key.toString(), String.valueOf(value));
 	}
 
-	public final boolean getBooleanProperty(Object key, boolean defaultValue) {
+	public final boolean getBooleanProperty(final Object key, final boolean defaultValue) {
 		String s = getProperty(key.toString());
 		if (s == null)
 			return defaultValue;
@@ -60,11 +60,11 @@ public class MyProperties extends Properties {
 		return b;
 	}
 
-	public final void setByteProperty(Object key, byte value) {
+	public final void setByteProperty(final Object key, final byte value) {
 		setProperty(key.toString(), String.valueOf(value));
 	}
 
-	public final byte getByteProperty(Object key, byte defaultValue) {
+	public final byte getByteProperty(final Object key, final byte defaultValue) {
 		String s = getProperty(key.toString());
 		if (s == null)
 			return defaultValue;
@@ -80,7 +80,7 @@ public class MyProperties extends Properties {
 		setProperty(key.toString(), String.valueOf(value));
 	}
 
-	public final short getShortProperty(Object key, short defaultValue) {
+	public final short getShortProperty(final Object key, final short defaultValue) {
 		String s = getProperty(key.toString());
 		if (s == null)
 			return defaultValue;
@@ -92,11 +92,11 @@ public class MyProperties extends Properties {
 		return defaultValue;
 	}
 
-	public final void setIntProperty(Object key, int value) {
+	public final void setIntProperty(final Object key, final int value) {
 		setProperty(key.toString(), String.valueOf(value));
 	}
 
-	public final int getIntProperty(Object key, int defaultValue) {
+	public final int getIntProperty(final Object key, final int defaultValue) {
 		String s = getProperty(key.toString());
 		if (s == null)
 			return defaultValue;
@@ -108,7 +108,7 @@ public class MyProperties extends Properties {
 		return defaultValue;
 	}
 
-	public final void setLongProperty(Object key, long value) {
+	public final void setLongProperty(final Object key, final long value) {
 		setProperty(key.toString(), String.valueOf(value));
 	}
 
@@ -124,21 +124,21 @@ public class MyProperties extends Properties {
 		return defaultValue;
 	}
 
-	public final String getProperty(Object keyObj) {
+	public final String getProperty(final Object keyObj) {
 		return getProperty(keyObj.toString());
 	}
 
 	@Override
-	public final String getProperty(String key) {
+	public final String getProperty(final String key) {
 		return this.getProperty(key, null);
 	}
 
-	public final String getProperty(Object keyObj, String defaultValue) {
+	public final String getProperty(final Object keyObj, final String defaultValue) {
 		return getProperty(keyObj.toString(), defaultValue);
 	}
 
 	@Override
-	public final String getProperty(String key, String defaultValue) {
+	public final String getProperty(final String key, final String defaultValue) {
 		String original;
 		if (defaultValue == null)
 			original = super.getProperty(key);
@@ -153,15 +153,15 @@ public class MyProperties extends Properties {
 		return newValue;
 	}
 
-	public final Object setProperty(Object keyObj, Object valueObj) {
+	public final Object setProperty(final Object keyObj, final Object valueObj) {
 		return super.setProperty(keyObj.toString(), valueObj.toString());
 	}
 
-	public final String removeProperty(Object keyObj) {
+	public final String removeProperty(final Object keyObj) {
 		return (String) remove(keyObj.toString());
 	}
 
-	private String replaceVarWithSystemProperty(String original) {
+	private String replaceVarWithSystemProperty(final String original) {
 		StringBuilder bldr = new StringBuilder(original);
 		int start = bldr.indexOf("${");
 		int end = bldr.indexOf("}", start + 2);

@@ -13,11 +13,11 @@ public class MyLogger {
 	private static final String FQCN = MyLogger.class.getName();
 	private final Logger logger;
 
-	public MyLogger(Class<?> clazz) {
+	public MyLogger(final Class<?> clazz) {
 		logger = Logger.getLogger(clazz);
 	}
 
-	public MyLogger(String name) {
+	public MyLogger(final String name) {
 		logger = Logger.getLogger(name);
 	}
 

@@ -63,7 +63,7 @@ public abstract class Configurator {
 	 * 
 	 * @return an object of the specified class is returned
 	 */
-	public final static <T> T get(Class<T> classT) {
+	public final static <T> T get(final Class<T> classT) {
 		return get(classT, true);
 	}
 
@@ -79,7 +79,7 @@ public abstract class Configurator {
 	 * 
 	 * @return an object of the specified class is returned
 	 */
-	public final static <T> T get(Class<T> classT, String resourceName) {
+	public final static <T> T get(final Class<T> classT, final String resourceName) {
 		return get(classT, resourceName, true);
 	}
 
@@ -96,7 +96,7 @@ public abstract class Configurator {
 	 * 
 	 * @return an object of the specified class is returned
 	 */
-	public final static <T> T get(Class<T> classT, boolean useCache) {
+	public final static <T> T get(final Class<T> classT, final boolean useCache) {
 		String resourceName = String.format("/%s.%s", classT.getSimpleName(), CONFIG_FILE_TYPE);
 		return get(classT, resourceName, useCache);
 	}
@@ -117,7 +117,7 @@ public abstract class Configurator {
 	 * 
 	 * @return an object of the specified class is returned
 	 */
-	public final static <T> T get(Class<T> classT, String resourceName, boolean useCache) {
+	public final static <T> T get(final Class<T> classT, final String resourceName, final boolean useCache) {
 		T t = getCachedObject(useCache, classT, resourceName);
 		if (t != null) {
 			return t;
@@ -151,12 +151,12 @@ public abstract class Configurator {
 		}
 	}
 
-	public final static String toJson(Object obj) {
+	public final static String toJson(final Object obj) {
 		return new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create().toJson(obj);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T getCachedObject(boolean useCache, Class<T> classT, String resourceName) {
+	private static <T> T getCachedObject(final boolean useCache, final Class<T> classT, final String resourceName) {
 		if (!useCache)
 			return null;
 		String key = classT.getName();

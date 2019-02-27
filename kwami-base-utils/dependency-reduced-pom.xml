@@ -26,6 +26,15 @@
                 <goals>
                   <goal>shade</goal>
                 </goals>
+                <configuration>
+                  <transformers>
+                    <transformer>
+                      <manifestEntries>
+                        <Multi-Release>true</Multi-Release>
+                      </manifestEntries>
+                    </transformer>
+                  </transformers>
+                </configuration>
               </execution>
             </executions>
           </plugin>

@@ -8,16 +8,16 @@ public final class HexDumper {
 		super();
 	}
 	
-	public HexDumper(int hexPerLine) {
+	public HexDumper(final int hexPerLine) {
 		super();
 		this.hexPerLine = hexPerLine;
 	}
 
-	public final StringBuilder buildHexDump(byte[] bytes) {
+	public final StringBuilder buildHexDump(final byte[] bytes) {
 		return buildHexDump(bytes, bytes.length);
 	}
 
-	public final StringBuilder buildHexDump(byte[] inBytes, int length) {
+	public final StringBuilder buildHexDump(final byte[] inBytes, final int length) {
 		byte[] bytes = new byte[length];
 		System.arraycopy(inBytes, 0, bytes, 0, length);
 		StringBuilder sb = new StringBuilder((length == 0 ? 20 : length) * 2);
@@ -60,7 +60,7 @@ public final class HexDumper {
 		return sb;
 	}
 
-	private final void translateToHex(StringBuilder sb, byte b) {
+	private final void translateToHex(final StringBuilder sb, final byte b) {
 		int byteValue = b;
 		int leftDigit = byteValue & 0x000000F0;
 		leftDigit >>= 4;
@@ -69,7 +69,7 @@ public final class HexDumper {
 		sb.append(HEX.charAt(rightDigit));
 	}
 
-	private final String removeNonPrintable(byte[] bytes, int offset, int length) {
+	private final String removeNonPrintable(final byte[] bytes, final int offset, final int length) {
 		if (bytes.length == 0)
 			return "";
 		for (int i = offset; i < (offset + length); i++) {
