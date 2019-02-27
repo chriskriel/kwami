@@ -2,13 +2,15 @@ package net.kwami.pipe.test;
 
 import java.net.InetAddress;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.kwami.pipe.RemoteEndpoint;
 import net.kwami.pipe.client.PipeClient;
 import net.kwami.pipe.client.TimeoutException;
-import net.kwami.utils.MyLogger;
 
 public class ThreadedClientTester extends Thread {
-	private static final MyLogger logger = new MyLogger(ThreadedClientTester.class);
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	static class MessageSenderThread extends Thread {
 		int pipeNo;
@@ -26,14 +28,14 @@ public class ThreadedClientTester extends Thread {
 		}
 
 		public void run() {
-			logger.info("starting");
+			LOGGER.info("starting");
 			String threadName = String.format("%s-%s", pipeNo, threadNum);
 			Thread.currentThread().setName(threadName);
 			for (int i = 0; i < 5000; i++) {
 				try {
 					sendRequest(client, threadName, i);
 				} catch (TimeoutException e) {
-					logger.info("On %s: %s", threadName, e.toString());
+					LOGGER.info("On {}: {}", threadName, e.toString());
 					continue;
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -46,7 +48,7 @@ public class ThreadedClientTester extends Thread {
 			String request = threadName + " request-" + i;
 			String s = client.sendRequest(request, 100);
 			long latency = System.currentTimeMillis() - start;
-			logger.info("%s received after %dms: '%s' for %s", threadName, latency, s, request);
+			LOGGER.info("{} received after {}ms: '{}' for {}", threadName, latency, s, request);
 
 		}
 	}
@@ -81,7 +83,7 @@ public class ThreadedClientTester extends Thread {
 		for (int i = 0; i < threads.length; i++) {
 			threads[i].join();
 		}
-		logger.info("D O N E ! (timing %dms)", System.currentTimeMillis() - start);
+		LOGGER.info("D O N E ! (timing {}ms)", System.currentTimeMillis() - start);
 	}
 
 	@Override

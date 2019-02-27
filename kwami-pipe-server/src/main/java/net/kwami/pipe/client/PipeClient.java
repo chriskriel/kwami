@@ -9,6 +9,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.kwami.pipe.FifoPipe;
 import net.kwami.pipe.Message;
 import net.kwami.pipe.Message.Status;
@@ -18,11 +21,10 @@ import net.kwami.pipe.TcpPipe;
 import net.kwami.pipe.server.Command;
 import net.kwami.pipe.server.Command.Cmd;
 import net.kwami.utils.Configurator;
-import net.kwami.utils.MyLogger;
 import net.kwami.utils.MyProperties;
 
 public class PipeClient implements AutoCloseable {
-	private static final MyLogger LOGGER = new MyLogger(PipeClient.class);
+	private static final Logger LOGGER = LogManager.getLogger();
 	public final AtomicLong nextMsgId = new AtomicLong();
 	private final BlockingQueue<Long> transmitQueue;
 	private final ConcurrentMap<Long, Message> outstandingRequests = new ConcurrentHashMap<>();
@@ -43,7 +45,7 @@ public class PipeClient implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		LOGGER.info("%s", pipe.getRemoteEndpoint().toString());
+		LOGGER.info("{}", pipe.getRemoteEndpoint().toString());
 		isClosed = true;
 		// When auto-closing the responseReader is active and we have a MessagePipe,
 		// so notify the server to reclaim the pipe. The other scenario is when the

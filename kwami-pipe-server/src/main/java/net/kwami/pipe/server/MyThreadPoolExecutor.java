@@ -7,10 +7,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import net.kwami.utils.MyLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class MyThreadPoolExecutor extends ThreadPoolExecutor {
-	private static final MyLogger LOGGER = new MyLogger(MyThreadPoolExecutor.class);
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	public MyThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime,
 			TimeUnit unit, BlockingQueue<Runnable> workQueue) {
@@ -37,7 +38,7 @@ public class MyThreadPoolExecutor extends ThreadPoolExecutor {
 			}
 		}
 		if (t != null)
-			LOGGER.error(t);
+			LOGGER.error("", t);
 	}
 
 }

@@ -3,13 +3,15 @@ package net.kwami.pipe.server;
 import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.RejectedExecutionException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.kwami.pipe.FifoPipe;
 import net.kwami.pipe.Message;
 import net.kwami.pipe.Pipe;
-import net.kwami.utils.MyLogger;
 
 public class RequestReader extends ManagedThread {
-	private static final MyLogger LOGGER = new MyLogger(RequestReader.class);
+	private static final Logger LOGGER = LogManager.getLogger();
 	private final PipeServer server;
 	private final Pipe pipe;
 	private final Class<MyCallable> callableClass;
@@ -39,7 +41,7 @@ public class RequestReader extends ManagedThread {
 					callable.setParameter(new CallableMessage(request, pipe));
 					server.getThreadPoolExecutor().submit(callable);
 				} catch (RejectedExecutionException e) {
-					LOGGER.error("%s: %s", pipe.getRemoteEndpoint().toString(), e.toString());
+					LOGGER.error("{}: {}", pipe.getRemoteEndpoint().toString(), e.toString());
 					try {
 						Thread.sleep(20); // back off a bit
 					} catch (InterruptedException e1) {
@@ -47,14 +49,14 @@ public class RequestReader extends ManagedThread {
 					continue;
 				} catch (Exception e) {
 					if (e instanceof ClosedChannelException) {
-						LOGGER.info("%s was closed, terminating", pipe.getRemoteEndpoint().toString());
+						LOGGER.info("{} was closed, terminating", pipe.getRemoteEndpoint().toString());
 						break;
 					}
 					if (e.toString().contains(Pipe.END_OF_STREAM)) {
-						LOGGER.info("%s was closed by the client, terminating", pipe.getRemoteEndpoint().toString());
+						LOGGER.info("{} was closed by the client, terminating", pipe.getRemoteEndpoint().toString());
 						break;
 					}
-					LOGGER.error(e);
+					LOGGER.error("", e);
 					break;
 				}
 			}

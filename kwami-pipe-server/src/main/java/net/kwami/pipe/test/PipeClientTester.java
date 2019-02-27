@@ -3,13 +3,15 @@ package net.kwami.pipe.test;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.kwami.pipe.RemoteEndpoint;
 import net.kwami.pipe.client.PipeClient;
 import net.kwami.pipe.client.TimeoutException;
-import net.kwami.utils.MyLogger;
 
 public class PipeClientTester extends Thread {
-	private static final MyLogger logger = new MyLogger(PipeClientTester.class);
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	static class MessageSenderThread extends Thread {
 		int threadNum;
@@ -27,7 +29,7 @@ public class PipeClientTester extends Thread {
 		}
 
 		public void run() {
-			logger.info("starting");
+			LOGGER.info("starting");
 			String threadName = String.format("%s-Thread-%s-%s", testName, clientThreadNum, threadNum);
 			Thread.currentThread().setName(threadName);
 			try (PipeClient client = new PipeClient(endpoint)) {

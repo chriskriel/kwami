@@ -3,13 +3,15 @@ package net.kwami.pipe.client;
 import java.io.IOException;
 import java.nio.channels.AsynchronousCloseException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.kwami.pipe.Message;
 import net.kwami.pipe.Pipe;
 import net.kwami.pipe.server.ManagedThread;
-import net.kwami.utils.MyLogger;
 
 public class RequestTransmitter extends ManagedThread {
-	private static final MyLogger LOGGER = new MyLogger(RequestTransmitter.class);
+	private static final Logger LOGGER = LogManager.getLogger();
 	private PipeClient context;
 
 	public RequestTransmitter(PipeClient context) {
@@ -32,7 +34,7 @@ public class RequestTransmitter extends ManagedThread {
 					Message msg = context.getOutstandingRequests().get(msgId);
 					// the client may have timed out and removed the message
 					if (msg == null) {
-						LOGGER.trace("msgId %d was a null message, outstanding: %d", msgId,
+						LOGGER.trace("msgId {} was a null message, outstanding: {}", msgId,
 								context.getOutstandingRequests().size());
 						continue;
 					}
@@ -43,12 +45,12 @@ public class RequestTransmitter extends ManagedThread {
 					continue;
 				} catch (IOException e) {
 					if (e instanceof AsynchronousCloseException) {
-						LOGGER.info("%s was closed by another thread, terminating",
+						LOGGER.info("{} was closed by another thread, terminating",
 								context.getPipe().getRemoteEndpoint().toString());
 						break;
 					}
 					if (e.toString().contains(Pipe.END_OF_STREAM)) {
-						LOGGER.info("%s was closed by the server, terminating",
+						LOGGER.info("{} was closed by the server, terminating",
 								context.getPipe().getRemoteEndpoint().toString());
 						break;
 					}

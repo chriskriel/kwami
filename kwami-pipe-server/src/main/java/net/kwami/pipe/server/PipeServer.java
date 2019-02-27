@@ -14,12 +14,14 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.kwami.pipe.FifoPipe;
 import net.kwami.pipe.Pipe;
 import net.kwami.pipe.RemoteEndpoint;
 import net.kwami.pipe.TcpPipe;
 import net.kwami.utils.Configurator;
-import net.kwami.utils.MyLogger;
 import net.kwami.utils.MyProperties;
 
 /**
@@ -29,7 +31,7 @@ import net.kwami.utils.MyProperties;
 public final class PipeServer {
 
 	public static final String RESPONSE_TRANSMITTER_NAME = "ResponseTransmitterThread";
-	private static final MyLogger LOGGER = new MyLogger(PipeServer.class);
+	private static final Logger LOGGER = LogManager.getLogger();
 	private static byte[] fifoByteMap = { 1 };
 
 	public static void main(String[] args) {
@@ -81,7 +83,7 @@ public final class PipeServer {
 				}
 			}
 		}
-		LOGGER.info("FIFOs 0 to %d can be used as %d bi-directional connections to this server", i - 1, i / 2);
+		LOGGER.info("FIFOs 0 to {} can be used as {} bi-directional connections to this server", i - 1, i / 2);
 		fifoByteMap = new byte[i];
 	}
 
@@ -122,7 +124,7 @@ public final class PipeServer {
 				}
 			}
 		} catch (Exception e) {
-			LOGGER.error(e, "SERIOUS PROBLEM: System is not functional");
+			LOGGER.error("SERIOUS PROBLEM: System is not functional", e);
 		}
 	}
 
@@ -151,7 +153,7 @@ public final class PipeServer {
 			// try to reuse if available
 			for (int i = 0; i < fifoByteMap.length; i++)
 				if (fifoByteMap[i] == 0) {
-					LOGGER.debug("reusing FIFO %d", i);
+					LOGGER.debug("reusing FIFO {}", i);
 					fifoByteMap[i] = 1;
 					fifoByteMapPosition = i;
 					return i;

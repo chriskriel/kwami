@@ -1,14 +1,17 @@
 package net.kwami.pathsend;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.google.gson.GsonBuilder;
 import com.tandem.tsmp.TsmpServer;
 
-import net.kwami.utils.MyLogger;
+import net.kwami.utils.MemoryDumpMessage;
 import net.kwami.utils.MyProperties;
 
 public final class PathwayClient {
 
-	private static final MyLogger logger = new MyLogger(PathwayClient.class);
+	private static final Logger LOGGER = LogManager.getLogger();
 	private final long latencyThresholdMillis;
 	private final int timeoutCentiSecs;
 	private final byte[] receiveBuffer;
@@ -23,7 +26,7 @@ public final class PathwayClient {
 	public PathwayClient(String serverPath, int timeoutSecsX100, long latencyThresholdMillis, int requestBufSize,
 			int receiveBufSize) {
 		super();
-		logger.debug("serverPath=%s,timeoutCentiSecs=%d,latencyThreshold=%dms,requestBufSize=%d,receiveBufSize=%d",
+		LOGGER.debug("serverPath={},timeoutCentiSecs={},latencyThreshold={}ms,requestBufSize={},receiveBufSize={}",
 				serverPath, timeoutSecsX100, latencyThresholdMillis, requestBufSize, receiveBufSize);
 		receiveBuffer = new byte[receiveBufSize];
 		requestParameterBuffer = new ParameterBuffer(0, requestBufSize);
@@ -39,13 +42,12 @@ public final class PathwayClient {
 
 	public final void transceive(int messageId, MyProperties requestParameters, MyProperties responseParameters)
 			throws Exception {
-		logger.trace("msgId=%d,requestParameters=%s", messageId, requestParameters.toString());
+		LOGGER.traceEntry("msgId={},requestParameters={}", messageId, requestParameters.toString());
 		requestParameterBuffer.initialize(messageId, requestParameters);
 		long latency = 0, startTime = System.currentTimeMillis();
 		int requestLength = requestParameterBuffer.position();
 		byte[] requestBuffer = requestParameterBuffer.array();
-		logger.trace("requestBytes:", requestBuffer, requestLength);
-
+		LOGGER.trace(new MemoryDumpMessage("requestBytes:", requestBuffer, requestLength));
 		int responseLength = tsmpServer.service(requestBuffer, requestLength, receiveBuffer);
 
 		if (responseLength > receiveBuffer.length) {
@@ -53,11 +55,11 @@ public final class PathwayClient {
 					receiveBuffer.length);
 			throw new Exception(errorMsg);
 		}
-		logger.trace("responseBytes", receiveBuffer, responseLength);
+		LOGGER.trace(new MemoryDumpMessage("responseBytes", receiveBuffer, responseLength));
 		latency = System.currentTimeMillis() - startTime;
 		ParameterBuffer respBuf = ParameterBuffer.wrap(receiveBuffer, 0, responseLength);
 		if (latency > latencyThresholdMillis)
-			logger.warn("Latency of %dms on server %s exceeded threshold of %dms", latency, serverPath,
+			LOGGER.warn("Latency of {}ms on server {} exceeded threshold of {}ms", latency, serverPath,
 					latencyThresholdMillis);
 		respBuf.extractPropertiesInto(responseParameters);
 	}
