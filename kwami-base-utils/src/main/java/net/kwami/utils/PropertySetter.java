@@ -3,12 +3,15 @@ package net.kwami.utils;
 import java.lang.reflect.Method;
 import java.util.Properties;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public abstract class PropertySetter {
-	private static final MyLogger LOGGER = new MyLogger(PropertySetter.class);
+	private static final Logger LOGGER = LogManager.getLogger(PropertySetter.class);
 	
 	public static final void set(final Object obj, final Properties props) {
 		for (String key : props.stringPropertyNames()) {
-			LOGGER.trace("setting property '%s'", key);
+			LOGGER.trace("setting property '{}'", key);
 			String value = props.getProperty(key);
 			StringBuilder setterName = new StringBuilder(key);
 			setterName.replace(0, 1, setterName.substring(0, 1).toUpperCase());
@@ -32,7 +35,7 @@ public abstract class PropertySetter {
 					throw new Exception();
 				}
 			} catch (Exception e) {
-				LOGGER.error("ignoring setter '%s'", setterName.toString());
+				LOGGER.error("ignoring setter '{}'", setterName.toString());
 			}
 		}
 	}

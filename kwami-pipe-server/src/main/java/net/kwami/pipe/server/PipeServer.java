@@ -31,7 +31,7 @@ import net.kwami.utils.MyProperties;
 public final class PipeServer {
 
 	public static final String RESPONSE_TRANSMITTER_NAME = "ResponseTransmitterThread";
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger(PipeServer.class);
 	private static byte[] fifoByteMap = { 1 };
 
 	public static void main(String[] args) {
@@ -58,14 +58,16 @@ public final class PipeServer {
 
 	public PipeServer() throws Exception {
 		super();
+		LOGGER.traceEntry();
 		ServerConfig config = Configurator.get(ServerConfig.class);
 		commandBuffer = ByteBuffer.allocate(config.getCommandBufferSize());
 		this.serverPort = config.getPort();
 		System.setProperty("pipe.server.port", String.valueOf(this.serverPort));
 		System.setProperty("pipe.server.host", RemoteEndpoint.getMachineAddress());
 		callableClass = loadCallableClass(config);
-		threadPoolExecutor = new MyThreadPoolExecutor(config.getCorePoolSize(), config.getMaxPoolSize(), config.getKeepAliveTime(),
-				TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
+		threadPoolExecutor = new MyThreadPoolExecutor(config.getCorePoolSize(), config.getMaxPoolSize(),
+				config.getKeepAliveTime(), TimeUnit.DAYS,
+				new ArrayBlockingQueue<Runnable>(config.getSubmitQueueSize()));
 		int i = 0;
 		File fifoDir = new File(System.getProperty("user.dir"));
 		fifoDir = new File(fifoDir, "fifo");
@@ -85,6 +87,7 @@ public final class PipeServer {
 		}
 		LOGGER.info("FIFOs 0 to {} can be used as {} bi-directional connections to this server", i - 1, i / 2);
 		fifoByteMap = new byte[i];
+		callableClass.newInstance(); // configure BasicCapsule class object
 	}
 
 	public Class<MyCallable> loadCallableClass(ServerConfig config) throws Exception {
@@ -94,9 +97,10 @@ public final class PipeServer {
 	}
 
 	public final void call() throws IOException {
+		LOGGER.traceEntry();
 		try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
-			serverChannel.socket()
-					.bind(new InetSocketAddress(Inet4Address.getByName(RemoteEndpoint.getMachineAddress()), serverPort));
+			serverChannel.socket().bind(
+					new InetSocketAddress(Inet4Address.getByName(RemoteEndpoint.getMachineAddress()), serverPort));
 			Thread.currentThread().setName("PipeServer" + serverChannel.socket().getLocalSocketAddress().toString());
 			while (true) {
 				SocketChannel socketChannel = serverChannel.accept();
@@ -126,6 +130,7 @@ public final class PipeServer {
 		} catch (Exception e) {
 			LOGGER.error("SERIOUS PROBLEM: System is not functional", e);
 		}
+		LOGGER.traceExit();
 	}
 
 	private final void startTcpRequestReader(final SocketChannel socketChannel, final RemoteEndpoint remoteEndpoint)

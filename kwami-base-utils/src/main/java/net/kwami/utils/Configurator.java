@@ -7,6 +7,9 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -42,7 +45,7 @@ class CachedObject {
  */
 public abstract class Configurator {
 
-	private static final MyLogger LOGGER = new MyLogger(Configurator.class);
+	private static final Logger LOGGER = LogManager.getLogger(Configurator.class);
 	private static final Map<String, CachedObject> CACHE = new ConcurrentHashMap<String, CachedObject>();
 	private static final long LIFETIME_MILLIS;
 	private static final String CONFIG_FILE_TYPE;
@@ -126,7 +129,7 @@ public abstract class Configurator {
 			t = getCachedObject(useCache, classT, resourceName);
 			if (t != null)
 				return t;
-			LOGGER.info("Loading %s from resource %s", classT.getName(), resourceName);
+			LOGGER.info("Loading {} from resource {}", classT.getName(), resourceName);
 			try (InputStream is = classT.getResourceAsStream(resourceName)) {
 				InputStreamReader rdr = new InputStreamReader(is);
 				Gson gson = new GsonBuilder().disableHtmlEscaping().create();

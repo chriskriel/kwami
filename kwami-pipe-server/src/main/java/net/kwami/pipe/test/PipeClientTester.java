@@ -11,7 +11,7 @@ import net.kwami.pipe.client.PipeClient;
 import net.kwami.pipe.client.TimeoutException;
 
 public class PipeClientTester extends Thread {
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger(PipeClientTester.class);
 
 	static class MessageSenderThread extends Thread {
 		int threadNum;

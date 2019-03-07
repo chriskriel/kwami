@@ -10,7 +10,7 @@
   <groupId>net.kwami</groupId>
   <artifactId>kwami-base-utils</artifactId>
   <name>kwami-base-utils</name>
-  <version>23</version>
+  <version>24</version>
   <url>http://maven.apache.org</url>
   <profiles>
     <profile>

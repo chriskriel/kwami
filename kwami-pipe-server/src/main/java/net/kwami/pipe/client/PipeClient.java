@@ -24,7 +24,7 @@ import net.kwami.utils.Configurator;
 import net.kwami.utils.MyProperties;
 
 public class PipeClient implements AutoCloseable {
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger(PipeClient.class);
 	public final AtomicLong nextMsgId = new AtomicLong();
 	private final BlockingQueue<Long> transmitQueue;
 	private final ConcurrentMap<Long, Message> outstandingRequests = new ConcurrentHashMap<>();

@@ -1,6 +1,10 @@
 package net.kwami.utils;
 
 import java.util.Properties;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.google.gson.GsonBuilder;
 
 /*
@@ -9,9 +13,9 @@ import com.google.gson.GsonBuilder;
 */
 public class MyProperties extends Properties {
 
-	private static final String ERR_MSG = "returning defaultValue %d because property '%s', with value '%s', cannot be parsed as %s";
+	private static final String ERR_MSG = "returning defaultValue {} because property '{}', with value '{}', cannot be parsed as {}";
 	private static final long serialVersionUID = 1L;
-	private static final MyLogger LOGGER = new MyLogger(MyProperties.class);
+	private static final Logger LOGGER = LogManager.getLogger(MyProperties.class);
 
 	/*
 	 * Allows the use of JSON strings as properties. This method will instantiate
@@ -149,7 +153,7 @@ public class MyProperties extends Properties {
 		if (!original.contains("${"))
 			return original;
 		String newValue = replaceVarWithSystemProperty(original);
-		LOGGER.debug("key=%s,original='%s',new='%s'", key, original, newValue);
+		LOGGER.debug("key={},original={}',new='{}'", key, original, newValue);
 		return newValue;
 	}
 

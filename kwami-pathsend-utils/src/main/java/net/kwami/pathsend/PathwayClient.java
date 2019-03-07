@@ -11,7 +11,7 @@ import net.kwami.utils.MyProperties;
 
 public final class PathwayClient {
 
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger(PathwayClient.class);
 	private final long latencyThresholdMillis;
 	private final int timeoutCentiSecs;
 	private final byte[] receiveBuffer;

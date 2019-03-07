@@ -7,7 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public abstract class Pipe implements AutoCloseable {
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger(Pipe.class);
 	public static final String END_OF_STREAM = "END-OF-STREAM";
 	public static final String READING_DISABLED = "READING-DISABLED";
 	public static final String WRITING_DISABLED = "WRITING-DISABLED";

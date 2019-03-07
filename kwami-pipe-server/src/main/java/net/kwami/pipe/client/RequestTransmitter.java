@@ -11,7 +11,7 @@ import net.kwami.pipe.Pipe;
 import net.kwami.pipe.server.ManagedThread;
 
 public class RequestTransmitter extends ManagedThread {
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger(RequestTransmitter.class);
 	private PipeClient context;
 
 	public RequestTransmitter(PipeClient context) {

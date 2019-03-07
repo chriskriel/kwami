@@ -16,7 +16,7 @@ import net.kwami.utils.MemoryDumpMessage;
 import net.kwami.utils.MyLogger;
 
 public class Log4j2Tester {
-	Logger logger = LogManager.getLogger();
+	Logger logger = LogManager.getLogger(Log4j2Tester.class);
 
 	@Test
 	public void testBasic() {

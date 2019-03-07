@@ -4,7 +4,7 @@
 
     <groupId>net.kwami</groupId>
     <artifactId>kwami-pathsend-utils</artifactId>
-    <version>6</version>
+    <version>7</version>
     <packaging>jar</packaging>
 
     <name>kwami-pathsend-utils</name>
@@ -13,7 +13,7 @@
     <parent>
         <groupId>net.kwami</groupId>
         <artifactId>kwami-parent</artifactId>
-        <version>3</version>
+        <version>4</version>
     </parent>
 
     <properties>

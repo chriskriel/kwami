@@ -11,7 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class MyThreadPoolExecutor extends ThreadPoolExecutor {
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger(MyThreadPoolExecutor.class);
 
 	public MyThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime,
 			TimeUnit unit, BlockingQueue<Runnable> workQueue) {
