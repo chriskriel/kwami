@@ -180,7 +180,7 @@ public class MyProperties extends Properties {
 
 	@Override
 	public final String toString() {
-		return new GsonBuilder().create().toJson(this);
+		return new JsonMessage(this).toString();
 	}
 
 }

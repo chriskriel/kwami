@@ -6,10 +6,12 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.kwami.utils.MyLogger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class RuntimeExecExample {
-	private static final MyLogger logger = new MyLogger(RuntimeExecExample.class);
+	private static final Logger logger = LogManager.getLogger(RuntimeExecExample.class);
 
 	public static boolean issue(String cmd) {
 		boolean success = true;
@@ -34,7 +36,7 @@ public abstract class RuntimeExecExample {
 		for (String line : outputLines) {
 			output.append(line);
 		}
-		logger.info("Command execution successful = %b:\n%s\n%s", success, cmd, output.toString());
+		logger.printf(Level.INFO, "Command execution successful = %b:\n%s\n%s", success, cmd, output.toString());
 		return success;
 	}
 

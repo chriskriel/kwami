@@ -13,7 +13,6 @@ import org.junit.Test;
 
 import net.kwami.utils.JsonMessage;
 import net.kwami.utils.MemoryDumpMessage;
-import net.kwami.utils.MyLogger;
 
 public class Log4j2Tester {
 	Logger logger = LogManager.getLogger(Log4j2Tester.class);
@@ -22,10 +21,6 @@ public class Log4j2Tester {
 	public void testBasic() {
 		logger.info("message");
 		x(1, 2);
-		MyLogger logger2 = new MyLogger(Log4j2Tester.class);
-		logger2.info("who is logging here");
-		logger2.info("%s", "formatted message");
-		logger2.info("%s", "formatted message");
 	}
 
 	private String x(int one, int two) {

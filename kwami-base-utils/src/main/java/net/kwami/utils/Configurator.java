@@ -83,7 +83,9 @@ public abstract class Configurator {
 	 * @return an object of the specified class is returned
 	 */
 	public final static <T> T get(final Class<T> classT, final String resourceName) {
-		return get(classT, resourceName, true);
+		T t = get(classT, resourceName, true);
+		LOGGER.traceExit();
+		return t;
 	}
 
 	/*
@@ -134,6 +136,7 @@ public abstract class Configurator {
 				InputStreamReader rdr = new InputStreamReader(is);
 				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 				t = gson.fromJson(rdr, classT);
+				LOGGER.debug("Loaded {} from resource {}", classT.getName(), resourceName);
 			} catch (Throwable e) {
 				String err = String.format("%s: error processing %s", e.toString(), resourceName);
 				LOGGER.error(err);
@@ -150,6 +153,7 @@ public abstract class Configurator {
 				System.err.println(err);
 				throw new RuntimeException(err);
 			}
+			LOGGER.traceExit();
 			return t;
 		}
 	}
