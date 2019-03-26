@@ -1,38 +1,39 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-        <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-        <groupId>net.kwami</groupId>
-        <artifactId>kwami-pipe-server</artifactId>
-        <version>5</version>
-        <packaging>jar</packaging>
+	<groupId>net.kwami</groupId>
+	<artifactId>kwami-pipe-server</artifactId>
+	<version>5</version>
+	<packaging>jar</packaging>
 
-        <name>kwami-pipe-server</name>
-        <url>http://maven.apache.org</url>
+	<name>kwami-pipe-server</name>
+	<url>http://maven.apache.org</url>
 
-        <parent>
-                <groupId>net.kwami</groupId>
-                <artifactId>kwami-parent</artifactId>
-                <version>3</version>
-        </parent>
-	 <build>
+	<parent>
+		<groupId>net.kwami</groupId>
+		<artifactId>kwami-parent</artifactId>
+		<version>5</version>
+	</parent>
+	<build>
 		<plugins>
 			<plugin>
 				<groupId>com.coderplus.maven.plugins</groupId>
 				<artifactId>copy-rename-maven-plugin</artifactId>
 				<version>1.0</version>
 				<executions>
-				  <execution>
-					<id>copy-file</id>
-					<phase>install</phase>
-					<goals>
-					  <goal>copy</goal>
-					</goals>
-					<configuration>
-					  <sourceFile>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</sourceFile>
-					  <destinationFile>${user.home}/apps/lib/${project.artifactId}-${project.version}.${project.packaging}</destinationFile>
-					</configuration>
-				  </execution>
+					<execution>
+						<id>copy-file</id>
+						<phase>install</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<sourceFile>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</sourceFile>
+							<destinationFile>${user.home}/apps/lib/${project.artifactId}-${project.version}.${project.packaging}</destinationFile>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>

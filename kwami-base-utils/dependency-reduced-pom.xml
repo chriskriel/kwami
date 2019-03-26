@@ -10,7 +10,7 @@
   <groupId>net.kwami</groupId>
   <artifactId>kwami-base-utils</artifactId>
   <name>kwami-base-utils</name>
-  <version>25</version>
+  <version>26</version>
   <url>http://maven.apache.org</url>
   <profiles>
     <profile>
@@ -34,6 +34,24 @@
                       </manifestEntries>
                     </transformer>
                   </transformers>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.coderplus.maven.plugins</groupId>
+            <artifactId>copy-rename-maven-plugin</artifactId>
+            <version>1.0</version>
+            <executions>
+              <execution>
+                <id>copy-file</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>copy</goal>
+                </goals>
+                <configuration>
+                  <sourceFile>/mnt/c/Users/krielchr/git/kwami/general/kwami-base-utils/target/kwami-base-utils-26.jar</sourceFile>
+                  <destinationFile>/home/chris/apps/lib/kwami-base-utils-26.jar</destinationFile>
                 </configuration>
               </execution>
             </executions>
@@ -70,11 +88,35 @@
               </execution>
             </executions>
           </plugin>
+          <plugin>
+            <groupId>com.coderplus.maven.plugins</groupId>
+            <artifactId>copy-rename-maven-plugin</artifactId>
+            <version>1.0</version>
+            <executions>
+              <execution>
+                <id>copy-file</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>copy</goal>
+                </goals>
+                <configuration>
+                  <sourceFile>${project.build.directory}/${project.artifactId}-${project.version}-jdk7.${project.packaging}</sourceFile>
+                  <destinationFile>${user.home}/apps/lib/${project.artifactId}-${project.version}-jdk7.${project.packaging}</destinationFile>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
   </profiles>
   <dependencies>
+    <dependency>
+      <groupId>net.kwami</groupId>
+      <artifactId>kwami-log4j2-uber</artifactId>
+      <version>1</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
