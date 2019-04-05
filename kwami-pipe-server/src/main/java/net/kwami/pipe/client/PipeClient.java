@@ -89,6 +89,8 @@ public class PipeClient implements AutoCloseable {
 						String.format("%s, msgId %d waiting for response from server on request '%s'",
 								pipe.getRemoteEndpoint().toString(), msgId, data));
 			}
+			if (msg.getData().startsWith(Pipe.EXCPTN_PRFX))
+				throw new Exception(msg.getData());
 			return msg.getData();
 		} finally {
 			outstandingRequests.remove(msgId);

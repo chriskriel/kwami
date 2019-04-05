@@ -5,7 +5,7 @@
 
 	<groupId>net.kwami</groupId>
 	<artifactId>kwami-pipe-server</artifactId>
-	<version>5</version>
+	<version>6</version>
 	<packaging>jar</packaging>
 
 	<name>kwami-pipe-server</name>

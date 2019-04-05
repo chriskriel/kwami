@@ -1,5 +1,6 @@
 package net.kwami.pipe.server;
 
+import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -33,20 +34,20 @@ public class RequestReader extends ManagedThread {
 						this.wait();
 					} catch (InterruptedException e) {
 					}
+				Message msg = null;
 				try {
-					Message request = pipe.read();
-					if (request.getData().equals(Pipe.END_OF_STREAM))
+					msg = pipe.read();
+					if (msg.getData().equals(Pipe.END_OF_STREAM))
 						break;
 					MyCallable callable = callableClass.newInstance();
-					callable.setParameter(new CallableMessage(request, pipe));
+					callable.setParameter(new CallableMessage(msg, pipe));
 					server.getThreadPoolExecutor().submit(callable);
 				} catch (RejectedExecutionException e) {
+					if (!sendExceptionToClient(msg, e))
+						break;
+				} catch (IOException e) {
 					LOGGER.error("{}: {}", pipe.getRemoteEndpoint().toString(), e.toString());
-					try {
-						Thread.sleep(20); // back off a bit
-					} catch (InterruptedException e1) {
-					}
-					continue;
+					break;
 				} catch (Exception e) {
 					if (e instanceof ClosedChannelException) {
 						LOGGER.info("{} was closed, terminating", pipe.getRemoteEndpoint().toString());
@@ -56,8 +57,8 @@ public class RequestReader extends ManagedThread {
 						LOGGER.info("{} was closed by the client, terminating", pipe.getRemoteEndpoint().toString());
 						break;
 					}
-					LOGGER.error("", e);
-					break;
+					if (!sendExceptionToClient(msg, e))
+						break;
 				}
 			}
 		} finally {
@@ -76,6 +77,18 @@ public class RequestReader extends ManagedThread {
 				}
 			} catch (Exception e) {
 			}
+		}
+	}
+
+	private boolean sendExceptionToClient(Message msg, Exception e) {
+		LOGGER.error("{}: {}", pipe.getRemoteEndpoint().toString(), e.toString());
+		msg.setData(String.format("%s %s in %s", Pipe.EXCPTN_PRFX, e.getClass().getSimpleName(), this.getName()));
+		try {
+			pipe.write(msg);
+			return true;
+		} catch (IOException e1) {
+			LOGGER.error("{}: {}", pipe.getRemoteEndpoint().toString(), e1.toString());
+			return false;
 		}
 	}
 
